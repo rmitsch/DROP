@@ -115,3 +115,7 @@ logs
 
 # Dolphin files.
 .directory
+
+# Ignore data directory.
+data
+data/
