@@ -1,14 +1,15 @@
 import os.path
 from random import shuffle
-
 import psutil
-from TSNEThread import TSNEThread
 from scipy.spatial.distance import cdist
 from sklearn.datasets import load_wine
 from sklearn.preprocessing import StandardScaler
 from tables import *
 
+from backend.data_generation.TSNEThread import TSNEThread
+from backend.objectives.CorankingObjectiveBundle import CorankingObjectiveBundle
 from backend.data_generation.PersistenceThread import PersistenceThread
+
 
 ######################################################
 # 1. Generate parameter sets, store in file.
@@ -38,10 +39,10 @@ if os.path.isfile(file_name):
 
 # Define parameter ranges.
 parameter_values = {
-    "n_components": (1, ), #2, 3, 4),
-    "perplexity": (10, ), #25, 50, 80),
-    "early_exaggeration": (5.0, 10.0, ), #15.0, 20.0),
-    "learning_rate": (10.0, 250.0, ), #500.0, 1000.0),
+    "n_components": (1, 2, 3, 4),
+    "perplexity": (10, 25, 50, 80),
+    "early_exaggeration": (5.0, 10.0, 15.0, 20.0),
+    "learning_rate": (10.0, 250.0, 500.0, 1000.0),
     "n_iter": (250, 1000, 2000, 5000),
     # Commenting out min_grad_norm, since a variable value for this since (1) MulticoreTSNE doesn't support dynamic
     # values for this attribute and (2) sklearn's implementation is slow af.
@@ -49,7 +50,7 @@ parameter_values = {
     # it might be added again.
     #"min_grad_norm": (1e-10, 1e-7, 1e-4, 1e-1),
     "angle": (0.1, 0.35, 0.65, 0.9),
-    "metrics": ('euclidean',)
+    "metrics": ('seuclidean', 'cosine')
 }
 
 parameter_sets = []
@@ -92,12 +93,20 @@ high_dim_data = load_wine()
 high_dim_data = StandardScaler().fit_transform(high_dim_data.data)
 
 ######################################################
-# 3. Calculate distance matrices.
+# 3. Calculate distance matrices and the corresponding
+# coranking matrices.
 ######################################################
 
 # Assumes all specified distances can be calculated by scipy's cdist().
 distance_matrices = {
-    metric: cdist(high_dim_data.data, high_dim_data.data, metric) for metric in parameter_values["metrics"]
+    metric: cdist(high_dim_data.data, high_dim_data.data, metric)
+    for metric in parameter_values["metrics"]
+}
+
+# Generate neighbourhood ranking for high dimensional data w.r.t. all used distance metrics.
+high_dim_neighbourhood_rankings = {
+    metric: CorankingObjectiveBundle.generate_neighbourhood_ranking(high_dim_data, metric)
+    for metric in parameter_values["metrics"]
 }
 
 ######################################################
@@ -125,7 +134,8 @@ for i in range(0, n_jobs):
             results=results,
             distance_matrices=distance_matrices,
             parameter_sets=parameter_sets[first_index:last_index],
-            high_dimensional_data=high_dim_data
+            high_dimensional_data=high_dim_data,
+            high_dimensional_neighbourhood_rankings=high_dim_neighbourhood_rankings
         )
     )
 

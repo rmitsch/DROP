@@ -44,6 +44,7 @@ class PersistenceThread(threading.Thread):
             # Check how many results are available so far.
             num_of_results_so_far = len(self.results)
             print(num_of_results_so_far / float(self.expected_number_of_results))
+
             # If number of records has changed: Add to file.
             if num_of_results_so_far > last_processed_index + 1:
                 # Loop through all entries.
@@ -72,6 +73,7 @@ class PersistenceThread(threading.Thread):
                     result_objectives = result["objectives"]
                     metadata_row["runtime"] = result_objectives["runtime"]
                     metadata_row["trustworthiness"] = result_objectives["trustworthiness"]
+                    metadata_row["continuity"] = result_objectives["continuity"]
 
                     # Append row to file.
                     metadata_row.append()

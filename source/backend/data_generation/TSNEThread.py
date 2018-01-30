@@ -3,6 +3,7 @@ import numpy
 from sklearn.manifold import TSNE
 import time
 from MulticoreTSNE import MulticoreTSNE
+from backend.objectives.CorankingObjectiveBundle import CorankingObjectiveBundle
 
 
 class TSNEThread(threading.Thread):
@@ -15,7 +16,9 @@ class TSNEThread(threading.Thread):
             results: list,
             distance_matrices: dict,
             parameter_sets: list,
-            high_dimensional_data: numpy.ndarray):
+            high_dimensional_data: numpy.ndarray,
+            high_dimensional_neighbourhood_rankings: dict
+    ):
         """
         Initializes thread instance that will calculate the low-dimensional representation of the specified distance
         matrices applying t-SNE.
@@ -23,6 +26,8 @@ class TSNEThread(threading.Thread):
         :param distance_matrices:
         :param parameter_sets:
         :param high_dimensional_data:
+        :param high_dimensional_neighbourhood_rankings: Neighbourhood rankings in original high-dimensional space. Dict.
+        with one entry per distance metric.
         """
         threading.Thread.__init__(self)
 
@@ -30,6 +35,7 @@ class TSNEThread(threading.Thread):
         self.parameter_sets = parameter_sets
         self.results = results
         self.high_dimensional_data = high_dimensional_data
+        self.high_dimensional_neighbourhood_rankings = high_dimensional_neighbourhood_rankings
 
     def run(self):
         """
@@ -37,7 +43,13 @@ class TSNEThread(threading.Thread):
         :return: List of 2D-ndarrays containing coordinates of instances in low-dimensional space.
         """
 
+        ###################################################
+        # 1. Calculate embedding for each distance metric.
+        ###################################################
+
         for parameter_set in self.parameter_sets:
+            metric = parameter_set["metric"]
+
             # Calculate t-SNE.
             start = time.time()
             low_dimensional_projection = MulticoreTSNE(
@@ -55,14 +67,33 @@ class TSNEThread(threading.Thread):
                 # Set n_jobs to 1, since we parallelize at a higher level by splitting up model parametrizations amongst
                 # threads.
                 n_jobs=1
-            ).fit_transform(self.distance_matrices[parameter_set["metric"]])
+            ).fit_transform(self.distance_matrices[metric])
+
+            ###################################################
+            # 2. Calculate objectives.
+            ###################################################
+
+            # Runtime.
+            runtime = time.time() - start
+
+            # Coranking-matrix based objectives.
+            coranking_objectives = CorankingObjectiveBundle(
+                high_dimensional_data=self.distance_matrices[metric],
+                low_dimensional_data=low_dimensional_projection,
+                distance_metric=metric,
+                high_dimensional_neighbourhood_ranking=self.high_dimensional_neighbourhood_rankings[metric]
+            ).compute(k=10)
 
             # Append runtime to set of objectives.
             objectives = {
-                "runtime": time.time() - start,
-                # todo Calculate trustworthiness here.
-                "trustworthiness": 1
+                "runtime": runtime,
+                "trustworthiness": coranking_objectives["trustworthiness"],
+                "continuity": coranking_objectives["continuity"]
             }
+
+            ###################################################
+            # 3. Collect data, terminate.
+            ###################################################
 
             # Store parameter set, objective set and low dimensional projection in globally shared object.
             self.results.append({

@@ -20,6 +20,7 @@ class TSNEMetadata(IsDescription):
 
     # Objectives for faithfulness of dimensionality-reduced projection.
     trustworthiness = Float64Col(pos=10)
+    continuity = Float64Col(pos=10)
 
     # Other quality measures.
     runtime = Int8Col(pos=11)
