@@ -1,8 +1,10 @@
+import os
 import threading
 import time
+
 from tables import *
-import TSNEMetadata
-import os
+
+from backend.data_generation import TSNEMetadata
 
 
 class PersistenceThread(threading.Thread):

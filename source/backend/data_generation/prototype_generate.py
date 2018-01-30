@@ -1,17 +1,14 @@
-from sklearn.datasets import load_wine
-from sklearn.manifold import TSNE
-import time
-import numpy
-from sklearn.preprocessing import StandardScaler
-from tables import *
 import os.path
 from random import shuffle
-import multiprocessing
-from scipy.spatial.distance import cdist
+
 import psutil
 from TSNEThread import TSNEThread
-from PersistenceThread import PersistenceThread
+from scipy.spatial.distance import cdist
+from sklearn.datasets import load_wine
+from sklearn.preprocessing import StandardScaler
+from tables import *
 
+from backend.data_generation.PersistenceThread import PersistenceThread
 
 ######################################################
 # 1. Generate parameter sets, store in file.
