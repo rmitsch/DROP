@@ -1,8 +1,8 @@
 import threading
 import time
-import os
 from tables import *
 import TSNEMetadata
+import os
 
 
 class PersistenceThread(threading.Thread):
@@ -35,9 +35,9 @@ class PersistenceThread(threading.Thread):
         metadata_table = self.h5file.root.metadata
         metadata_row = metadata_table.row
 
+        # Check on new arrivals every 5 seconds.
         last_processed_index = -1
         num_of_results_so_far = 0
-        print(self.expected_number_of_results)
         while num_of_results_so_far < self.expected_number_of_results:
             # Check how many results are available so far.
             num_of_results_so_far = len(self.results)
@@ -50,9 +50,13 @@ class PersistenceThread(threading.Thread):
                     # 1. Add metadata (hyperparameter + objectives).
                     ######################################################
 
+                    # Calculate ID to persist based on running ID as assigned by generation procedure plus offset
+                    # necessary due to datasets already existing in target file for dataset.
+                    valid_model_id = self.model_id_offset + result["parameter_set"]["id"]
+
                     # Hyperparameter.
                     result_hyperparam = result["parameter_set"]
-                    metadata_row["id"] = result_hyperparam["id"]
+                    metadata_row["id"] = valid_model_id
                     metadata_row["n_components"] = result_hyperparam["n_components"]
                     metadata_row["perplexity"] = result_hyperparam["perplexity"]
                     metadata_row["early_exaggeration"] = result_hyperparam["early_exaggeration"]
@@ -73,7 +77,14 @@ class PersistenceThread(threading.Thread):
                     ######################################################
                     # 2. Add low-dimensional projections.
                     ######################################################
-                    # array1 = fileh.create_array(root, "array1", ["string", "array"], "String array")
+
+                    self.h5file.create_carray(
+                        self.h5file.root.projection_coordinates,
+                        name="model" + str(valid_model_id),
+                        obj=result["low_dimensional_projection"],
+                        title="Low dimensional coordinates for model #" + str(valid_model_id),
+                        filters=Filters(complevel=3, complib='zlib')
+                    )
 
                 # Flush buffer, make sure data is stored in file.
                 metadata_table.flush()
@@ -94,16 +105,28 @@ class PersistenceThread(threading.Thread):
         :return: File handle of newly created .h5 file.
         """
 
+        # Used to store how many models are already stored in file.
+        self.model_id_offset = 0
+
         file_name = os.getcwd() + "/../data/drop_" + self.dataset_name + ".h5"
         # If file exists: Return handle to existing file (assuming file is not corrupt).
         if os.path.isfile(file_name):
-            return open_file(filename=file_name, mode="r+")
+            h5file = open_file(filename=file_name, mode="r+")
+            # Determine highest ID of available nodes.
+            for low_dim_leaf in h5file.walk_nodes("/projection_coordinates/", classname="CArray"):
+                model_id = int(low_dim_leaf._v_name[5:])
+                self.model_id_offset = model_id if model_id > self.model_id_offset else self.model_id_offset
 
-        # If not: Initialize new file.
+            # Set offset to first ID of new model.
+            self.model_id_offset += 1
+
+            return h5file
+
+        # If file doesn't exist yet: Initialize new file.
         h5file = open_file(filename=file_name, mode="w")
 
         # Create groups in new file.
-        h5file.create_group(h5file.root, "projection_coordinates")
+        h5file.create_group(h5file.root, "projection_coordinates", title="Low-dimensional coordinates")
 
         # Create table.
         metadata_table = h5file.create_table(

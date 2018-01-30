@@ -9,15 +9,35 @@ from random import shuffle
 import multiprocessing
 from scipy.spatial.distance import cdist
 import psutil
-from TSNEMetadata import TSNEMetadata
 from TSNEThread import TSNEThread
 from PersistenceThread import PersistenceThread
-import MulticoreTSNE
 
 
 ######################################################
 # 1. Generate parameter sets, store in file.
 ######################################################
+
+# Get all parameter configurations (to avoid duplicate model generations).
+existent_parameter_sets = []
+file_name = os.getcwd() + "/../data/drop_wine.h5"
+if os.path.isfile(file_name):
+    h5file = open_file(filename=file_name, mode="r+")
+    for row in h5file.root.metadata:
+        # Note: We don't use the model ID here, since that would never lead to comparison hits.
+        existent_parameter_sets.append({
+            "n_components": row["n_components"],
+            "perplexity": row["perplexity"],
+            "early_exaggeration": row["early_exaggeration"],
+            "learning_rate": row["learning_rate"],
+            "n_iter": row["n_iter"],
+            # "min_grad_norm": row["min_grad_norm"],
+            "angle": row["angle"],
+            "metric": str(row["metric"], "utf-8")
+        })
+
+    # Close file after reading parameter set data.
+    h5file.close()
+
 
 # Define parameter ranges.
 parameter_values = {
@@ -46,9 +66,7 @@ for n_components in parameter_values["n_components"]:
                         for angle in parameter_values["angle"]:
                             for metric in parameter_values["metrics"]:
                                 # Define dictionary object with values.
-                                parameter_sets.append({
-                                    # Use running ID for later reference between models and their output data.
-                                    "id": current_id,
+                                new_parameter_set = {
                                     "n_components": n_components,
                                     "perplexity": perplexity,
                                     "early_exaggeration": early_exaggeration,
@@ -57,7 +75,12 @@ for n_components in parameter_values["n_components"]:
                                     # "min_grad_norm": min_grad_norm,
                                     "angle": angle,
                                     "metric": metric
-                                })
+                                }
+
+                                # If new parameter set not already generated: Add to list of datasets to generate.
+                                if new_parameter_set not in existent_parameter_sets:
+                                    new_parameter_set["id"] = current_id
+                                    parameter_sets.append(new_parameter_set)
 
                                 # Keep track of number of generated parameter sets.
                                 current_id += 1
@@ -84,7 +107,7 @@ distance_matrices = {
 # 3. Set up multithreading.
 ######################################################
 
-# Shuffle list with parameter sets.
+# Shuffle list with parameter sets so that they are kinda evenly distributed.
 shuffle(parameter_sets)
 # Determine number of workers.
 n_jobs = psutil.cpu_count(logical=True) - 1
