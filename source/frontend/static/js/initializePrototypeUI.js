@@ -23,6 +23,7 @@ $(document).ready(function() {
                     // Start with hyperparameter/objective panel.
                     // All components inside a panel are automatically linked with dc.js. Panels have to be linked
                     // with each other explicitly, if so desired (since used datasets may differ).
+
                 }
             });
 
