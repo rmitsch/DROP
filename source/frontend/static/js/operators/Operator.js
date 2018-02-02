@@ -1,7 +1,7 @@
 /**
  *
  */
-class Operator
+export default class Operator
 {
     constructor(name, type)
     {

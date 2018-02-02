@@ -1,7 +1,7 @@
 /**
  *
  */
-class Chart
+export default class Chart
 {
     constructor(name, type)
     {

@@ -2,7 +2,9 @@
  * Holds all elements to be shown in a certain view.
  * Note that a dashboard corresponds to exactly one view, pop-ups/detail views correspond to another view.
  */
-class View
+
+
+export default class View
 {
     /**
      *

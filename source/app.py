@@ -68,8 +68,9 @@ def get_metadata_template():
     # todo Should be customized (e. g. filename should be selected in UI).
 
     return jsonify({
-        "hyperparameters": ["n_components", "perplexity", "early_exaggeration", "learning_rate", "n_iter", "angle",
-                           "metric"],
+        "hyperparameters": [
+            "n_components", "perplexity", "early_exaggeration", "learning_rate", "n_iter", "angle", "metric"
+        ],
         "objectives": ["runtime", "trustworthiness", "continuity"]
     })
 

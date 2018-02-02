@@ -2,7 +2,7 @@
  * A panel holds exactly one chart plus optional controls.
  * Panel is linked with exactly one operator.
  */
-class Panel
+export default class Panel
 {
     constructor(name)
     {
