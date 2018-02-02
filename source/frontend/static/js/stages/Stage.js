@@ -17,10 +17,10 @@ export default class Stage
      */
     constructor(name, target, data, metadata)
     {
-        this._name = name;
-        this._target = target;
-        this._data = data;
-        this._metadata = metadata;
+        this._name      = name;
+        this._target    = target;
+        this._data      = data;
+        this._metadata  = metadata;
         this._operators = {};
 
         // Make class abstract.

@@ -16,21 +16,20 @@ export default class Operator
      */
     constructor(name, stage, inputCardinality, outputCardinality, data, metadata)
     {
-        this._name = name;
-        this._stage = stage;
-        this._panels = {};
-        this._target = uuidv4();
+        this._name      = name;
+        this._stage     = stage;
+        this._panels    = {};
+        this._target    = uuidv4();
 
-        this._inputCardinality = inputCardinality;
+        this._inputCardinality  = inputCardinality;
         this._outputCardinality = outputCardinality;
-        this._data = data;
-        this._metadata = metadata;
-
+        this._data              = data;
+        this._metadata          = metadata;
 
         // Create div structure for this operator.
-        let div = document.createElement('div');
-        div.id = this._target;
-        div.className = 'operator filter-reduce-operator';
+        let div         = document.createElement('div');
+        div.id          = this._target;
+        div.className   = 'operator filter-reduce-operator';
         $("#" + this._stage.target).append(div);
 
         // Make class abstract.

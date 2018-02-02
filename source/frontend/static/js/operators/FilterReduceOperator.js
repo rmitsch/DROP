@@ -1,5 +1,6 @@
 import Operator from "./Operator.js";
 import FilterReduceChartsPanel from "../panels/FilterReduceChartsPanel.js";
+import FilterReduceTablePanel from "../panels/FilterReduceTablePanel.js";
 
 /**
  * Abstract base class for FilterReduce operators.
@@ -41,7 +42,7 @@ export default class FilterReduceOperator extends Operator
         );
 
         // 2. Construct panel for selection table.
-        this.tablePanel = new FilterReduceChartsPanel(
+        this.tablePanel = new FilterReduceTablePanel(
             "Model Selection",
             this
         );
