@@ -1,4 +1,4 @@
-import PrototypeView from './views/PrototypeView.js';
+import PrototypeStage from './stages/PrototypeStage.js';
 
 // IDs of menu buttons.
 let menuIDs = ["menu_prototype", "menu_about"]
@@ -12,20 +12,32 @@ $(document).ready(function() {
         success: function(model_data) {
             // Parse delivered JSON with metadata for all models.
             model_data = JSON.parse(model_data);
+            // Cast Object to array.
+            let model_data_list = [];
+            for (let key in model_data) {
+                if (model_data.hasOwnProperty(key)) {
+                    // Add ID to entry, then add to list.
+                    let currParametrization = model_data[key];
+                    currParametrization["id"] = parseInt(key);
+                    model_data_list.push(currParametrization);
+                }
+            }
 
             // Get information on which hyperparameters and objectives are available.
             $.ajax({
                 url: '/get_metadata_template',
                 type: 'GET',
                 success: function(model_metadata) {
-                    console.log(model_metadata["hyperparameters"]);
-                    console.log(model_metadata["objectives"]);
-
                     // Next: Spawn instances of panels and components in UI.
                     // Start with hyperparameter/objective panel.
                     // All components inside a panel are automatically linked with dc.js. Panels have to be linked
                     // with each other explicitly, if so desired (since used datasets may differ).
-                    let prototypeView = new PrototypeView("PrototypeView", model_data, model_metadata);
+                    let prototypeStage = new PrototypeStage(
+                        "PrototypeStage",
+                        "stage",
+                        model_data_list,
+                        model_metadata
+                    );
                 }
             });
         }

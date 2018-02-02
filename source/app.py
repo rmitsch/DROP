@@ -49,6 +49,7 @@ def get_metadata():
     # Open .h5 file.
     # todo Should be customized (e. g. filename should be selected in UI).
     file_name = os.getcwd() + "/../data/drop_wine.h5"
+    print(file_name)
     if os.path.isfile(file_name):
         h5file = tables.open_file(filename=file_name, mode="r")
         # Cast to dataframe, then return as JSON.
