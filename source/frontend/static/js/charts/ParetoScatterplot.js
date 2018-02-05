@@ -12,11 +12,14 @@ export default class ParetoScatterplot extends Scatterplot
      * @param attributes Attributes to be considered in plot. Has to be of length 2. First argument is projected onto
      * x-axis, second to y-axis. Attributes can contain one hyperparameter and one objective or two objectives (might
      * produce unspecified behaviour if handled otherwise; currently not checked in code).
-     * @param crossfilter
+     * @param dataset
+     * @param style Various style settings (chart width/height, colors, ...). Arbitrary format, has to be parsed indivdually
+     * by concrete classes.
+     * @param targetDivID
      */
-    constructor(name, panel, attributes, crossfilter)
+    constructor(name, panel, attributes, dataset, style, targetDivID)
     {
-        super(name, panel, attributes, crossfilter);
+        super(name, panel, attributes, dataset, style, targetDivID);
 
         // Update involved CSS classes.
         $("#" + this._target).addClass("pareto-scatterplot");
@@ -36,28 +39,35 @@ export default class ParetoScatterplot extends Scatterplot
 
     render()
     {
-        throw new Error("ParetoScatterplot.render(): Not implemented yet.");
+        this._cf_chart.render();
     }
 
     constructCFChart()
     {
         this._cf_chart = dc.scatterPlot("#" + this._target);
 
-        let instance = this;
+        // Create shorthand references.
+        let instance    = this;
+        let extrema     = this._dataset._cf_extrema;
+        let dimensions  = this._dataset._cf_dimensions;
+        let key         = this._axes_attributes.x + ":" + this._axes_attributes.y;
+
+        // Configure chart.
         this._cf_chart
-            .height(137)
-            .x(d3.scale.linear().domain([instance._cf_extrema.x.min, instance._cf_extrema.x.max]))
-            .y(d3.scale.linear().domain([instance._cf_extrema.y.min, instance._cf_extrema.y.max]))
-            .xAxisLabel(instance._axes_attributes.x)
-            .yAxisLabel(instance._axes_attributes.y)
+            .height(instance._style.height)
+            .width(instance._style.width)
+            .x(d3.scale.linear().domain([extrema[this._axes_attributes.x].min, extrema[this._axes_attributes.x].max]))
+            .y(d3.scale.linear().domain([extrema[this._axes_attributes.y].min, extrema[this._axes_attributes.y].max]))
+            .xAxisLabel(instance._style.showAxisLabels ? instance._axes_attributes.x : null)
+            .yAxisLabel(instance._style.showAxisLabels ? instance._axes_attributes.y : null)
             .clipPadding(0)
             .renderHorizontalGridLines(true)
-            .dimension(instance._cf_dimensions.total)
-            .group(instance._cf_groups.total)
+            .dimension(dimensions[this._axes_attributes.x + ":" + this._axes_attributes.y])
+            .group(this._dataset.cf_groups[key])
             .existenceAccessor(function(d) {
                 return d.value.items.length > 0;
             })
-            .symbolSize(2)
+            .symbolSize(instance._style.symbolSize)
     //        .colorAccessor(function(d) {
     //            return d.key[2];
     //        })
@@ -65,16 +75,16 @@ export default class ParetoScatterplot extends Scatterplot
             .keyAccessor(function(d) {
                 return d.key[0];
              })
-            .excludedOpacity(0.65)
+            .excludedOpacity(instance._style.excludedOpacity)
             .mouseZoomable(true)
-            .margins({top: 5, right: 0, bottom: 50, left: 45});
+            .margins({top: 0, right: 0, bottom: 25, left: 20});
 
-        this._cf_chart.yAxis().ticks(4);
-        this._cf_chart.xAxis().ticks(4);
+        this._cf_chart.yAxis().ticks(instance._style.numberOfTicks.y);
+        this._cf_chart.xAxis().ticks(instance._style.numberOfTicks.x);
 
-        this._cf_chart.on('pretransition', function(chart) {
-            instance._cf_chart.selectAll('g.row')
-                .on('mouseover', console.log("over"));
-        });
+        // this._cf_chart.on('pretransition', function(chart) {
+        //     instance._cf_chart.selectAll('g.row').on('mouseover', function() {
+        //     });
+        // });
     }
 }

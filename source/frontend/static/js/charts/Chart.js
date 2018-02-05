@@ -1,4 +1,4 @@
-import uuidv4 from "../utils.js";
+import Utils from "../Utils.js";
 
 /**
  * Abstract base class for individual charts.
@@ -12,27 +12,27 @@ export default class Chart
      * @param panel
      * @param attributes Attributes that are to be considered in this chart (how exactly is up to the implementation of
      * the relevant subclass(es)).
-     * @param crossfilter
+     * @param dataset
+     * @param style Various style settings (chart width/height, colors, ...). Arbitrary format, has to be parsed indivdually
+     * by concrete classes.
+     * @param targetDivID
      */
-    constructor(name, panel, attributes, crossfilter)
+    constructor(name, panel, attributes, dataset, style, targetDivID)
     {
         this._name          = name;
         this._panel         = panel;
         this._attributes    = attributes;
-        this._crossfilter   = crossfilter;
-        this._target        = uuidv4();
-
-        // Define variables relevant for crossfilter.
-        this._cf_dimensions = {};
-        this._cf_extrema    = {};
-        this._cf_groups     = {};
-        this._cf_chart      = null;
+        this._dataset       = dataset;
+        this._style         = style;
+        this._target        = targetDivID == null ? Utils.uuidv4() : targetDivID;
 
         // Create div structure for this chart.
-        let div         = document.createElement('div');
-        div.id          = this._target;
-        div.className   = 'chart';
-        $("#" + this._panel.target).append(div);
+        if (targetDivID == null) {
+           let div = document.createElement('div');
+            div.id = this._target;
+            div.className = 'chart';
+            $("#" + this._panel.target).append(div);
+        }
 
         // Make class abstract.
         if (new.target === Chart) {
@@ -71,5 +71,10 @@ export default class Chart
     get attributes()
     {
         return this._attributes;
+    }
+
+    get dataset()
+    {
+        return this._dataset;
     }
 }

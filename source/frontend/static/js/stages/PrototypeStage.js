@@ -16,14 +16,12 @@ export default class PrototypeStage extends Stage
      *
      * @param name
      * @param target ID of container div.
-     * @param data Array of objects (JSON/array/dict/...) holding data to display. Note: Length of array defines number
-     * of panels (one dataset per panel) and has to be equal with length of objects in metadata.
-     * @param metadata Array of JSON objects holding metadata. Note: Length of array has to be equal with length of
-     * data.
+     * @param datasets Dictionary of isnstance of dataset class.
      */
-    constructor(name, target, data, metadata)
+    constructor(name, target, datasets)
     {
-        super(name, target, data, metadata);
+        super(name, target, datasets);
+
         // Construct operators.
         this.constructOperators()
     }
@@ -43,8 +41,7 @@ export default class PrototypeStage extends Stage
         this.operators["FilterReduce"] = new FilterReduceOperator(
             "FilterReduce:TSNE",
             this,
-            this._data,
-            this._metadata
+            this._datasets["prototypeDataset"]
         );
     }
 }

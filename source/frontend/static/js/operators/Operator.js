@@ -1,4 +1,4 @@
-import uuidv4 from "../utils.js";
+import Utils from "../Utils.js";
 
 /**
  * Abstract base class for operators.
@@ -11,26 +11,27 @@ export default class Operator
      * @param stage
      * @param inputCardinality
      * @param outputCardinality
-     * @param data
-     * @param metadata
+     * @param dataset Instance of Dataset class. Holds exactly one dataset.
+     * @param targetDivID
      */
-    constructor(name, stage, inputCardinality, outputCardinality, data, metadata)
+    constructor(name, stage, inputCardinality, outputCardinality, dataset, targetDivID)
     {
         this._name      = name;
         this._stage     = stage;
         this._panels    = {};
-        this._target    = uuidv4();
+        this._target    = targetDivID == null ? Utils.uuidv4() : targetDivID;
 
         this._inputCardinality  = inputCardinality;
         this._outputCardinality = outputCardinality;
-        this._data              = data;
-        this._metadata          = metadata;
+        this._dataset           = dataset;
 
-        // Create div structure for this operator.
-        let div         = document.createElement('div');
-        div.id          = this._target;
-        div.className   = 'operator filter-reduce-operator';
-        $("#" + this._stage.target).append(div);
+        // Create div structure for this operator, if no target was specified.
+        if (targetDivID == null) {
+            let div         = document.createElement('div');
+            div.id          = this._target;
+            div.className   = 'operator filter-reduce-operator';
+            $("#" + this._stage.target).append(div);
+        }
 
         // Make class abstract.
         if (new.target === Operator) {
@@ -38,9 +39,12 @@ export default class Operator
         }
     }
 
+    /**
+     * Constructs all panels in this operator.
+     */
     constructPanels()
     {
-        throw new TypeError("Operator.constructPanels: Abstract method must not be called.");
+        throw new TypeError("Operator.constructPanels(): Abstract method must not be called.");
     }
 
     get name()
@@ -63,14 +67,9 @@ export default class Operator
         return this._outputCardinality;
     }
 
-    get data()
+    get dataset()
     {
-        return this._data;
-    }
-
-    get metadata()
-    {
-        return this._metadata;
+        return this._dataset;
     }
 
     get stage()

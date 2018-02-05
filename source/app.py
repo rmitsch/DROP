@@ -70,7 +70,13 @@ def get_metadata_template():
 
     return jsonify({
         "hyperparameters": [
-            "n_components", "perplexity", "early_exaggeration", "learning_rate", "n_iter", "angle", "metric"
+            {"name": "n_components", "type": "numeric"},
+            {"name": "perplexity", "type": "numeric"},
+            {"name": "early_exaggeration", "type": "numeric"},
+            {"name": "learning_rate", "type": "numeric"},
+            {"name": "n_iter", "type": "numeric"},
+            {"name": "angle", "type": "numeric"},
+            {"name": "metric", "type": "categorical"}
         ],
         "objectives": ["runtime", "trustworthiness", "continuity"]
     })

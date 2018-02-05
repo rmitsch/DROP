@@ -9,13 +9,10 @@ export default class FilterReduceTablePanel extends Panel
      * Constructs new FilterReduce table panel.
      * @param name
      * @param operator
-     * @param linked_crossfilter Reference to crossfilter instance. Might be null. If not null, specified crossfilter
-     * instance is used (useful when multiple panels inside the same operator are supposed to operate on the same
-     * dataset).
      */
-    constructor(name, operator, linked_crossfilter)
+    constructor(name, operator)
     {
-        super(name, operator, linked_crossfilter);
+        super(name, operator);
 
         // For all hyper-parameter/objective combinations: Construct one scatterplot.
         // Visual separation.

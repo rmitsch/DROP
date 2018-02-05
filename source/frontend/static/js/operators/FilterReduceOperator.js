@@ -4,6 +4,7 @@ import FilterReduceTablePanel from "../panels/FilterReduceTablePanel.js";
 
 /**
  * Abstract base class for FilterReduce operators.
+ * One operator operates on exactly one dataset (-> one instance of class Dataset).
  */
 export default class FilterReduceOperator extends Operator
 {
@@ -14,12 +15,12 @@ export default class FilterReduceOperator extends Operator
      * stored in a class attribute only (as opposed to branching the Operator class tree further).
      * @param name
      * @param stage
-     * @param data
-     * @param metadata
+     * @param dataset Instance of Dataset class.
+     * @param targetDivID
      */
-    constructor(name, stage, data, metadata)
+    constructor(name, stage, dataset, targetDivID)
     {
-        super(name, stage, "1", "n", data, metadata);
+        super(name, stage, "1", "n", dataset, targetDivID);
 
         // Construct all necessary panels.
         this.constructPanels();

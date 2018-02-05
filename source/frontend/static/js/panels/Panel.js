@@ -1,4 +1,4 @@
-import uuidv4 from "../utils.js";
+import Utils from "../Utils.js";
 
 /**
  * A panel holds exactly one chart plus optional controls.
@@ -13,28 +13,26 @@ export default class Panel
      * Constructs new panel.
      * @param name
      * @param operator
-     * @param linked_crossfilter Reference to crossfilter instance. Might be null. If not null, specified crossfilter
-     * instance is used (useful when multiple panels inside the same operator are supposed to operate on the same
-     * dataset).
+     * @param targetDivID
      */
-    constructor(name, operator, linked_crossfilter)
+    constructor(name, operator, targetDivID)
     {
         this._name      = name;
         this._operator  = operator;
         this._charts    = {};
-        this._target    = uuidv4();
+        this._target    = targetDivID == null ? Utils.uuidv4() : targetDivID;
+
         // Panels datasets never differ from their operators'.
         this._data      = this._operator.data;
         this._metadata  = this._operator.metadata;
 
         // Create div structure for this panel.
-        let div         = document.createElement('div');
-        div.id          = this._target;;
-        div.className   = 'panel';
-        $("#" + this._operator.target).append(div);
-
-        // Instantiate crossfilter, if not done already.
-        this._crossfilter = linked_crossfilter != null ? linked_crossfilter : crossfilter(this._data);
+        if (targetDivID == null) {
+            let div         = document.createElement('div');
+            div.id          = this._target;
+            div.className   = 'panel';
+            $("#" + this._operator.target).append(div);
+        }
 
         // Make class abstract.
         if (new.target === Panel) {

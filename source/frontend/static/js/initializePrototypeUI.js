@@ -1,4 +1,5 @@
 import PrototypeStage from './stages/PrototypeStage.js';
+import Dataset from './Dataset.js';
 
 // IDs of menu buttons.
 let menuIDs = ["menu_prototype", "menu_about"]
@@ -28,15 +29,18 @@ $(document).ready(function() {
                 url: '/get_metadata_template',
                 type: 'GET',
                 success: function(model_metadata) {
-                    // Next: Spawn instances of panels and components in UI.
-                    // Start with hyperparameter/objective panel.
+                    // Generate dataset.
+                    let dataset = new Dataset("PrototypeDataset", model_data_list, model_metadata);
+                    dataset.initBinaryDimensions(true);
+
                     // All components inside a panel are automatically linked with dc.js. Panels have to be linked
                     // with each other explicitly, if so desired (since used datasets may differ).
                     let prototypeStage = new PrototypeStage(
                         "PrototypeStage",
                         "stage",
-                        model_data_list,
-                        model_metadata
+                        {
+                            prototypeDataset: dataset
+                        }
                     );
                 }
             });

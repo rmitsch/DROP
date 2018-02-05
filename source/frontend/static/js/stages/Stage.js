@@ -2,25 +2,19 @@
  * Holds all elements to be shown in a certain view.
  * Note that a dashboard corresponds to exactly one view, pop-ups/detail views correspond to another view.
  */
-
-
 export default class Stage
 {
     /**
      *
      * @param name
      * @param target ID of container div.
-     * @param data Array of objects (JSON/array/dict/...) holding data to display. Note: Length of array defines number
-     * of panels (one dataset per panel) and has to be equal with length of objects in metadata.
-     * @param metadata Array of JSON objects holding metadata. Note: Length of array has to be equal with length of
-     * data.
+     * @param datasets Dictionary of instances of dataset class.
      */
-    constructor(name, target, data, metadata)
+    constructor(name, target, datasets)
     {
         this._name      = name;
         this._target    = target;
-        this._data      = data;
-        this._metadata  = metadata;
+        this._datasets  = datasets;
         this._operators = {};
 
         // Make class abstract.
@@ -42,14 +36,9 @@ export default class Stage
         return this._name;
     }
 
-    get data()
+    get datasets()
     {
-        return this._data;
-    }
-
-    get metadata()
-    {
-        return this._metadata;
+        return this._datasets;
     }
 
     get operators()
