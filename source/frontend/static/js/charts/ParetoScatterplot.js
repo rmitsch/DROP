@@ -3,31 +3,23 @@ import Scatterplot from "./Scatterplot.js";
 /**
  * Scatterplots with dots connected by specified degree of freedom.
  */
-export default class Scatterplot extends Scatterplot
+export default class ParetoScatterplot extends Scatterplot
 {
     /**
      * Instantiates new ParetoScatterplot.
      * @param name
      * @param panel
      * @param attributes Attributes to be considered in plot. Has to be of length 2. First argument is projected onto
-     * x-axis, second to y-axis. Attributes can contain one hyperparameter and one objective or two objectives.
+     * x-axis, second to y-axis. Attributes can contain one hyperparameter and one objective or two objectives (might
+     * produce unspecified behaviour if handled otherwise; currently not checked in code).
+     * @param crossfilter
      */
-    constructor(name, panel, attributes)
+    constructor(name, panel, attributes, crossfilter)
     {
-        super(name, panel, attributes);
+        super(name, panel, attributes, crossfilter);
 
-
-        // Remaining todos for prototype:
-        //      1. Duplicate scatterplot generated in FilterReduceChartsPanel here in ParetoScatterplot.
-        //      2. Generate other scatterplots.
-        //      3. Arrange layout + formatting + title(s).
-        //      4. Generate histograms.
-        //      5. Add other UI elements in panel (dropdown for connectBy()?).
-        //      6. Model selection table.
-
-        for (let attribute of this._attributes) {
-
-        }
+        // Update involved CSS classes.
+        $("#" + this._target).addClass("pareto-scatterplot");
     }
 
     /**
@@ -45,5 +37,44 @@ export default class Scatterplot extends Scatterplot
     render()
     {
         throw new Error("ParetoScatterplot.render(): Not implemented yet.");
+    }
+
+    constructCFChart()
+    {
+        this._cf_chart = dc.scatterPlot("#" + this._target);
+
+        let instance = this;
+        this._cf_chart
+            .height(137)
+            .x(d3.scale.linear().domain([instance._cf_extrema.x.min, instance._cf_extrema.x.max]))
+            .y(d3.scale.linear().domain([instance._cf_extrema.y.min, instance._cf_extrema.y.max]))
+            .xAxisLabel(instance._axes_attributes.x)
+            .yAxisLabel(instance._axes_attributes.y)
+            .clipPadding(0)
+            .renderHorizontalGridLines(true)
+            .dimension(instance._cf_dimensions.total)
+            .group(instance._cf_groups.total)
+            .existenceAccessor(function(d) {
+                return d.value.items.length > 0;
+            })
+            .symbolSize(2)
+    //        .colorAccessor(function(d) {
+    //            return d.key[2];
+    //        })
+    //        .colors(scatterplotColors)
+            .keyAccessor(function(d) {
+                return d.key[0];
+             })
+            .excludedOpacity(0.65)
+            .mouseZoomable(true)
+            .margins({top: 5, right: 0, bottom: 50, left: 45});
+
+        this._cf_chart.yAxis().ticks(4);
+        this._cf_chart.xAxis().ticks(4);
+
+        this._cf_chart.on('pretransition', function(chart) {
+            instance._cf_chart.selectAll('g.row')
+                .on('mouseover', console.log("over"));
+        });
     }
 }

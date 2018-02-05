@@ -1,4 +1,4 @@
-import uuidv4 from "../utils";
+import uuidv4 from "../utils.js";
 
 /**
  * Abstract base class for individual charts.
@@ -12,19 +12,21 @@ export default class Chart
      * @param panel
      * @param attributes Attributes that are to be considered in this chart (how exactly is up to the implementation of
      * the relevant subclass(es)).
+     * @param crossfilter
      */
-    constructor(name, panel, attributes)
+    constructor(name, panel, attributes, crossfilter)
     {
         this._name          = name;
         this._panel         = panel;
         this._attributes    = attributes;
+        this._crossfilter   = crossfilter;
         this._target        = uuidv4();
 
         // Define variables relevant for crossfilter.
-        this._cf_dimensions = [];
-        this._cf_extrema = {};
-        this._cf_groups = {};
-        this._cf_chart = {};
+        this._cf_dimensions = {};
+        this._cf_extrema    = {};
+        this._cf_groups     = {};
+        this._cf_chart      = null;
 
         // Create div structure for this chart.
         let div         = document.createElement('div');
@@ -45,6 +47,15 @@ export default class Chart
     render()
     {
         throw new TypeError("Chart.render(): Abstract method must not be called.");
+    }
+
+
+    /**
+     * Constructs and defines styling and behaviour of crossfilter's chart object.
+     */
+    constructCFChart()
+    {
+        throw new TypeError("Chart.constructCFChart(): Abstract method must not be called.");
     }
 
     get name()
