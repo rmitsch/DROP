@@ -21,7 +21,6 @@ export default class ParetoScatterplot extends Scatterplot
     {
         super(name, panel, attributes, dataset, style, parentDivID);
 
-        console.log(parentDivID);
         // Update involved CSS classes.
         $("#" + this._target).addClass("pareto-scatterplot");
     }
@@ -82,7 +81,7 @@ export default class ParetoScatterplot extends Scatterplot
              })
             .excludedOpacity(instance._style.excludedOpacity)
             .mouseZoomable(true)
-            .margins({top: 0, right: 0, bottom: 25, left: 20});
+            .margins({top: 0, right: 5, bottom: 25, left: 20});
 
         this._cf_chart.yAxis().ticks(instance._style.numberOfTicks.y);
         this._cf_chart.xAxis().ticks(instance._style.numberOfTicks.x);

@@ -22,7 +22,7 @@ export default class Scatterplot extends Chart
 
         // Check if attributes contain exactly two parameters.
         if (!Array.isArray(attributes) || attributes.length !== 2) {
-            throw new Error("ParetoScatterplot: Has to be instantiated with an array of attributes with length 2.");
+            throw new Error("Scatterplot: Has to be instantiated with an array of attributes with length 2.");
         }
 
         // Construct dictionary for axis/attribute names.

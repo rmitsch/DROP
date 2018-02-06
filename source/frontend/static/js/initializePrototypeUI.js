@@ -30,8 +30,8 @@ $(document).ready(function() {
                 type: 'GET',
                 success: function(model_metadata) {
                     // Generate dataset.
-                    let dataset = new Dataset("PrototypeDataset", model_data_list, model_metadata);
-                    dataset.initBinaryDimensions(true);
+                    let dataset = new Dataset("PrototypeDataset", model_data_list, model_metadata, 5);
+                    dataset.initBinaryDimensionsAndGroups(true);
 
                     // All components inside a panel are automatically linked with dc.js. Panels have to be linked
                     // with each other explicitly, if so desired (since used datasets may differ).

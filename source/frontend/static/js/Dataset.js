@@ -3,6 +3,7 @@ import Utils from "./Utils.js";
 /**
  * Wrapper class providing the specified dataset itself plus the corresponding crossfilter context and various utility
  * methods.
+ * Note that this class includes a few custom tweaks regarding which dimensions and groups to generate.
  */
 export default class Dataset
 {
@@ -13,23 +14,29 @@ export default class Dataset
      * of panels (one dataset per panel) and has to be equal with length of objects in metadata.
      * @param metadata Array of JSON objects holding metadata. Note: Length of array has to be equal with length of
      * data.
+     * @param binCount Number of bins in histograms.
      */
-    constructor(name, data, metadata) {
-        this._name = name;
-        this._data = data;
-        this._metadata = metadata;
+    constructor(name, data, metadata, binCount) {
+        this._name      = name;
+        this._data      = data;
+        this._metadata  = metadata;
+        this._binCount  = binCount;
 
         // Set up containers for crossfilter data.
-        this._crossfilter = crossfilter(this._data);
+        this._crossfilter   = crossfilter(this._data);
         this._cf_dimensions = {};
-        this._cf_extrema = {};
-        this._cf_groups = {};
+        this._cf_extrema    = {};
+        this._cf_groups     = {};
+        this._cf_intervals  = {};
 
         // Set up singular dimensions (one dimension per attribute).
-        this.initSingularDimensions();
+        this.initSingularDimensionsAndGroups();
 
         // Calculate extrema.
         this.calculateExtrema();
+
+        // Set up histogram dimensions.
+        this.initHistogramDimensionsAndGroups();
     }
 
     /**
@@ -49,9 +56,9 @@ export default class Dataset
             };
 
             // Update extrema by padding values (hardcoded to 10%) for x-axis.
-            let interval = this._cf_extrema[attribute].max - this._cf_extrema[attribute].min;
-            this._cf_extrema[attribute].min -= interval / 5.0;
-            this._cf_extrema[attribute].max -= interval / 5.0;
+            this._cf_intervals[attribute]   = this._cf_extrema[attribute].max - this._cf_extrema[attribute].min;
+            this._cf_extrema[attribute].min -= this._cf_intervals[attribute] / 3.0;
+            this._cf_extrema[attribute].max += this._cf_intervals[attribute] / 3.0;
         }
     }
 
@@ -59,24 +66,46 @@ export default class Dataset
      * Initializes singular dimensions.
      * Note: Creates dimensions for all attribute by default. If not desired, columns have to be dropped beforehand.
      */
-    initSingularDimensions()
+    initSingularDimensionsAndGroups()
     {
+        let hyperparameters = Utils.unfoldHyperparameterObjectList(this._metadata.hyperparameters);
+
         // -------------------------------------
-        // 1. Create dimensions.
+        // Create dimensions and grouops.
         // -------------------------------------
 
-        // Create dimensions for hyperparameter.
-        for (let attribute of this._metadata.hyperparameters) {
-            this._cf_dimensions[attribute.name] = this._crossfilter.dimension(
-                function(d) { return d[attribute.name]; }
-            );
-        }
-
-        // Create dimensions for objectives.
-        for (let attribute of this._metadata.objectives) {
+        // Create dimensions for hyperparameters and objectives.
+        for (let attribute of hyperparameters.concat(this._metadata.objectives)) {
+            // Dimension with exact values.
             this._cf_dimensions[attribute] = this._crossfilter.dimension(
                 function(d) { return d[attribute]; }
             );
+        }
+    }
+
+    /**
+     * Initializes singular dimensions w.r.t. histograms.
+     */
+    initHistogramDimensionsAndGroups()
+    {
+        let hyperparameters = Utils.unfoldHyperparameterObjectList(this._metadata.hyperparameters);
+        let instance        = this;
+
+        for (let attribute of hyperparameters.concat(this._metadata.objectives)) {
+            // Dimension with rounded values (for histograms).
+            this._cf_dimensions[attribute + "#histogram"] = this._crossfilter.dimension(
+                function (d) {
+                    if (typeof d[attribute] === "number") {
+                        let binWidth = instance._cf_intervals[attribute] / instance._binCount;
+                        return (Math.round(d[attribute] / binWidth) * binWidth);
+                    }
+
+                    return d[attribute];
+                }
+            );
+
+            // Create group for histogram.
+            this._cf_groups[attribute + "#histogram"] = this._generateGroupForHistogram(attribute);
         }
     }
 
@@ -85,7 +114,7 @@ export default class Dataset
      * hyperparameter-objective and objective-objective pairings.
      * @param includeGroups Determines whether groups for binary dimensions should be generated as well.
      */
-    initBinaryDimensions(includeGroups = true)
+    initBinaryDimensionsAndGroups(includeGroups = true)
     {
         // Transform list of hyperparameter objects into list of hyperparameter names.
         let hyperparameters = [];
@@ -135,6 +164,31 @@ export default class Dataset
                 }
             }
         }
+    }
+
+    /**
+     * Generates crossfilter group for histogram.
+     * @param attribute
+     * @returns Newly generated group.
+     * @private
+     */
+    _generateGroupForHistogram(attribute)
+    {
+        return this._cf_dimensions[attribute + "#histogram"].group().reduce(
+            function(elements, item) {
+               elements.items.push(item);
+               elements.count++;
+               return elements;
+            },
+            function(elements, item) {
+                elements.items.splice(elements.items.indexOf(item), 1);
+                elements.count--;
+                return elements;
+            },
+            function() {
+                return {items: [], count: 0};
+            }
+        );
     }
 
     get name()

@@ -1,6 +1,7 @@
 import Panel from "./Panel.js";
 import Utils from "../Utils.js";
 import ParetoScatterplot from "../charts/ParetoScatterplot.js";
+import Histogram from "../charts/Histogram.js";
 
 /**
  * Panel holding scatterplots and histograms in operator FilterReduce.
@@ -17,7 +18,9 @@ export default class FilterReduceChartsPanel extends Panel
         super(name, operator, parentDivID);
 
         // Create div structure for child nodes.
-        this._containerDivIDs = this.createDivStructure();
+        let divStructure        = this.createDivStructure();
+        this._containerDivIDs   = divStructure.containerDivIDs;
+        this._histogramDivIDs   = divStructure.histogramDivIDs;
 
         // Generate charts.
         this.generateCharts();
@@ -36,7 +39,20 @@ export default class FilterReduceChartsPanel extends Panel
         console.log("Generating...");
 
         // Define style options for charts.
-        let style = {
+        let scatterplotStyle = {
+            showAxisLabels: false,
+            height: 100,
+            width: 100,
+            symbolSize: 1.5,
+            excludedOpacity: 0.5,
+            numberOfTicks: {
+                x: 2,
+                y: 0
+            },
+            showTickMarks: true
+        };
+        // Define style options for charts.
+        let histogramStyle = {
             showAxisLabels: false,
             height: 100,
             width: 100,
@@ -53,6 +69,26 @@ export default class FilterReduceChartsPanel extends Panel
         let dataset = this._operator._dataset;
 
         // -----------------------------------
+        // 0. Histograms.
+        // -----------------------------------
+
+        // Unfold names of hyperparamater objects in list.
+        let hyperparameters = Utils.unfoldHyperparameterObjectList(dataset.metadata.hyperparameters);
+        // Iterate over all attributes.
+        for (let attribute of hyperparameters.concat(dataset.metadata.objectives)) {
+            // Generate histogram.
+            let histogram = new Histogram(
+                attribute + ".histogram",
+                this,
+                [attribute],
+                dataset,
+                histogramStyle,
+                // Place chart in previously generated container div.
+                this._histogramDivIDs[attribute]
+            );
+        }
+
+        // -----------------------------------
         // 1. Hyperparameter-objective combinations.
         // -----------------------------------
 
@@ -67,7 +103,7 @@ export default class FilterReduceChartsPanel extends Panel
                         this,
                         [hyperparameter.name, objective],
                         dataset,
-                        style,
+                        scatterplotStyle,
                         // Place chart in previously generated container div.
                         this._containerDivIDs[hyperparameter.name]
                     );
@@ -99,7 +135,7 @@ export default class FilterReduceChartsPanel extends Panel
                     this,
                     [objective1, objective2],
                     dataset,
-                    style,
+                    scatterplotStyle,
                     // Place chart in previously generated container div.
                     this._containerDivIDs[objective1]
                 );
@@ -111,36 +147,40 @@ export default class FilterReduceChartsPanel extends Panel
 
     /**
      * Create (hardcoded) div structure for child nodes.
-     * @returns {object}
+     * @returns {Object}
      */
     createDivStructure()
     {
-        let hyperparameters = [];
         let containerDivIDs = {};
+        let histogramDivIDs = {};
         let dataset         = this._operator._dataset;
 
-        // Unfold names of hyperparamater objects in list.
-        for (let hyperparam in dataset.metadata.hyperparameters) {
-            hyperparameters.push(dataset.metadata.hyperparameters[hyperparam].name);
+        // Create row labels.
+        let labelContainer = Utils.spawnChildDiv(this._target, null, 'filter-reduce-labels-container');
+        // Add labels to container.
+        for (let objective of dataset.metadata.objectives) {
+            Utils.spawnChildDiv(labelContainer.id, null, 'filter-reduce-row-label', objective);
         }
 
+        // -----------------------------------
         // Create container divs.
+        // -----------------------------------
+
+        // Unfold names of hyperparamater objects in list.
+        let hyperparameters = Utils.unfoldHyperparameterObjectList(dataset.metadata.hyperparameters);
+
+        // Iterate over all attributes.
         for (let attribute of hyperparameters.concat(dataset.metadata.objectives)) {
-            let div         = document.createElement('div');
-            div.id          = Utils.uuidv4();
-            div.className   = 'filter-reduce-charts-container';
-            $("#" + this._target).append(div);
-
-            let labelDiv        = document.createElement('div');
-            labelDiv.id         = Utils.uuidv4();
-            labelDiv.className  = 'title';
-            labelDiv.innerHTML  = attribute;
-            $("#" + div.id).append(labelDiv);
-
-            // Add div ID to dictionary.
+            let div = Utils.spawnChildDiv(this._target, null, "filter-reduce-charts-container");
             containerDivIDs[attribute] = div.id;
+
+            // Add column label.
+            Utils.spawnChildDiv(div.id, null, "title", attribute);
+
+            // Add div for histogram.
+            histogramDivIDs[attribute] = Utils.spawnChildDiv(div.id, null, "histogram").id;
         }
 
-        return containerDivIDs;
+        return {containerDivIDs: containerDivIDs, histogramDivIDs: histogramDivIDs};
     }
 }
