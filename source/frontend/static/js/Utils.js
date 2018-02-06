@@ -24,7 +24,7 @@ export default class Utils
     }
 
     /**
-     * Spawns new child inspecified parent.
+     * Spawns new child in specified parent.
      * @param parentDivID
      * @param childDivID
      * @param childDivCSSClasses
@@ -33,14 +33,34 @@ export default class Utils
      */
     static spawnChildDiv(parentDivID, childDivID, childDivCSSClasses, text)
     {
-        let div = document.createElement('div');
+        let div         = document.createElement('div');
         div.id         = (typeof childDivID == "undefined") || (childDivID == null) ? Utils.uuidv4() : childDivID;
         div.className  = childDivCSSClasses;
         if (text != null && typeof text != "undefined")
-            div.innerHTML  = text;
+            div.innerHTML = text;
         $("#" + parentDivID).append(div);
 
         return div;
+    }
+
+    /**
+     * Spawns new child in specified parent.
+     * @param parentDivID
+     * @param childSpanID
+     * @param childSpanCSSClasses
+     * @param text
+     * @returns {HTMLSpanElement}
+     */
+    static spawnChildSpan(parentDivID, childSpanID, childSpanCSSClasses, text)
+    {
+        let span        = document.createElement('span');
+        span.id         = (typeof childSpanID == "undefined") || (childSpanID == null) ? Utils.uuidv4() : childDivID;
+        span.className  = childSpanCSSClasses;
+        if (text != null && typeof text != "undefined")
+            span.innerHTML = text;
+        $("#" + parentDivID).append(span);
+
+        return span;
     }
 
     /**

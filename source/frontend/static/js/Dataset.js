@@ -22,6 +22,9 @@ export default class Dataset
         this._metadata  = metadata;
         this._binCount  = binCount;
 
+        // Adaption for prototype - remove when no longer needed.
+        this._metadata.hyperparameters.splice(-1, 1);
+
         // Set up containers for crossfilter data.
         this._crossfilter   = crossfilter(this._data);
         this._cf_dimensions = {};

@@ -39,25 +39,27 @@ export default class FilterReduceChartsPanel extends Panel
         console.log("Generating...");
 
         // Define style options for charts.
-        let scatterplotStyle = {
+        let histogramStyle = {
             showAxisLabels: false,
-            height: 100,
+            height: 60,
             width: 100,
-            symbolSize: 1.5,
-            excludedOpacity: 0.5,
+            excludedColor: "#ccc",
             numberOfTicks: {
                 x: 2,
                 y: 0
             },
             showTickMarks: true
         };
+
         // Define style options for charts.
-        let histogramStyle = {
+        let scatterplotStyle = {
             showAxisLabels: false,
             height: 100,
             width: 100,
             symbolSize: 1.5,
-            excludedOpacity: 0.1,
+            excludedOpacity: 1,
+            excludedSymbolSize: 1.5,
+            excludedColor: "#ccc",
             numberOfTicks: {
                 x: 2,
                 y: 0
@@ -159,7 +161,8 @@ export default class FilterReduceChartsPanel extends Panel
         let labelContainer = Utils.spawnChildDiv(this._target, null, 'filter-reduce-labels-container');
         // Add labels to container.
         for (let objective of dataset.metadata.objectives) {
-            Utils.spawnChildDiv(labelContainer.id, null, 'filter-reduce-row-label', objective);
+            let label = Utils.spawnChildDiv(labelContainer.id, null, 'filter-reduce-row-label');
+            Utils.spawnChildSpan(label.id, null, 'filter-reduce-row-label-text', objective);
         }
 
         // -----------------------------------

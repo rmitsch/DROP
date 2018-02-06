@@ -56,6 +56,7 @@ export default class ParetoScatterplot extends Scatterplot
         this._cf_chart
             .height(instance._style.height)
             .width(instance._style.width)
+            .useCanvas(true)
             .x(d3.scale.linear().domain(
                 [extrema[instance._axes_attributes.x].min, extrema[instance._axes_attributes.x].max])
             )
@@ -71,6 +72,10 @@ export default class ParetoScatterplot extends Scatterplot
             .existenceAccessor(function(d) {
                 return d.value.items.length > 0;
             })
+            .mouseZoomable(true)
+            .excludedSize(instance._style.excludedSymbolSize)
+            .excludedOpacity(instance._style.excludedOpacity)
+            .excludedColor(instance._style.excludedColor)
             .symbolSize(instance._style.symbolSize)
     //        .colorAccessor(function(d) {
     //            return d.key[2];
