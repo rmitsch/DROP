@@ -12,26 +12,24 @@ export default class Operator
      * @param inputCardinality
      * @param outputCardinality
      * @param dataset Instance of Dataset class. Holds exactly one dataset.
-     * @param targetDivID
+     * @param parentDivID
      */
-    constructor(name, stage, inputCardinality, outputCardinality, dataset, targetDivID)
+    constructor(name, stage, inputCardinality, outputCardinality, dataset, parentDivID)
     {
         this._name      = name;
         this._stage     = stage;
         this._panels    = {};
-        this._target    = targetDivID == null ? Utils.uuidv4() : targetDivID;
+        this._target    = Utils.uuidv4();
 
         this._inputCardinality  = inputCardinality;
         this._outputCardinality = outputCardinality;
         this._dataset           = dataset;
 
-        // Create div structure for this operator, if no target was specified.
-        if (targetDivID == null) {
-            let div         = document.createElement('div');
-            div.id          = this._target;
-            div.className   = 'operator filter-reduce-operator';
-            $("#" + this._stage.target).append(div);
-        }
+        // Create div structure for this operator.
+        let div         = document.createElement('div');
+        div.id          = this._target;
+        div.className   = 'operator filter-reduce-operator';
+        $("#" + (typeof parentDivID == "undefined" ? this._stage.target : parentDivID)).append(div);
 
         // Make class abstract.
         if (new.target === Operator) {

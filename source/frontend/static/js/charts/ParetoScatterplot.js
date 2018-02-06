@@ -15,12 +15,13 @@ export default class ParetoScatterplot extends Scatterplot
      * @param dataset
      * @param style Various style settings (chart width/height, colors, ...). Arbitrary format, has to be parsed indivdually
      * by concrete classes.
-     * @param targetDivID
+     * @param parentDivID
      */
-    constructor(name, panel, attributes, dataset, style, targetDivID)
+    constructor(name, panel, attributes, dataset, style, parentDivID)
     {
-        super(name, panel, attributes, dataset, style, targetDivID);
+        super(name, panel, attributes, dataset, style, parentDivID);
 
+        console.log(parentDivID);
         // Update involved CSS classes.
         $("#" + this._target).addClass("pareto-scatterplot");
     }
@@ -56,13 +57,17 @@ export default class ParetoScatterplot extends Scatterplot
         this._cf_chart
             .height(instance._style.height)
             .width(instance._style.width)
-            .x(d3.scale.linear().domain([extrema[this._axes_attributes.x].min, extrema[this._axes_attributes.x].max]))
-            .y(d3.scale.linear().domain([extrema[this._axes_attributes.y].min, extrema[this._axes_attributes.y].max]))
+            .x(d3.scale.linear().domain(
+                [extrema[instance._axes_attributes.x].min, extrema[instance._axes_attributes.x].max])
+            )
+            .y(d3.scale.linear().domain(
+                [extrema[instance._axes_attributes.y].min, extrema[instance._axes_attributes.y].max])
+            )
             .xAxisLabel(instance._style.showAxisLabels ? instance._axes_attributes.x : null)
             .yAxisLabel(instance._style.showAxisLabels ? instance._axes_attributes.y : null)
             .clipPadding(0)
             .renderHorizontalGridLines(true)
-            .dimension(dimensions[this._axes_attributes.x + ":" + this._axes_attributes.y])
+            .dimension(dimensions[key])
             .group(this._dataset.cf_groups[key])
             .existenceAccessor(function(d) {
                 return d.value.items.length > 0;

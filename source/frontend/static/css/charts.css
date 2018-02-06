@@ -1,4 +1,23 @@
 .pareto-scatterplot {
-    margin-left: 0px;
-    margin-right: 0px;
+    margin: 0 0 0 0;
+}
+
+.chart {
+    display: block;
+    float: none;
+}
+
+.filter-reduce-charts-container {
+    display: inline-block;
+    width: 105px;
+}
+
+.filter-reduce-charts-container .title {
+    font-size: 12px;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.chart-placeholder {
+    height: 100px;
 }

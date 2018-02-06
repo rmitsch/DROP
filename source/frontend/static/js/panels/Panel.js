@@ -13,26 +13,24 @@ export default class Panel
      * Constructs new panel.
      * @param name
      * @param operator
-     * @param targetDivID
+     * @param parentDivID
      */
-    constructor(name, operator, targetDivID)
+    constructor(name, operator, parentDivID)
     {
         this._name      = name;
         this._operator  = operator;
         this._charts    = {};
-        this._target    = targetDivID == null ? Utils.uuidv4() : targetDivID;
+        this._target    = Utils.uuidv4();
 
         // Panels datasets never differ from their operators'.
         this._data      = this._operator.data;
         this._metadata  = this._operator.metadata;
 
         // Create div structure for this panel.
-        if (targetDivID == null) {
-            let div         = document.createElement('div');
-            div.id          = this._target;
-            div.className   = 'panel';
-            $("#" + this._operator.target).append(div);
-        }
+        let div         = document.createElement('div');
+        div.id          = this._target;
+        div.className   = 'panel';
+        $("#" + (typeof parentDivID == "undefined" ? this._operator.target : parentDivID)).append(div);
 
         // Make class abstract.
         if (new.target === Panel) {

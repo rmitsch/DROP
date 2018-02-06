@@ -9,10 +9,11 @@ export default class FilterReduceTablePanel extends Panel
      * Constructs new FilterReduce table panel.
      * @param name
      * @param operator
+     * @param parentDivID
      */
-    constructor(name, operator)
+    constructor(name, operator, parentDivID)
     {
-        super(name, operator);
+        super(name, operator, parentDivID);
 
         // For all hyper-parameter/objective combinations: Construct one scatterplot.
         // Visual separation.

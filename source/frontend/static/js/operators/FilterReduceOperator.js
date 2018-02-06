@@ -16,11 +16,11 @@ export default class FilterReduceOperator extends Operator
      * @param name
      * @param stage
      * @param dataset Instance of Dataset class.
-     * @param targetDivID
+     * @param parentDivID
      */
-    constructor(name, stage, dataset, targetDivID)
+    constructor(name, stage, dataset, parentDivID)
     {
-        super(name, stage, "1", "n", dataset, targetDivID);
+        super(name, stage, "1", "n", dataset, parentDivID);
 
         // Construct all necessary panels.
         this.constructPanels();

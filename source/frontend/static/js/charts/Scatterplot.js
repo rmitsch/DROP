@@ -14,19 +14,16 @@ export default class Scatterplot extends Chart
      * @param dataset
      * @param style Various style settings (chart width/height, colors, ...). Arbitrary format, has to be parsed indivdually
      * by concrete classes.
-     * @param targetDivID
+     * @param parentDivID
      */
-    constructor(name, panel, attributes, dataset, style, targetDivID)
+    constructor(name, panel, attributes, dataset, style, parentDivID)
     {
-        super(name, panel, attributes, dataset, style, targetDivID);
+        super(name, panel, attributes, dataset, style, parentDivID);
 
         // Check if attributes contain exactly two parameters.
         if (!Array.isArray(attributes) || attributes.length !== 2) {
             throw new Error("ParetoScatterplot: Has to be instantiated with an array of attributes with length 2.");
         }
-
-        // Store reference to this instance for later use in nested expressions.
-        let instance = this;
 
         // Construct dictionary for axis/attribute names.
         this._axes_attributes = {

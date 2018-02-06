@@ -15,24 +15,22 @@ export default class Chart
      * @param dataset
      * @param style Various style settings (chart width/height, colors, ...). Arbitrary format, has to be parsed indivdually
      * by concrete classes.
-     * @param targetDivID
+     * @param parentDivID
      */
-    constructor(name, panel, attributes, dataset, style, targetDivID)
+    constructor(name, panel, attributes, dataset, style, parentDivID)
     {
         this._name          = name;
         this._panel         = panel;
         this._attributes    = attributes;
         this._dataset       = dataset;
         this._style         = style;
-        this._target        = targetDivID == null ? Utils.uuidv4() : targetDivID;
+        this._target        = Utils.uuidv4();
 
         // Create div structure for this chart.
-        if (targetDivID == null) {
-           let div = document.createElement('div');
-            div.id = this._target;
-            div.className = 'chart';
-            $("#" + this._panel.target).append(div);
-        }
+        let div = document.createElement('div');
+        div.id = this._target;
+        div.className = 'chart';
+        $("#" + (typeof parentDivID == "undefined" ? this._panel.target : parentDivID)).append(div);
 
         // Make class abstract.
         if (new.target === Chart) {
