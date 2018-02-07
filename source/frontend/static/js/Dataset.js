@@ -22,8 +22,7 @@ export default class Dataset
         this._metadata  = metadata;
         this._binCount  = binCount;
 
-        // Adaption for prototype - remove when no longer needed.
-        this._metadata.hyperparameters.splice(-1, 1);
+
 
         // Set up containers for crossfilter data.
         this._crossfilter   = crossfilter(this._data);
@@ -40,6 +39,11 @@ export default class Dataset
 
         // Set up histogram dimensions.
         this.initHistogramDimensionsAndGroups();
+
+        // Create series mapping.
+        // Since for the intended use case (i. e. DROP) it is to be expected to need series variant w.r.t. each possible
+        // hyperparameter, in makes sense to calculate all of them beforehand.
+        this._idToSeriesMappingByHyperparameter = this._generateSeriesMappingForHyperparameters();
     }
 
     /**
@@ -194,6 +198,67 @@ export default class Dataset
         );
     }
 
+    /**
+     * Generates attribute-variant series for all hyperparameters.
+     * Note that there are no predefined series for hyperparameter-based series, since they don't allow for natural
+     * (i. e. with exactly one variant parameter) bindings. They could instead be connected by any number of common
+     * properties, such as arbitrary hyperparameter settings, fuzzy value condition etc. (which are hence to be
+     * calculate lazily on demand and on-the-fly).
+     * @returns {{}}
+     * @private
+     */
+    _generateSeriesMappingForHyperparameters()
+    {
+        let idToSeriesMappingByAttribute = {};
+
+        // Loop through all hyperparameters, generate series for each of them.
+        for (let attributeIndex in this._metadata.hyperparameters) {
+            let variantAttribute = this._metadata.hyperparameters[attributeIndex].name;
+            // Generate series for this variant attribute.
+            idToSeriesMappingByAttribute[variantAttribute] = this._mapRecordsToSeries(variantAttribute);
+        }
+
+        return idToSeriesMappingByAttribute;
+    }
+
+    /**
+     * Maps records in this dataset to series w. r. t. to a invariant variable.
+     * @param variantAttribute Attribute whose value is to be varied (while all others stay the same).
+     * @returns {{}}
+     * @private
+     */
+    _mapRecordsToSeries(variantAttribute)
+    {
+        let recordIDsToSeriesMap                = {};
+        let constantParameterSetsToSeriesMap    = {};
+        let seriesCounter                       = 0;
+
+        // Loop through all records.
+        for (let record of this._data) {
+            // Key holds stringified represenatation of constant parameters.
+            let key = "";
+
+            // Chain together key for this record.
+            for (let attributeIndex in this._metadata.hyperparameters) {
+                let attribute = this._metadata.hyperparameters[attributeIndex].name;
+                if (attribute !== variantAttribute) {
+                    key += record[this._metadata.hyperparameters[attributeIndex].name] + "_";
+                }
+            }
+            key = key.slice(0, -1);
+
+            // If key/constant parameter set doesn't exist yet: Create new entry.
+            if (!(key in constantParameterSetsToSeriesMap)) {
+                constantParameterSetsToSeriesMap[key] = seriesCounter++;
+
+            }
+            // Link record ID to series ID.
+            recordIDsToSeriesMap[record.id] = constantParameterSetsToSeriesMap[key];
+        }
+
+        return recordIDsToSeriesMap;
+    }
+
     get name()
     {
         return this._name;
@@ -227,5 +292,10 @@ export default class Dataset
     get cf_groups()
     {
         return this._cf_groups;
+    }
+
+    get idToSeriesMappingByHyperparameter()
+    {
+        return this._idToSeriesMappingByHyperparameter;
     }
 }

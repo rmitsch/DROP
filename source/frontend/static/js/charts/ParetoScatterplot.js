@@ -44,7 +44,7 @@ export default class ParetoScatterplot extends Scatterplot
 
     constructCFChart()
     {
-        this._cf_chart = dc.scatterPlot("#" + this._target);
+        this._cf_chart = dc.scatterPlot("#" + this._target, this._dataset);
 
         // Create shorthand references.
         let instance    = this;
@@ -84,6 +84,8 @@ export default class ParetoScatterplot extends Scatterplot
             .keyAccessor(function(d) {
                 return d.key[0];
              })
+            // Filter on end of brushing action, not meanwhile (performance suffers otherwise).
+            .filterOnBrushEnd(true)
             .excludedOpacity(instance._style.excludedOpacity)
             .mouseZoomable(true)
             .margins({top: 0, right: 5, bottom: 25, left: 20});
