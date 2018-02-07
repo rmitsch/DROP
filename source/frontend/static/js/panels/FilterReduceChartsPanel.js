@@ -61,8 +61,8 @@ export default class FilterReduceChartsPanel extends Panel
             excludedSymbolSize: 1.5,
             excludedColor: "#ccc",
             numberOfTicks: {
-                x: 2,
-                y: 0
+                x: 0,
+                y: 3
             },
             showTickMarks: true
         };
@@ -97,9 +97,10 @@ export default class FilterReduceChartsPanel extends Panel
         // Iterate over hyperparameter.
         for (let hyperparameter of dataset.metadata.hyperparameters) {
             // Iterate over objectives.
+            if (hyperparameter.name === "n_components")
             for (let objective of dataset.metadata.objectives) {
                 // Don't display categorical values as scatterplot.
-                if (hyperparameter.type !== "categorical") {
+                if (objective === "runtime" && hyperparameter.type !== "categorical") {
                     let scatterplot = new ParetoScatterplot(
                         hyperparameter.name + ":" + objective,
                         this,
@@ -118,7 +119,7 @@ export default class FilterReduceChartsPanel extends Panel
         // -----------------------------------
 
         // Iterate over objectives.
-        for (let i = 0; i < dataset.metadata.objectives.length; i++) {
+        for (let i = 0; false && i < dataset.metadata.objectives.length; i++) {
             let objective1 = dataset.metadata.objectives[i];
 
             // Temporary: Fill slot with empty div.
