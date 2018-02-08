@@ -1,7 +1,8 @@
 import Panel from "./Panel.js";
 import Utils from "../Utils.js";
 import ParetoScatterplot from "../charts/ParetoScatterplot.js";
-import Histogram from "../charts/Histogram.js";
+import NumericalHistogram from "../charts/NumericalHistogram.js";
+import CategoricalHistogram from "../charts/CategoricalHistogram.js";
 
 /**
  * Panel holding scatterplots and histograms in operator FilterReduce.
@@ -27,7 +28,7 @@ export default class FilterReduceChartsPanel extends Panel
 
         // Render all charts in prototype stage (work with groups instead of using .renderAll()!).
         console.log("Rendering...");
-        dc.renderAll();
+        // dc.renderAll();
         console.log("Finished rendering.");
     }
 
@@ -41,8 +42,8 @@ export default class FilterReduceChartsPanel extends Panel
         // Define style options for charts.
         let histogramStyle = {
             showAxisLabels: false,
-            height: 60,
-            width: 90,
+            height: 80,
+            width: 120,
             excludedColor: "#ccc",
             numberOfTicks: {
                 x: 2,
@@ -54,16 +55,18 @@ export default class FilterReduceChartsPanel extends Panel
         // Define style options for charts.
         let scatterplotStyle = {
             showAxisLabels: false,
-            height: 90,
-            width: 90,
-            symbolSize: 1.5,
+            height: 120,
+            width: 120,
+            symbolSize: 1,
             excludedOpacity: 1,
-            excludedSymbolSize: 1.5,
+            excludedSymbolSize: 1,
             excludedColor: "#ccc",
             numberOfTicks: {
                 x: 0,
                 y: 3
             },
+            numberOfXTicksInLastRow: 2,
+            numberOfYTicksInFirstRow: 0,
             showTickMarks: true
         };
 
@@ -74,20 +77,46 @@ export default class FilterReduceChartsPanel extends Panel
         // 0. Histograms.
         // -----------------------------------
 
+        // Iterate over all attributes.
         // Unfold names of hyperparamater objects in list.
         let hyperparameters = Utils.unfoldHyperparameterObjectList(dataset.metadata.hyperparameters);
-        // Iterate over all attributes.
-        for (let attribute of hyperparameters.concat(dataset.metadata.objectives)) {
-            // Generate histogram.
-            let histogram = new Histogram(
-                attribute + ".histogram",
-                this,
-                [attribute],
-                dataset,
-                histogramStyle,
-                // Place chart in previously generated container div.
-                this._histogramDivIDs[attribute]
-            );
+        let attributes = hyperparameters.concat(dataset.metadata.objectives);
+        for (let i = 0; i < attributes.length; i++) {
+            let attribute   = attributes[i];
+            let histogram   = null;
+            // If attributes is objective or numerical hyperparameter: Spawn NumericalHistogram.
+            // This is hacky and you should be ashamed of yourself.
+            if (i < hyperparameters.length &&
+                dataset.metadata.hyperparameters[i].type === "numeric" ||
+                i >= hyperparameters.length) {
+                // Generate numerical histogram.
+                histogram = new NumericalHistogram(
+                    attribute + ".histogram",
+                    this,
+                    [attribute],
+                    dataset,
+                    histogramStyle,
+                    // Place chart in previously generated container div.
+                    this._histogramDivIDs[attribute]
+                );
+            }
+
+            // Otherwise: Spawn categorical histogram.
+            else {
+                // Generate categorical histogram.
+                histogram = new CategoricalHistogram(
+                    attribute + ".histogram",
+                    this,
+                    [attribute],
+                    dataset,
+                    histogramStyle,
+                    // Place chart in previously generated container div.
+                    this._histogramDivIDs[attribute]
+                );
+            }
+
+            // Render histogram.
+            histogram.render();
         }
 
         // -----------------------------------
@@ -95,22 +124,39 @@ export default class FilterReduceChartsPanel extends Panel
         // -----------------------------------
 
         // Iterate over hyperparameter.
+        let hyperparameterIndex = 0;
         for (let hyperparameter of dataset.metadata.hyperparameters) {
+            let objectiveIndex = 0;
             // Iterate over objectives.
             for (let objective of dataset.metadata.objectives) {
                 // Don't display categorical values as scatterplot.
                 if (hyperparameter.type !== "categorical") {
+                    // Adapt style settings, based on whether this is the first scatterplot or not.
+                    let style               = $.extend(true, {}, scatterplotStyle);
+                    style.numberOfTicks.y   = hyperparameterIndex === 0 ?
+                        style.numberOfTicks.y : style.numberOfYTicksInFirstRow;
+                    style.numberOfTicks.x   = objectiveIndex === dataset.metadata.objectives.length - 1 ?
+                        style.numberOfXTicksInLastRow : style.numberOfTicks.x;
+
+                    // Instantiate new scatterplot.
                     let scatterplot = new ParetoScatterplot(
                         hyperparameter.name + ":" + objective,
                         this,
                         [hyperparameter.name, objective],
                         dataset,
-                        scatterplotStyle,
+                        style,
                         // Place chart in previously generated container div.
                         this._containerDivIDs[hyperparameter.name]
                     );
+
+                    // Draw scatterplot.
+                    scatterplot.render();
                 }
+
+                objectiveIndex++;
             }
+
+            hyperparameterIndex++;
         }
 
         // -----------------------------------
@@ -132,6 +178,7 @@ export default class FilterReduceChartsPanel extends Panel
             for (let j = i + 1; j < dataset.metadata.objectives.length; j++) {
                 let objective2 = dataset.metadata.objectives[j];
 
+                // Instantiate new scatterplot.
                 let scatterplot = new ParetoScatterplot(
                     objective1 + ":" + objective2,
                     this,
@@ -141,6 +188,9 @@ export default class FilterReduceChartsPanel extends Panel
                     // Place chart in previously generated container div.
                     this._containerDivIDs[objective1]
                 );
+
+                // Render scatterplot.
+                scatterplot.render();
             }
         }
 
@@ -184,6 +234,9 @@ export default class FilterReduceChartsPanel extends Panel
             histogramDivIDs[attribute] = Utils.spawnChildDiv(div.id, null, "histogram").id;
         }
 
-        return {containerDivIDs: containerDivIDs, histogramDivIDs: histogramDivIDs};
+        return {
+            containerDivIDs: containerDivIDs,
+            histogramDivIDs: histogramDivIDs
+        };
     }
 }

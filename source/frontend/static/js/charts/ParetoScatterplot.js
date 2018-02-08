@@ -88,7 +88,7 @@ export default class ParetoScatterplot extends Scatterplot
             .filterOnBrushEnd(true)
             .excludedOpacity(instance._style.excludedOpacity)
             .mouseZoomable(true)
-            .margins({top: 0, right: 10, bottom: 25, left: 25});
+            .margins({top: 0, right: 0, bottom: 25, left: 25});
 
         // Set number of ticks.
         this._cf_chart.yAxis().ticks(instance._style.numberOfTicks.y);

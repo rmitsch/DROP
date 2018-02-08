@@ -51,12 +51,6 @@ export default class Dataset
         // Since for the intended use case (i. e. DROP) it is to be expected to need series variant w.r.t. each possible
         // hyperparameter, in makes sense to calculate all of them beforehand.
         this._idToSeriesMappingByHyperparameter = this._generateSeriesMappingForHyperparameters();
-
-        // NEXT UP:
-        //     - Implement line color mechanism (point filtered/excluded?)
-        //     - Evaluate
-        //     - Think about potential improvements to parallel coordinates-style scatterplot - line arcs/bundling?
-        //     - Implement parallel coordinate
     }
 
     /**
@@ -109,23 +103,38 @@ export default class Dataset
     initHistogramDimensionsAndGroups()
     {
         let hyperparameters = Utils.unfoldHyperparameterObjectList(this._metadata.hyperparameters);
+        let attributes = hyperparameters.concat(this.metadata.objectives);
         let instance        = this;
 
-        for (let attribute of hyperparameters.concat(this._metadata.objectives)) {
-            // Dimension with rounded values (for histograms).
-            this._cf_dimensions[attribute + "#histogram"] = this._crossfilter.dimension(
-                function (d) {
-                    if (typeof d[attribute] === "number") {
+        for (let i = 0; i < attributes.length; i++) {
+            let attribute   = attributes[i];
+
+            // If this is a numerical hyperparameter or an objective: Returned binned width.
+            if (i < hyperparameters.length &&
+                this._metadata.hyperparameters[i].type === "numeric" ||
+                i >= hyperparameters.length) {
+                // Dimension with rounded values (for histograms).
+                this._cf_dimensions[attribute + "#histogram"] = this._crossfilter.dimension(
+                    function (d) {
                         let binWidth = instance._cf_intervals[attribute] / instance._binCount;
                         return (Math.round(d[attribute] / binWidth) * binWidth);
                     }
+                );
 
-                    return d[attribute];
-                }
-            );
+                // Create group for histogram.
+                this._cf_groups[attribute + "#histogram"] = this._generateGroupForHistogram(attribute);
+            }
 
-            // Create group for histogram.
-            this._cf_groups[attribute + "#histogram"] = this._generateGroupForHistogram(attribute);
+            // Else if this is a categorical hyperparameter: Return value itself.
+            else {
+                this._cf_dimensions[attribute + "#histogram"] = this._crossfilter.dimension(
+                    function (d) { return d[attribute]; }
+                );
+                console.log(attribute + "#histogram");
+
+                // Create group for histogram.
+                this._cf_groups[attribute + "#histogram"] = this._cf_dimensions[attribute + "#histogram"].group().reduceCount();
+            }
         }
     }
 
