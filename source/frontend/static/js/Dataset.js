@@ -4,6 +4,9 @@ import Utils from "./Utils.js";
  * Wrapper class providing the specified dataset itself plus the corresponding crossfilter context and various utility
  * methods.
  * Note that this class includes a few custom tweaks regarding which dimensions and groups to generate.
+ * This class might be split and only used as abstract base class, once the prototype is extended to other operators -
+ * typically, operators have different requirements regarding their datasets and their capabilities. This could be
+ * reflected by a diverging Dataset class hierarchy.
  */
 export default class Dataset
 {
@@ -17,12 +20,16 @@ export default class Dataset
      * @param binCount Number of bins in histograms.
      */
     constructor(name, data, metadata, binCount) {
-        this._name      = name;
-        this._data      = data;
-        this._metadata  = metadata;
-        this._binCount  = binCount;
+        this._name              = name;
+        this._data              = data;
+        this._dataIndicesByID   = {};
+        this._metadata          = metadata;
+        this._binCount          = binCount;
 
-
+        // Store ID-to-index references for data elements.
+        for (let i = 0; i < this._data.length; i++) {
+            this._dataIndicesByID[this._data[i].id] = i;
+        }
 
         // Set up containers for crossfilter data.
         this._crossfilter   = crossfilter(this._data);
@@ -44,6 +51,12 @@ export default class Dataset
         // Since for the intended use case (i. e. DROP) it is to be expected to need series variant w.r.t. each possible
         // hyperparameter, in makes sense to calculate all of them beforehand.
         this._idToSeriesMappingByHyperparameter = this._generateSeriesMappingForHyperparameters();
+
+        // NEXT UP:
+        //     - Implement line color mechanism (point filtered/excluded?)
+        //     - Evaluate
+        //     - Think about potential improvements to parallel coordinates-style scatterplot - line arcs/bundling?
+        //     - Implement parallel coordinate
     }
 
     /**
@@ -230,6 +243,7 @@ export default class Dataset
     _mapRecordsToSeries(variantAttribute)
     {
         let recordIDsToSeriesMap                = {};
+        let seriesToRecordIDsMap                = {};
         let constantParameterSetsToSeriesMap    = {};
         let seriesCounter                       = 0;
 
@@ -247,16 +261,24 @@ export default class Dataset
             }
             key = key.slice(0, -1);
 
-            // If key/constant parameter set doesn't exist yet: Create new entry.
+            // If key/constant parameter set doesn't exist yet: Create new series.
             if (!(key in constantParameterSetsToSeriesMap)) {
+                // Link parameter set to series ID.
                 constantParameterSetsToSeriesMap[key] = seriesCounter++;
-
+                // Create new entry in map for linking series IDs to record IDs.
+                seriesToRecordIDsMap[constantParameterSetsToSeriesMap[key]] = [];
             }
             // Link record ID to series ID.
             recordIDsToSeriesMap[record.id] = constantParameterSetsToSeriesMap[key];
+            // Link series ID to IDs of records.
+            seriesToRecordIDsMap[constantParameterSetsToSeriesMap[key]].push(record.id);
         }
 
-        return recordIDsToSeriesMap;
+        return {
+            recordToSeriesMapping: recordIDsToSeriesMap,
+            seriesToRecordMapping: seriesToRecordIDsMap,
+            seriesCount: seriesCounter
+        };
     }
 
     get name()
@@ -297,5 +319,15 @@ export default class Dataset
     get idToSeriesMappingByHyperparameter()
     {
         return this._idToSeriesMappingByHyperparameter;
+    }
+
+    /**
+     * Fetches record by its correspoding ID. Uses index structure to retrieve element from array.
+     * @param recordID
+     * @returns {*}
+     */
+    getDataByID(recordID)
+    {
+        return this._data[this._dataIndicesByID[recordID]];
     }
 }

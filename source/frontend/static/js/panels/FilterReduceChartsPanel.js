@@ -42,7 +42,7 @@ export default class FilterReduceChartsPanel extends Panel
         let histogramStyle = {
             showAxisLabels: false,
             height: 60,
-            width: 100,
+            width: 90,
             excludedColor: "#ccc",
             numberOfTicks: {
                 x: 2,
@@ -54,8 +54,8 @@ export default class FilterReduceChartsPanel extends Panel
         // Define style options for charts.
         let scatterplotStyle = {
             showAxisLabels: false,
-            height: 100,
-            width: 100,
+            height: 90,
+            width: 90,
             symbolSize: 1.5,
             excludedOpacity: 1,
             excludedSymbolSize: 1.5,
@@ -97,10 +97,9 @@ export default class FilterReduceChartsPanel extends Panel
         // Iterate over hyperparameter.
         for (let hyperparameter of dataset.metadata.hyperparameters) {
             // Iterate over objectives.
-            if (hyperparameter.name === "n_components")
             for (let objective of dataset.metadata.objectives) {
                 // Don't display categorical values as scatterplot.
-                if (objective === "runtime" && hyperparameter.type !== "categorical") {
+                if (hyperparameter.type !== "categorical") {
                     let scatterplot = new ParetoScatterplot(
                         hyperparameter.name + ":" + objective,
                         this,
@@ -119,7 +118,7 @@ export default class FilterReduceChartsPanel extends Panel
         // -----------------------------------
 
         // Iterate over objectives.
-        for (let i = 0; false && i < dataset.metadata.objectives.length; i++) {
+        for (let i = 0; i < dataset.metadata.objectives.length; i++) {
             let objective1 = dataset.metadata.objectives[i];
 
             // Temporary: Fill slot with empty div.

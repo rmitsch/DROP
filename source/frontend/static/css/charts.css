@@ -9,7 +9,7 @@
 
 .filter-reduce-charts-container {
     display: inline-block;
-    width: 105px;
+    width: 95px;
 }
 
 .filter-reduce-labels-container {
@@ -24,7 +24,7 @@
     font-size: 12px;
     text-align: right;
     width: 0px;
-    height: 105px;
+    height: 95px;
     position: relative;
 }
 
@@ -35,7 +35,7 @@
 }
 
 .chart-placeholder {
-    height: 100px;
+    height: 90px;
     margin-bottom: 5px;
 }
 

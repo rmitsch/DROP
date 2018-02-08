@@ -44,7 +44,7 @@ export default class ParetoScatterplot extends Scatterplot
 
     constructCFChart()
     {
-        this._cf_chart = dc.scatterPlot("#" + this._target, this._dataset);
+        this._cf_chart = dc.scatterPlot("#" + this._target, this._dataset, this._axes_attributes.x);
 
         // Create shorthand references.
         let instance    = this;
@@ -61,7 +61,7 @@ export default class ParetoScatterplot extends Scatterplot
                 [extrema[instance._axes_attributes.x].min, extrema[instance._axes_attributes.x].max])
             )
             .y(d3.scale.linear().domain(
-                [extrema[instance._axes_attributes.y].min, extrema[instance._axes_attributes.y].max])
+                [0, extrema[instance._axes_attributes.y].max])
             )
             .xAxisLabel(instance._style.showAxisLabels ? instance._axes_attributes.x : null)
             .yAxisLabel(instance._style.showAxisLabels ? instance._axes_attributes.y : null)
@@ -88,7 +88,7 @@ export default class ParetoScatterplot extends Scatterplot
             .filterOnBrushEnd(true)
             .excludedOpacity(instance._style.excludedOpacity)
             .mouseZoomable(true)
-            .margins({top: 0, right: 5, bottom: 25, left: 20});
+            .margins({top: 0, right: 10, bottom: 25, left: 25});
 
         // Set number of ticks.
         this._cf_chart.yAxis().ticks(instance._style.numberOfTicks.y);
