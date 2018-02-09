@@ -50,7 +50,7 @@ export default class Dataset
         // Create series mapping.
         // Since for the intended use case (i. e. DROP) it is to be expected to need series variant w.r.t. each possible
         // hyperparameter, in makes sense to calculate all of them beforehand.
-        this._idToSeriesMappingByHyperparameter = this._generateSeriesMappingForHyperparameters();
+        this._seriesMappingByHyperparameter = this._generateSeriesMappingForHyperparameters();
     }
 
     /**
@@ -130,7 +130,6 @@ export default class Dataset
                 this._cf_dimensions[attribute + "#histogram"] = this._crossfilter.dimension(
                     function (d) { return d[attribute]; }
                 );
-                console.log(attribute + "#histogram");
 
                 // Create group for histogram.
                 this._cf_groups[attribute + "#histogram"] = this._cf_dimensions[attribute + "#histogram"].group().reduceCount();
@@ -286,7 +285,8 @@ export default class Dataset
         return {
             recordToSeriesMapping: recordIDsToSeriesMap,
             seriesToRecordMapping: seriesToRecordIDsMap,
-            seriesCount: seriesCounter
+            seriesCount: seriesCounter,
+            variantAttribute: variantAttribute
         };
     }
 
@@ -327,7 +327,7 @@ export default class Dataset
 
     get idToSeriesMappingByHyperparameter()
     {
-        return this._idToSeriesMappingByHyperparameter;
+        return this._seriesMappingByHyperparameter;
     }
 
     /**

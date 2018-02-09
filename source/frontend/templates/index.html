@@ -13,16 +13,19 @@
     <link rel="stylesheet" href="./static/lib/ion_rangeslider/css/ion.rangeSlider.skinFlat.css" />
     <link rel="stylesheet" href="./static/lib/lcSwitch/lc_switch.css">
     <link rel="stylesheet" href="./static/lib/parcoords/d3.parcoords.css">
+
      <!-- Load custom .css files. -->
     <link rel="stylesheet" href="./static/css/dropdown.css">
     <link rel="stylesheet" href="./static/css/skeleton.css">
     <link rel="stylesheet" href="./static/css/charts.css">
+
 
     <!-- Load icon. -->
     <link rel="icon" type="image/png" href="./static/img/icon.png">
 
     <!-- Page title. -->
     <title>DROP {{version}}</title>
+    <script src="../static/js/charts/Scatterplot.js"></script>
 </head>
 
 <body>
@@ -50,6 +53,8 @@
         <!-- Dashboard content loaded by jquery. -->
         <div class="stage" id="stage">
         </div>
+
+        <div id="example" class="parcoords" style="width:220px;height:150px"></div>
     </div>
 
     <!------------------------------------------------------>

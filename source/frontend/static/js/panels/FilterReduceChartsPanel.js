@@ -3,6 +3,7 @@ import Utils from "../Utils.js";
 import ParetoScatterplot from "../charts/ParetoScatterplot.js";
 import NumericalHistogram from "../charts/NumericalHistogram.js";
 import CategoricalHistogram from "../charts/CategoricalHistogram.js";
+import ParallelCoordinates from "../charts/ParallelCoordinates.js"
 
 /**
  * Panel holding scatterplots and histograms in operator FilterReduce.
@@ -74,10 +75,30 @@ export default class FilterReduceChartsPanel extends Panel
         let dataset = this._operator._dataset;
 
         // -----------------------------------
-        // 0. Histograms.
+        // 1. Histograms.
         // -----------------------------------
 
-        // Iterate over all attributes.
+        this._createHistograms(dataset, histogramStyle);
+
+        // -----------------------------------
+        // 2. Create scatterplots.
+        // -----------------------------------
+
+        this._createScatterplots(dataset, scatterplotStyle);
+
+
+        console.log("Finished generating.");
+    }
+
+    /**
+     * Creates histograms for this panel.
+     * @param dataset
+     * @param style
+     * @private
+     */
+    _createHistograms(dataset, style)
+    {
+       // Iterate over all attributes.
         // Unfold names of hyperparamater objects in list.
         let hyperparameters = Utils.unfoldHyperparameterObjectList(dataset.metadata.hyperparameters);
         let attributes = hyperparameters.concat(dataset.metadata.objectives);
@@ -95,7 +116,7 @@ export default class FilterReduceChartsPanel extends Panel
                     this,
                     [attribute],
                     dataset,
-                    histogramStyle,
+                    style,
                     // Place chart in previously generated container div.
                     this._histogramDivIDs[attribute]
                 );
@@ -109,7 +130,7 @@ export default class FilterReduceChartsPanel extends Panel
                     this,
                     [attribute],
                     dataset,
-                    histogramStyle,
+                    style,
                     // Place chart in previously generated container div.
                     this._histogramDivIDs[attribute]
                 );
@@ -118,7 +139,16 @@ export default class FilterReduceChartsPanel extends Panel
             // Render histogram.
             histogram.render();
         }
+    }
 
+    /**
+     * Create histograms for this panel.
+     * @param dataset
+     * @param style
+     * @private
+     */
+    _createScatterplots(dataset, style)
+    {
         // -----------------------------------
         // 1. Hyperparameter-objective combinations.
         // -----------------------------------
@@ -129,28 +159,39 @@ export default class FilterReduceChartsPanel extends Panel
             let objectiveIndex = 0;
             // Iterate over objectives.
             for (let objective of dataset.metadata.objectives) {
+                // Adapt style settings, based on whether this is the first scatterplot or not.
+                let updatedStyle                = $.extend(true, {}, style);
+                updatedStyle.numberOfTicks.y    = hyperparameterIndex === 0 ? updatedStyle.numberOfTicks.y : updatedStyle.numberOfYTicksInFirstRow;
+                updatedStyle.numberOfTicks.x    = objectiveIndex === dataset.metadata.objectives.length - 1 ? updatedStyle.numberOfXTicksInLastRow : updatedStyle.numberOfTicks.x;
+
                 // Don't display categorical values as scatterplot.
                 if (hyperparameter.type !== "categorical") {
-                    // Adapt style settings, based on whether this is the first scatterplot or not.
-                    let style               = $.extend(true, {}, scatterplotStyle);
-                    style.numberOfTicks.y   = hyperparameterIndex === 0 ?
-                        style.numberOfTicks.y : style.numberOfYTicksInFirstRow;
-                    style.numberOfTicks.x   = objectiveIndex === dataset.metadata.objectives.length - 1 ?
-                        style.numberOfXTicksInLastRow : style.numberOfTicks.x;
-
                     // Instantiate new scatterplot.
                     let scatterplot = new ParetoScatterplot(
                         hyperparameter.name + ":" + objective,
                         this,
                         [hyperparameter.name, objective],
                         dataset,
-                        style,
+                        updatedStyle,
                         // Place chart in previously generated container div.
                         this._containerDivIDs[hyperparameter.name]
                     );
 
                     // Draw scatterplot.
                     scatterplot.render();
+                }
+
+                // If hyperparameter is of categorical nature: Instantiate parallel coordinates.
+                else {
+                    let parCorPlot = new ParallelCoordinates(
+                        hyperparameter.name + ":" + objective,
+                        this,
+                        [hyperparameter.name, objective],
+                        dataset,
+                        updatedStyle,
+                        // Place chart in previously generated container div.
+                        this._containerDivIDs[hyperparameter.name]
+                    );
                 }
 
                 objectiveIndex++;
@@ -184,7 +225,7 @@ export default class FilterReduceChartsPanel extends Panel
                     this,
                     [objective1, objective2],
                     dataset,
-                    scatterplotStyle,
+                    style,
                     // Place chart in previously generated container div.
                     this._containerDivIDs[objective1]
                 );
@@ -193,8 +234,6 @@ export default class FilterReduceChartsPanel extends Panel
                 scatterplot.render();
             }
         }
-
-        console.log("Finished generating.");
     }
 
     /**

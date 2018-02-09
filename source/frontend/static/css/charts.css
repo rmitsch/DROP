@@ -5,6 +5,7 @@
 .chart {
     display: block;
     float: none;
+    position: relative;
 }
 
 .filter-reduce-charts-container {
@@ -47,4 +48,12 @@ span.filter-reduce-row-label-text {
 
 .histogram {
     height: 80px;
+}
+
+.parcoords-container {
+    height: 120px;
+}
+
+.parcoords {
+    position: absolute;
 }
