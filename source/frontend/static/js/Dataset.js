@@ -95,6 +95,8 @@ export default class Dataset
                 function(d) { return d[attribute]; }
             );
         }
+
+        // Create filter
     }
 
     /**

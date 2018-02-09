@@ -44,7 +44,13 @@ export default class ParetoScatterplot extends Scatterplot
 
     constructCFChart()
     {
-        this._cf_chart = dc.scatterPlot("#" + this._target, this._dataset, this._axes_attributes.x);
+        // Use operator's target ID as group name.
+        this._cf_chart = dc.scatterPlot(
+            "#" + this._target,
+            this._panel._operator._target,
+            this._dataset,
+            this._axes_attributes.x
+        );
 
         // Create shorthand references.
         let instance    = this;
@@ -61,7 +67,7 @@ export default class ParetoScatterplot extends Scatterplot
                 [extrema[instance._axes_attributes.x].min, extrema[instance._axes_attributes.x].max])
             )
             .y(d3.scale.linear().domain(
-                [0, extrema[instance._axes_attributes.y].max])
+                [extrema[instance._axes_attributes.y].min, extrema[instance._axes_attributes.y].max])
             )
             .xAxisLabel(instance._style.showAxisLabels ? instance._axes_attributes.x : null)
             .yAxisLabel(instance._style.showAxisLabels ? instance._axes_attributes.y : null)

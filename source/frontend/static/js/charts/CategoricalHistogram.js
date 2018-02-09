@@ -26,7 +26,8 @@ export default class CategoricalHistogram extends Histogram
 
     constructCFChart()
     {
-        this._cf_chart = dc.barChart("#" + this._target);
+        // Use operator's target ID as group name.
+        this._cf_chart = dc.barChart("#" + this._target, this._panel._operator._target);
 
         // Create shorthand references.
         let instance    = this;

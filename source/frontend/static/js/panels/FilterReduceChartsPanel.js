@@ -64,7 +64,7 @@ export default class FilterReduceChartsPanel extends Panel
             excludedColor: "#ccc",
             numberOfTicks: {
                 x: 0,
-                y: 3
+                y: 2
             },
             numberOfXTicksInLastRow: 2,
             numberOfYTicksInFirstRow: 0,
@@ -136,7 +136,6 @@ export default class FilterReduceChartsPanel extends Panel
                 );
             }
 
-            // Render histogram.
             histogram.render();
         }
     }
@@ -176,8 +175,6 @@ export default class FilterReduceChartsPanel extends Panel
                         // Place chart in previously generated container div.
                         this._containerDivIDs[hyperparameter.name]
                     );
-
-                    // Draw scatterplot.
                     scatterplot.render();
                 }
 
@@ -192,6 +189,7 @@ export default class FilterReduceChartsPanel extends Panel
                         // Place chart in previously generated container div.
                         this._containerDivIDs[hyperparameter.name]
                     );
+                    parCorPlot.render();
                 }
 
                 objectiveIndex++;

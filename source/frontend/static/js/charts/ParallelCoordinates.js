@@ -1,4 +1,4 @@
-import Chart from "./Chart.js"
+import Chart from "./Chart.js";
 import Utils from "../Utils.js";
 
 /**
@@ -37,9 +37,15 @@ export default class ParallelCoordinates extends Chart
         // Transform data so it's usable for parallel coordinate plot.
         this._dimensions        = {};
         this._transformedData   = this._transformData();
+        // Store whether record IDs are filtered or not.
+        this._filteredIDs       = new Set();
+        this._updateFilteredIDs();
 
         // Construct chart.
         this.constructCFChart();
+
+        // Implement methods necessary for dc.js hook and integrate it into it's chart registry.
+        this._registerChartInDC();
     }
 
     /**
@@ -71,11 +77,17 @@ export default class ParallelCoordinates extends Chart
             transformedData.push(transformedRecord);
         }
 
-        // Create dimensions
-        for (let key in transformedData[0]) {
+        // Create dimensions. Sort alphabetically to keep sequence of dimensions consistent with dc.js' charts' axes.
+        let xAttributeValuesSorted = Object.keys(transformedData[0]);
+        xAttributeValuesSorted.sort();
+        let attributeIndex = 0;
+        // Create dimensions, sorted lexically by value of attribute on x-axis.
+        for (let index in xAttributeValuesSorted) {
+            let key = xAttributeValuesSorted[index];
             if (key !== "ids") {
                 this._dimensions[key] = {
-                    title: " ",
+                    index: attributeIndex++,
+                    title: key,
                     orient: "left",
                     type: "number",
                     ticks: 0
@@ -93,23 +105,111 @@ export default class ParallelCoordinates extends Chart
 
     constructCFChart()
     {
+        let instance = this;
+
         // Construct conatiner div for parcoords element.
         let div = Utils.spawnChildDiv(this._target, null, 'parcoords');
 
-        this._cf_chart = d3.parcoords()("#" + div.id);
-        this._cf_chart
-            .data(this._transformedData)
+        // Use config object to pass information useful at initialization time.
+        this._cf_chart = d3.parcoords({
+                dimensions: this._dimensions,
+                data: this._transformedData,
+                colorRange: ["blue#ccc", "#cccblue", "#ccc#ccc", "blueblue"]
+            })("#" + div.id)
             .height(this._style.height)
             .width(this._style.width)
             .hideAxis(["ids"])
-            .alpha(0.045)
+            .alpha(0.04)
             .composite("darken")
-            .dimensions(this._dimensions)
+            .color(function(d) { return "blue"; })
+            // Define colors for ends.
+            .colors(function(d) {
+                // Assign blue for filtered and grey for unfiltered records
+                return d.ids.map(id => instance._filteredIDs.has(id) ? "blue" : "#ccc");
+            })
             .margin({top: 5, right: 0, bottom: 18, left: 0})
-            .render()
             .mode("queue")
+            .on("brush", Utils.debounce(function(data) {
+                // Get brushed thresholds for involved dimensions (e. g. objectives).
+                let brushedThresholds = instance._cf_chart.brushExtents();
+                // Get dimension holding both dimensions used for parallel coordinates chart.
+                let dim = instance._dataset._cf_dimensions[instance._axes_attributes.x + ":" + instance._axes_attributes.y];
+                // Aggregate conditions.
+                let conditions = {};
+                for (let xValue in brushedThresholds) {
+                    if (brushedThresholds.hasOwnProperty(xValue)) {
+                        conditions[xValue] = brushedThresholds[xValue];
+                    }
+                }
+                console.log(brushedThresholds);
+
+                // Filter dimension for this objective by the selected objective thresholds.
+                // Return true if datapoint's value on y-axis lies in interval defined by user on the corrsponding
+                // x-axis.
+                dim.filter(function(d) {
+                    // d[0] corresponds to value on x-axis, d[1] to value on y-axis.
+
+                    // If value on x-axis not selected by user: Filter all.
+                    if (!(d[0] in brushedThresholds))
+                        return true;
+
+                    // Otherwise: Check if value is inside interval.
+                    return d[1] >= brushedThresholds[d[0]][0] && d[1] <= brushedThresholds[d[0]][1];
+                });
+
+                // Redraw all charts after filter operation.
+                dc.redrawAll(instance._panel._operator._target);
+            }, 250))
             .brushMode("1D-axes");
 
         // this._cf_chart.svg.selectAll("text").style("font", "10px sans-serif");
+    }
+
+    /**
+     * Implement methods necessary for dc.js hook and integrate it into it's chart registry.
+     */
+    _registerChartInDC()
+    {
+        // --------------------------------
+        // 1. Implement necessary elements
+        // of dc.js' interface for charts.
+        // --------------------------------
+
+        let instance = this;
+
+        this._cf_chart.redraw       = function() {
+            // Update filtered IDs.
+            instance._updateFilteredIDs();
+
+            // Redraw chart.
+            instance._cf_chart.render();
+        };
+
+        this._cf_chart.filterAll    = function() {
+            // Set all records as filtered.
+            instance._filteredIDs = new Set(instance._dataset._data.map(record => +record.id))
+            // Reset brush.
+            instance._cf_chart.brushReset();
+        };
+
+        // --------------------------------
+        // 2. Register parcoords plot in
+        // dc.js' registry.
+        // --------------------------------
+
+        dc.chartRegistry.register(this._cf_chart, this._panel._operator._target);
+    }
+
+    /**
+     * Updates filtered IDs.
+     * @private
+     */
+    _updateFilteredIDs()
+    {
+        // Get filtered items, fill dictionary for filtered records' IDs.
+        let filteredItems = this._dataset._cf_dimensions[this._axes_attributes.x].top(Infinity);
+
+        // Reset dictionary with filtered IDs.
+        this._filteredIDs = new Set(filteredItems.map(record => +record.id));
     }
 }
