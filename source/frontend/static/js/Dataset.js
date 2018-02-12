@@ -41,9 +41,6 @@ export default class Dataset
         // Set up singular dimensions (one dimension per attribute).
         this.initSingularDimensionsAndGroups();
 
-        // Calculate extrema.
-        this.calculateExtrema();
-
         // Set up histogram dimensions.
         this.initHistogramDimensionsAndGroups();
 
@@ -55,25 +52,50 @@ export default class Dataset
 
     /**
      * Calculates extrema for all singular dimensions.
+     * @param attribute
      */
-    calculateExtrema()
+    calculateSingularExtremaByAttribute(attribute)
     {
-        let hyperparameters = [];
-        for (let hyperparam in this._metadata.hyperparameters) {
-            hyperparameters.push(this._metadata.hyperparameters[hyperparam].name);
-        }
+        // Calculate extrema for singular dimensions.
+        this._cf_extrema[attribute] = {
+            min: this._cf_dimensions[attribute].bottom(1)[0][attribute],
+            max: this._cf_dimensions[attribute].top(1)[0][attribute]
+        };
+        // Update extrema by padding values (hardcoded to 10%) for x-axis.
+        this._cf_intervals[attribute]   = this._cf_extrema[attribute].max - this._cf_extrema[attribute].min;
+        this._cf_extrema[attribute].min -= this._cf_intervals[attribute] / 3.0;
+        this._cf_extrema[attribute].max += this._cf_intervals[attribute] / 3.0;
+    }
 
-        for (let attribute of hyperparameters.concat(this._metadata.objectives)) {
-            this._cf_extrema[attribute] = {
-                min: this._cf_dimensions[attribute].bottom(1)[0][attribute],
-                max: this._cf_dimensions[attribute].top(1)[0][attribute]
-            };
+    /**
+     * Calculates extrema for all histogram dimensions/groups.
+     * @param attribute
+     * @param dataType "categorical" or "numerical". Distinction is necessary due to diverging structure of histogram
+     * data.
+     */
+    calculateHistogramExtremaForAttribute(attribute, dataType)
+    {
+        // Calculate extrema for histograms.
+        let histogramAttribute  = attribute + "#histogram";
+        let sortedData          = this._cf_groups[histogramAttribute].all();
+        // Sort data by number of entries in this attribute's histogram.
+        sortedData.sort(function(entryA, entryB) {
+            let countA = dataType === "numerical" ? entryA.value.count : entryA.value;
+            let countB = dataType === "numerical" ? entryB.value.count : entryB.value;
 
-            // Update extrema by padding values (hardcoded to 10%) for x-axis.
-            this._cf_intervals[attribute]   = this._cf_extrema[attribute].max - this._cf_extrema[attribute].min;
-            this._cf_extrema[attribute].min -= this._cf_intervals[attribute] / 3.0;
-            this._cf_extrema[attribute].max += this._cf_intervals[attribute] / 3.0;
-        }
+            return countA > countB ? 1 : (countB > countA ? -1 : 0);
+        });
+
+        // Determine extrema.
+        this._cf_extrema[histogramAttribute] = {
+            min: ((dataType === "numerical") ? sortedData[0].value.count : sortedData[0].value),
+            max: ((dataType === "numerical") ? sortedData[sortedData.length - 1].value.count : sortedData[sortedData.length - 1].value)
+        };
+
+        // Update extrema by padding values (hardcoded to 10%) for x-axis.
+        this._cf_intervals[histogramAttribute]   = this._cf_extrema[histogramAttribute].max - this._cf_extrema[histogramAttribute].min;
+        this._cf_extrema[histogramAttribute].min -= this._cf_intervals[histogramAttribute] / 3.0;
+        this._cf_extrema[histogramAttribute].max += this._cf_intervals[histogramAttribute] / 3.0;
     }
 
     /**
@@ -85,7 +107,7 @@ export default class Dataset
         let hyperparameters = Utils.unfoldHyperparameterObjectList(this._metadata.hyperparameters);
 
         // -------------------------------------
-        // Create dimensions and grouops.
+        // Create dimensions and groups.
         // -------------------------------------
 
         // Create dimensions for hyperparameters and objectives.
@@ -94,9 +116,10 @@ export default class Dataset
             this._cf_dimensions[attribute] = this._crossfilter.dimension(
                 function(d) { return d[attribute]; }
             );
-        }
 
-        // Create filter
+            // Calculate extrema.
+            this.calculateSingularExtremaByAttribute(attribute);
+        }
     }
 
     /**
@@ -125,6 +148,9 @@ export default class Dataset
 
                 // Create group for histogram.
                 this._cf_groups[attribute + "#histogram"] = this._generateGroupForHistogram(attribute);
+
+                // Calculate extrema.
+                this.calculateHistogramExtremaForAttribute(attribute, "numerical");
             }
 
             // Else if this is a categorical hyperparameter: Return value itself.
@@ -135,6 +161,9 @@ export default class Dataset
 
                 // Create group for histogram.
                 this._cf_groups[attribute + "#histogram"] = this._cf_dimensions[attribute + "#histogram"].group().reduceCount();
+
+                // Calculate extrema.
+                this.calculateHistogramExtremaForAttribute(attribute, "categorical");
             }
         }
     }

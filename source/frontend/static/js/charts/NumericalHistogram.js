@@ -35,15 +35,17 @@ export default class NumericalHistogram extends Histogram
         let dimensions  = this._dataset._cf_dimensions;
         let key         = this._axes_attributes.x + "#histogram";
 
+        // console.log(this._dataset._cf_groups[instance._axes_attributes.x + "#histogram"].top(1)[0]);
         // Configure chart.
         this._cf_chart
             .height(instance._style.height)
             .width(instance._style.width)
             .valueAccessor( function(d) { return  d.value.count; } )
-            .elasticY(true)
+            .elasticY(false)
             .x(d3.scale.linear().domain(
                 [extrema[instance._axes_attributes.x].min, extrema[instance._axes_attributes.x].max])
             )
+            .y(d3.scale.linear().domain([0, extrema[key].max]))
             .brushOn(true)
             .dimension(dimensions[key])
             .group(this._dataset.cf_groups[key])

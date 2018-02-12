@@ -34,14 +34,14 @@ export default class CategoricalHistogram extends Histogram
         let extrema     = this._dataset._cf_extrema;
         let dimensions  = this._dataset._cf_dimensions;
         let key         = this._axes_attributes.x + "#histogram";
-
+        
         // Configure chart.
         this._cf_chart
             .height(instance._style.height)
             .width(instance._style.width)
-
-            .elasticY(true)
+            .elasticY(false)
             .x(d3.scale.ordinal())
+            .y(d3.scale.linear().domain([0, extrema[key].max]))
             .xUnits(dc.units.ordinal)
             .brushOn(true)
             .barPadding(0.1)
