@@ -34,7 +34,7 @@ export default class CategoricalHistogram extends Histogram
         let extrema     = this._dataset._cf_extrema;
         let dimensions  = this._dataset._cf_dimensions;
         let key         = this._axes_attributes.x + "#histogram";
-        
+
         // Configure chart.
         this._cf_chart
             .height(instance._style.height)

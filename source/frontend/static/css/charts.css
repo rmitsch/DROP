@@ -51,7 +51,9 @@ span.filter-reduce-row-label-text {
 }
 
 .parcoords-container {
-    height: 120px;
+    height:calc(120px - 8px);
+    /* Approxiate workaround to level other charts with parallel coordintes. */
+    padding-top: 8px;
 }
 
 .parcoords {

@@ -1,9 +1,9 @@
-import Scatterplot from "./Scatterplot.js";
+import ParetoScatterplot from "./ParetoScatterplot.js";
 
 /**
  * Scatterplots with dots connected by specified degree of freedom.
  */
-export default class ParetoScatterplot extends Scatterplot
+export default class CategoricalParetoScatterplot extends ParetoScatterplot
 {
     /**
      * Instantiates new ParetoScatterplot.
@@ -20,9 +20,6 @@ export default class ParetoScatterplot extends Scatterplot
     constructor(name, panel, attributes, dataset, style, parentDivID)
     {
         super(name, panel, attributes, dataset, style, parentDivID);
-
-        // Update involved CSS classes.
-        $("#" + this._target).addClass("pareto-scatterplot");
     }
 
     /**
@@ -34,17 +31,11 @@ export default class ParetoScatterplot extends Scatterplot
      */
     connectBy(hyperparameter = 'native')
     {
-        throw new Error("ParetoScatterplot.connectBy(): Not implemented yet.");
-    }
-
-    render()
-    {
-        this._cf_chart.render();
+        throw new Error("CategoricalParetoScatterplot.connectBy(): Not implemented yet.");
     }
 
     constructCFChart()
     {
-        console.log(this._name);
         // Use operator's target ID as group name.
         this._cf_chart = dc.scatterPlot(
             "#" + this._target,
@@ -59,25 +50,19 @@ export default class ParetoScatterplot extends Scatterplot
         let dimensions  = this._dataset._cf_dimensions;
         let key         = this._axes_attributes.x + ":" + this._axes_attributes.y;
 
-        if (this._axes_attributes.x === "metric") {
-            console.log(instance._axes_attributes.y + "...");
-            console.log(extrema[instance._axes_attributes.y]);
-            console.log(instance._axes_attributes.x + "...");
-            console.log(extrema[instance._axes_attributes.x]);
-
-        }
-
         // Configure chart.
         this._cf_chart
             .height(instance._style.height)
             .width(instance._style.width)
             .useCanvas(true)
-            .x(d3.scale.linear().domain(
-                [extrema[instance._axes_attributes.x].min, extrema[instance._axes_attributes.x].max]
-            ))
+            // .x(d3.scale.linear().domain(
+            //     [extrema[instance._axes_attributes.x].min, extrema[instance._axes_attributes.x].max])
+            // )
+            .x(d3.scale.ordinal().domain(["cosine", "seuclidean"]))
+            .xUnits(dc.units.ordinal)
             .y(d3.scale.linear().domain(
-                [extrema[instance._axes_attributes.y].min, extrema[instance._axes_attributes.y].max]
-            ))
+                [extrema[instance._axes_attributes.y].min, extrema[instance._axes_attributes.y].max])
+            )
             .xAxisLabel(instance._style.showAxisLabels ? instance._axes_attributes.x : null)
             .yAxisLabel(instance._style.showAxisLabels ? instance._axes_attributes.y : null)
             .clipPadding(0)
@@ -87,6 +72,7 @@ export default class ParetoScatterplot extends Scatterplot
             .existenceAccessor(function(d) {
                 return d.value.items.length > 0;
             })
+            .brushOn(true)
             .mouseZoomable(true)
             .excludedSize(instance._style.excludedSymbolSize)
             .excludedOpacity(instance._style.excludedOpacity)
@@ -102,7 +88,7 @@ export default class ParetoScatterplot extends Scatterplot
             // Filter on end of brushing action, not meanwhile (performance suffers otherwise).
             .filterOnBrushEnd(true)
             .excludedOpacity(instance._style.excludedOpacity)
-            .mouseZoomable(true)
+            .mouseZoomable(false)
             .margins({top: 0, right: 0, bottom: 25, left: 25});
 
         // Set number of ticks.

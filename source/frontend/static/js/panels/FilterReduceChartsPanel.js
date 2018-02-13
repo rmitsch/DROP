@@ -3,6 +3,7 @@ import Utils from "../Utils.js";
 import ParetoScatterplot from "../charts/ParetoScatterplot.js";
 import NumericalHistogram from "../charts/NumericalHistogram.js";
 import CategoricalHistogram from "../charts/CategoricalHistogram.js";
+import CategoricalParetoScatterplot from "../charts/CategoricalParetoScatterplot.js";
 import ParallelCoordinates from "../charts/ParallelCoordinates.js"
 
 /**
@@ -152,6 +153,24 @@ export default class FilterReduceChartsPanel extends Panel
         // 1. Hyperparameter-objective combinations.
         // -----------------------------------
 
+        this._createHyperparameterObjectiveScatterplots(dataset, style, true);
+
+        // -----------------------------------
+        // 2. Objective-objective combinations.
+        // -----------------------------------
+
+        this._createObjectiveObjectiveScatterplots(dataset, style, true);
+    }
+
+    /**
+     * Creates hyperparameter-objective scatterplots.
+     * @param dataset
+     * @param style
+     * @param render Flag determining whether plots should be rendered immediately.
+     * @private
+     */
+    _createHyperparameterObjectiveScatterplots(dataset, style, render)
+    {
         // Iterate over hyperparameter.
         let hyperparameterIndex = 0;
         for (let hyperparameter of dataset.metadata.hyperparameters) {
@@ -163,45 +182,55 @@ export default class FilterReduceChartsPanel extends Panel
                 updatedStyle.numberOfTicks.y    = hyperparameterIndex === 0 ? updatedStyle.numberOfTicks.y : updatedStyle.numberOfYTicksInFirstRow;
                 updatedStyle.numberOfTicks.x    = objectiveIndex === dataset.metadata.objectives.length - 1 ? updatedStyle.numberOfXTicksInLastRow : updatedStyle.numberOfTicks.x;
 
-                // Don't display categorical values as scatterplot.
-                if (hyperparameter.type !== "categorical") {
-                    // Instantiate new scatterplot.
-                    let scatterplot = new ParetoScatterplot(
-                        hyperparameter.name + ":" + objective,
-                        this,
-                        [hyperparameter.name, objective],
-                        dataset,
-                        updatedStyle,
-                        // Place chart in previously generated container div.
-                        this._containerDivIDs[hyperparameter.name]
-                    );
-                    scatterplot.render();
-                }
+                // Instantiate new scatterplot.
+                let scatterplot = new ParetoScatterplot(
+                    hyperparameter.name + ":" + objective,
+                    this,
+                    // If hyperparameter is categorical: Use suffix "*" to enforce usage of numerical
+                    // representation.
+                    [
+                        hyperparameter.name + (hyperparameter.type === "categorical" ? "*" : ""),
+                        objective
+                    ],
+                    dataset,
+                    updatedStyle,
+                    // Place chart in previously generated container div.
+                    this._containerDivIDs[hyperparameter.name]
+                );
 
-                // If hyperparameter is of categorical nature: Instantiate parallel coordinates.
-                else {
-                    let parCorPlot = new ParallelCoordinates(
-                        hyperparameter.name + ":" + objective,
-                        this,
-                        [hyperparameter.name, objective],
-                        dataset,
-                        updatedStyle,
-                        // Place chart in previously generated container div.
-                        this._containerDivIDs[hyperparameter.name]
-                    );
-                    parCorPlot.render();
-                }
+                if (render)
+                    scatterplot.render();
+
+                    // let parCorPlot = new ParallelCoordinates(
+                    //     hyperparameter.name + ":" + objective,
+                    //     this,
+                    //     [hyperparameter.name, objective],
+                    //     dataset,
+                    //     updatedStyle,
+                    //     // Place chart in previously generated container div.
+                    //     this._containerDivIDs[hyperparameter.name]
+                    // );
+                    //
+                    // if (render)
+                    //     parCorPlot.render();
+
 
                 objectiveIndex++;
             }
 
             hyperparameterIndex++;
         }
+    }
 
-        // -----------------------------------
-        // 2. Objective-objective combinations.
-        // -----------------------------------
-
+    /**
+     * Creates objective-objective scatterplots.
+     * @param dataset
+     * @param style
+     * @param render Flag determining whether plots should be rendered immediately.
+     * @private
+     */
+    _createObjectiveObjectiveScatterplots(dataset, style, render)
+    {
         // Iterate over objectives.
         for (let i = 0; i < dataset.metadata.objectives.length; i++) {
             let objective1 = dataset.metadata.objectives[i];
@@ -217,19 +246,25 @@ export default class FilterReduceChartsPanel extends Panel
             for (let j = i + 1; j < dataset.metadata.objectives.length; j++) {
                 let objective2 = dataset.metadata.objectives[j];
 
+                // Adapt style settings, based on whether this is the first scatterplot or not.
+                let updatedStyle                = $.extend(true, {}, style);
+                updatedStyle.numberOfTicks.y    = 0;
+                updatedStyle.numberOfTicks.x    = j === dataset.metadata.objectives.length - 1 ? updatedStyle.numberOfXTicksInLastRow : updatedStyle.numberOfTicks.x;
+
+
                 // Instantiate new scatterplot.
                 let scatterplot = new ParetoScatterplot(
                     objective1 + ":" + objective2,
                     this,
                     [objective1, objective2],
                     dataset,
-                    style,
+                    updatedStyle,
                     // Place chart in previously generated container div.
                     this._containerDivIDs[objective1]
                 );
-
-                // Render scatterplot.
-                scatterplot.render();
+                if (render)
+                    // Render scatterplot.
+                    scatterplot.render();
             }
         }
     }
