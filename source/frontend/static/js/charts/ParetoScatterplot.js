@@ -44,7 +44,6 @@ export default class ParetoScatterplot extends Scatterplot
 
     constructCFChart()
     {
-        console.log(this._name);
         // Use operator's target ID as group name.
         this._cf_chart = dc.scatterPlot(
             "#" + this._target,
@@ -59,13 +58,12 @@ export default class ParetoScatterplot extends Scatterplot
         let dimensions  = this._dataset._cf_dimensions;
         let key         = this._axes_attributes.x + ":" + this._axes_attributes.y;
 
-        if (this._axes_attributes.x === "metric") {
-            console.log(instance._axes_attributes.y + "...");
-            console.log(extrema[instance._axes_attributes.y]);
-            console.log(instance._axes_attributes.x + "...");
-            console.log(extrema[instance._axes_attributes.x]);
-
-        }
+        NEXT:
+            - use xAxis().tickValues to set ordinal ticks for categorical chart (fix space problem later)
+            - add table
+            - fix bug: non-selected point in currently active chart shouldn't be displayed'
+            - improve: show lines between inactive points in series in gray instead not at all (solution similart to point above)
+            - add scrollpanes to layout
 
         // Configure chart.
         this._cf_chart

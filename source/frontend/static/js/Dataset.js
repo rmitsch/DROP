@@ -25,6 +25,8 @@ export default class Dataset
         this._dataIndicesByID   = {};
         this._metadata          = metadata;
         this._binCount          = binCount;
+        // Defines how much padding (relative to the shown interval) any axis should have.
+        this._axisPaddingRatio  = 6.0;
 
         // Extract categorical hyperparameter for later shorthand usage.
         this._categoricalHyperparameterSet = this._extractCategoricalHyperparameters();
@@ -72,8 +74,8 @@ export default class Dataset
         };
         // Update extrema by padding values (hardcoded to 10%) for x-axis.
         this._cf_intervals[attribute]   = this._cf_extrema[attribute].max - this._cf_extrema[attribute].min;
-        this._cf_extrema[attribute].min -= this._cf_intervals[attribute] / 5.0;
-        this._cf_extrema[attribute].max += this._cf_intervals[attribute] / 5.0;
+        this._cf_extrema[attribute].min -= this._cf_intervals[attribute] / this._axisPaddingRatio;
+        this._cf_extrema[attribute].max += this._cf_intervals[attribute] / this._axisPaddingRatio;
     }
 
     /**
@@ -103,8 +105,8 @@ export default class Dataset
 
         // Update extrema by padding values (hardcoded to 10%) for x-axis.
         this._cf_intervals[histogramAttribute]   = this._cf_extrema[histogramAttribute].max - this._cf_extrema[histogramAttribute].min;
-        this._cf_extrema[histogramAttribute].min -= this._cf_intervals[histogramAttribute] / 5.0;
-        this._cf_extrema[histogramAttribute].max += this._cf_intervals[histogramAttribute] / 5.0;
+        this._cf_extrema[histogramAttribute].min -= this._cf_intervals[histogramAttribute] / this._axisPaddingRatio;
+        this._cf_extrema[histogramAttribute].max += this._cf_intervals[histogramAttribute] / this._axisPaddingRatio;
     }
 
     /**
@@ -284,6 +286,11 @@ export default class Dataset
             let variantAttribute = this._metadata.hyperparameters[attributeIndex].name;
             // Generate series for this variant attribute.
             idToSeriesMappingByAttribute[variantAttribute] = this._mapRecordsToSeries(variantAttribute);
+
+            // If attribute is categorical: Also create series for its numerical representation.
+            if (this._categoricalHyperparameterSet.has(variantAttribute))
+                // Use already created series for categorical representation of this attribute.
+                idToSeriesMappingByAttribute[variantAttribute + "*"] = idToSeriesMappingByAttribute[variantAttribute];
         }
 
         return idToSeriesMappingByAttribute;
