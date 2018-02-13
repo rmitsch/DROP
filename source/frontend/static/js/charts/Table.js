@@ -25,6 +25,9 @@ export default class Table extends Chart
         // Create div structure.
         let tableID = this._createDivStructure();
 
+        // Select dimension to use for later look-ups.
+        this._dimension = this._dataset.cf_dimensions[this._dataset.metadata.hyperparameters[0].name];
+
         // Generate table.
         this._constructFCChart(tableID);
 
@@ -42,9 +45,7 @@ export default class Table extends Chart
      */
     _initTableData()
     {
-        let attribute           = this._dataset.metadata.hyperparameters[0].name;
-        let dim                 = this._dataset.cf_dimensions[attribute];
-        let records             = dim.top(Infinity);
+        let records             = this._dimension.top(Infinity);
         let transformedRecords  = [records.length];
 
         // Transform records to format accepted by DataTable.
@@ -59,11 +60,10 @@ export default class Table extends Chart
 
         this._cf_chart.rows.add(transformedRecords);
         this._cf_chart.draw();
-
-        NEXT UP:
-            - Integration into crossfilter - reacting
-            - Integration into crossfilter - acting
-            - Styling
+        //
+        // NEXT UP:
+        //     - Integration into crossfilter - acting/highlighting
+        //     - Styling
     }
 
     /**
@@ -73,7 +73,10 @@ export default class Table extends Chart
      */
     _constructFCChart(tableID)
     {
-        this._cf_chart = $("#" + tableID).DataTable();
+        this._cf_chart = $("#" + tableID).DataTable({
+            scrollX: true,
+            fixedColumns: false
+        });
     }
 
     _createDivStructure()
@@ -108,25 +111,34 @@ export default class Table extends Chart
 
         let instance = this;
 
-        this._cf_chart.render = function() {
-            console.log("render")
+        this._cf_chart.render       = function() {
+            // Redraw chart.
+            instance._cf_chart.draw();
         };
 
         this._cf_chart.redraw       = function() {
-            console.log("redraw");
             // Update filtered IDs.
-            // instance._updateFilteredIDs();
+            let records = instance._dimension.top(Infinity);
+            let filteredIDs = new Set();
+            for (let i = 0; i < records.length; i++) {
+                filteredIDs.add(records[i].id)
+            }
+
+            // Filter table data using an ugly hack 'cause DataTable.js can't do obvious things.
+            $.fn.dataTableExt.afnFiltering.push(
+                function (oSettings, aData, iDataIndex) {
+                    return filteredIDs.has(+aData[0]);
+                }
+            );
 
             // Redraw chart.
-            // instance._cf_chart.render();
+            instance._cf_chart.draw();
         };
+
         //
         this._cf_chart.filterAll    = function() {
-        //     // Set all records as filtered.
-        //     instance._filteredIDs = new Set(instance._dataset._data.map(record => +record.id))
-        //     // Reset brush.
-        //     instance._cf_chart.brushReset();
-            console.log("filter all");
+            // Reset brush.
+            instance._cf_chart.draw();
         };
 
         // --------------------------------

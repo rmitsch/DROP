@@ -59,3 +59,15 @@ span.filter-reduce-row-label-text {
 .parcoords {
     position: absolute;
 }
+
+.filter-reduce-charts-panel {
+    display: inline-block;
+    width: 65%;
+    vertical-align: top;
+}
+
+.filter-reduce-table-panel {
+    display:inline-block;
+    width: 33%;
+    vertical-align: top;
+}
