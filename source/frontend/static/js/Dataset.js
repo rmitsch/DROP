@@ -36,7 +36,9 @@ export default class Dataset
             this._dataIndicesByID[this._data[i].id] = i;
         }
 
-        // Translate categorical variables into numerical ones.
+        // Translate categorical variables into numerical ones; store maps for translation.
+        this._categoricalToNumericalValues = {};
+        this._numericalToCategoricalValues = {};
         this._discretizeCategoricalHyperparameters();
 
         // Set up containers for crossfilter data.
@@ -353,10 +355,13 @@ export default class Dataset
         // -------------------------------------------------
         // 1. Get metadata on categorical hyperparameters.
         // -------------------------------------------------
-        let categoricalHyperparameters = {};
+
         for (let attributeIndex in this._metadata.hyperparameters) {
-            if (this._metadata.hyperparameters[attributeIndex].type === "categorical")
-                categoricalHyperparameters[this._metadata.hyperparameters[attributeIndex].name] = {};
+            if (this._metadata.hyperparameters[attributeIndex].type === "categorical") {
+                let hyperparameterName = this._metadata.hyperparameters[attributeIndex].name;
+                this._categoricalToNumericalValues[hyperparameterName] = {};
+                this._numericalToCategoricalValues[hyperparameterName] = {};
+            }
         }
 
         // -------------------------------------------------
@@ -364,23 +369,25 @@ export default class Dataset
         // -------------------------------------------------
 
         for (let i = 0; i < this._data.length; i++) {
-            for (let param in categoricalHyperparameters) {
-                if (!(this._data[i][param] in categoricalHyperparameters[param])) {
-                    categoricalHyperparameters[param][this._data[i][param]] = null;
+            for (let param in this._categoricalToNumericalValues) {
+                if (!(this._data[i][param] in this._categoricalToNumericalValues[param])) {
+                    this._categoricalToNumericalValues[param][this._data[i][param]] = null;
                 }
             }
         }
 
         // -------------------------------------------------
         // 3. Assign numerical reprentations based on
-        // categories' descending alphabetical order.
+        // categories' ascending alphabetical order.
         // -------------------------------------------------
 
         // Use positive integer as numerical represenation.
-        for (let param in categoricalHyperparameters) {
-            let keys = Object.keys(categoricalHyperparameters[param]).sort();
+        for (let param in this._categoricalToNumericalValues) {
+            // Assign numerical representations in alphabetical order.
+            let keys = Object.keys(this._categoricalToNumericalValues[param]).sort();
             for (let i = 0; i < keys.length; i++) {
-                categoricalHyperparameters[param][keys[i]] = i + 1;
+                this._categoricalToNumericalValues[param][keys[i]]  = i + 1;
+                this._numericalToCategoricalValues[param][i + 1]    = keys[i];
             }
         }
 
@@ -391,8 +398,8 @@ export default class Dataset
 
         // Suffix * is used to indiciate an attribute's numerical represenation.
         for (let i = 0; i < this._data.length; i++) {
-            for (let param in categoricalHyperparameters) {
-                this._data[i][param + "*"] = categoricalHyperparameters[param][this._data[i][param]];
+            for (let param in this._categoricalToNumericalValues) {
+                this._data[i][param + "*"] = this._categoricalToNumericalValues[param][this._data[i][param]];
             }
         }
     }
@@ -451,6 +458,16 @@ export default class Dataset
     get idToSeriesMappingByHyperparameter()
     {
         return this._seriesMappingByHyperparameter;
+    }
+
+    get categoricalToNumericalValues()
+    {
+        return this._categoricalToNumericalValues;
+    }
+
+    get numericalToCategoricalValues()
+    {
+        return this._numericalToCategoricalValues;
     }
 
     /**

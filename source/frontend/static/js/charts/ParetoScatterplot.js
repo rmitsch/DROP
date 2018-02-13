@@ -58,12 +58,12 @@ export default class ParetoScatterplot extends Scatterplot
         let dimensions  = this._dataset._cf_dimensions;
         let key         = this._axes_attributes.x + ":" + this._axes_attributes.y;
 
-        NEXT:
-            - use xAxis().tickValues to set ordinal ticks for categorical chart (fix space problem later)
-            - add table
-            - fix bug: non-selected point in currently active chart shouldn't be displayed'
-            - improve: show lines between inactive points in series in gray instead not at all (solution similart to point above)
-            - add scrollpanes to layout
+        // NEXT:
+        //     - use xAxis().tickValues to set ordinal ticks for categorical chart (fix space problem later)
+        //     - add table
+        //     - fix bug: non-selected point in currently active chart shouldn't be displayed'
+        //     - improve: show lines between inactive points in series in gray instead not at all (solution similart to point above)
+        //     - add scrollpanes to layout
 
         // Configure chart.
         this._cf_chart
@@ -76,6 +76,7 @@ export default class ParetoScatterplot extends Scatterplot
             .y(d3.scale.linear().domain(
                 [extrema[instance._axes_attributes.y].min, extrema[instance._axes_attributes.y].max]
             ))
+
             .xAxisLabel(instance._style.showAxisLabels ? instance._axes_attributes.x : null)
             .yAxisLabel(instance._style.showAxisLabels ? instance._axes_attributes.y : null)
             .clipPadding(0)
@@ -103,13 +104,27 @@ export default class ParetoScatterplot extends Scatterplot
             .mouseZoomable(true)
             .margins({top: 0, right: 0, bottom: 25, left: 25});
 
-        // Set number of ticks.
+        // Set number of ticks for y-axis.
         this._cf_chart.yAxis().ticks(instance._style.numberOfTicks.y);
         this._cf_chart.xAxis().ticks(instance._style.numberOfTicks.x);
 
-        // this._cf_chart.on('pretransition', function(chart) {
-        //     instance._cf_chart.selectAll('g.row').on('mouseover', function() {
-        //     });
-        // });
+        // If this x-axis hosts categorical argument: Print categorical representations of numerical values.
+        if (this._axes_attributes.x.indexOf("*") !== -1) {
+            // Get original name by removing suffix "*" from attribute name.
+            let originalAttributeName = instance._axes_attributes.x.slice(0, -1);
+
+            // Overwrite number of ticks with number of possible categorical values.
+            console.log(Object.keys(this._dataset.numericalToCategoricalValues[originalAttributeName]).length);
+            this._cf_chart.xAxis().ticks(
+                Object.keys(this._dataset.numericalToCategoricalValues[originalAttributeName]).length
+            );
+
+            // Use .tickFormat to convert numerical to original categorical representations.
+            this._cf_chart.xAxis().tickFormat(function (tickValue) {
+                // Print original categorical for this numerical representation.
+                return tickValue in instance._dataset.numericalToCategoricalValues[originalAttributeName] ?
+                        instance._dataset.numericalToCategoricalValues[originalAttributeName][tickValue] : "";
+            });
+        }
     }
 }
