@@ -79,7 +79,6 @@ export default class ParetoScatterplot extends Scatterplot
 
             .xAxisLabel(instance._style.showAxisLabels ? instance._axes_attributes.x : null)
             .yAxisLabel(instance._style.showAxisLabels ? instance._axes_attributes.y : null)
-            .clipPadding(0)
             .renderHorizontalGridLines(true)
             .dimension(dimensions[key])
             .group(this._dataset.cf_groups[key])
@@ -114,7 +113,6 @@ export default class ParetoScatterplot extends Scatterplot
             let originalAttributeName = instance._axes_attributes.x.slice(0, -1);
 
             // Overwrite number of ticks with number of possible categorical values.
-            console.log(Object.keys(this._dataset.numericalToCategoricalValues[originalAttributeName]).length);
             this._cf_chart.xAxis().ticks(
                 Object.keys(this._dataset.numericalToCategoricalValues[originalAttributeName]).length
             );

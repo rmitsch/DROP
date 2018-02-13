@@ -1,4 +1,6 @@
 import Panel from "./Panel.js";
+import Utils from "../Utils.js";
+import Table from "../charts/Table.js"
 
 /**
  * Panel holding table for selection of models in operator FilterReduce.
@@ -15,13 +17,20 @@ export default class FilterReduceTablePanel extends Panel
     {
         super(name, operator, parentDivID);
 
-        // For all hyper-parameter/objective combinations: Construct one scatterplot.
-        // Visual separation.
-        // For all hyper-objective/objective combinations: Construct one scatterplot.
+        // Update involved CSS classes.
+        $("#" + this._target).addClass("filter-reduce-table-panel");
 
-
-        // CONTINUE HERE: Draw scatterplots, test brushing/linking.
-        // Also: Style rules how (dynamic IDs)? Adaptions in terms of width/height, placement etc. probably necessary.
-        // ndx -> crossfilter
+        // Generate table.
+        let table = new Table(
+            "Model selection table",
+            this,
+            Utils.unfoldHyperparameterObjectList(
+                this._operator.dataset.metadata.hyperparameters
+            ).concat(this._operator.dataset.metadata.objectives),
+            this._operator.dataset,
+            null,
+            this._target
+        );
     }
+
 }

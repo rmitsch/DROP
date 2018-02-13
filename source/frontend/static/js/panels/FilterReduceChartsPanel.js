@@ -3,7 +3,6 @@ import Utils from "../Utils.js";
 import ParetoScatterplot from "../charts/ParetoScatterplot.js";
 import NumericalHistogram from "../charts/NumericalHistogram.js";
 import CategoricalHistogram from "../charts/CategoricalHistogram.js";
-import CategoricalParetoScatterplot from "../charts/CategoricalParetoScatterplot.js";
 import ParallelCoordinates from "../charts/ParallelCoordinates.js"
 
 /**
@@ -20,8 +19,11 @@ export default class FilterReduceChartsPanel extends Panel
     constructor(name, operator, parentDivID) {
         super(name, operator, parentDivID);
 
+        // Update involved CSS classes.
+        $("#" + this._target).addClass("filter-reduce-charts-panel");
+
         // Create div structure for child nodes.
-        let divStructure        = this.createDivStructure();
+        let divStructure        = this._createDivStructure();
         this._containerDivIDs   = divStructure.containerDivIDs;
         this._histogramDivIDs   = divStructure.histogramDivIDs;
 
@@ -273,7 +275,7 @@ export default class FilterReduceChartsPanel extends Panel
      * Create (hardcoded) div structure for child nodes.
      * @returns {Object}
      */
-    createDivStructure()
+    _createDivStructure()
     {
         let containerDivIDs = {};
         let histogramDivIDs = {};

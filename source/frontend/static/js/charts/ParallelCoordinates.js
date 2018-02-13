@@ -235,6 +235,8 @@ export default class ParallelCoordinates extends Chart
         // dc.js' registry.
         // --------------------------------
 
+        // Use operators ID as group ID (all panels in operator use the same dataset and therefore should be notified if
+        // filter conditions change).
         dc.chartRegistry.register(this._cf_chart, this._panel._operator._target);
     }
 
