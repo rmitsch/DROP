@@ -156,7 +156,7 @@ export default class Dataset
     _initHistogramDimensionsAndGroups()
     {
         let hyperparameters = Utils.unfoldHyperparameterObjectList(this._metadata.hyperparameters);
-        let attributes = hyperparameters.concat(this.metadata.objectives);
+        let attributes      = hyperparameters.concat(this.metadata.objectives);
         let instance        = this;
 
         for (let i = 0; i < attributes.length; i++) {
@@ -175,7 +175,9 @@ export default class Dataset
                 );
 
                 // Create group for histogram.
-                this._cf_groups[attribute + "#histogram"] = this._generateGroupWithCounts(attribute + "#histogram");
+                this._cf_groups[attribute + "#histogram"] = this._generateGroupWithCounts(
+                    attribute + "#histogram", [attribute]
+                );
 
                 // Calculate extrema.
                 this._calculateHistogramExtremaForAttribute(attribute, "numerical");
@@ -236,7 +238,9 @@ export default class Dataset
                     this._cf_dimensions[transposedKey] = this._cf_dimensions[combinedKey];
 
                     // Create group for scatterplot.
-                    this._cf_groups[combinedKey] = this._generateGroupWithCounts(combinedKey);
+                    this._cf_groups[combinedKey] = this._generateGroupWithCounts(
+                        combinedKey, [attribute1, attribute2]
+                    );
 
                     // Mirror group to transposed key.
                     this._cf_groups[transposedKey] = this._cf_groups[combinedKey];
@@ -248,15 +252,25 @@ export default class Dataset
     /**
      * Generates crossfilter group with information on number of elements..
      * @param attribute
+     * @param primitiveAttributes List of relevenat attributes in original records. Extrema information is only
+     * collected for these. Note of caution: Extrema are not to be considered reliable, since they aren't
+     * updated after splicing operations (still sufficient for barchart highlighting operations though, since barchart/
+     * group widths on x-axis don't change after splicing).
      * @returns Newly generated group.
      * @private
      */
-    _generateGroupWithCounts(attribute)
+    _generateGroupWithCounts(attribute, primitiveAttributes)
     {
         return this._cf_dimensions[attribute].group().reduce(
             function(elements, item) {
                elements.items.push(item);
                elements.count++;
+               // Update extrema.
+               for (let attr in elements.extrema) {
+                   elements.extrema[attr].min = item[attr] < elements.extrema[attr].min ? item[attr] : elements.extrema[attr].min;
+                   elements.extrema[attr].max = item[attr] > elements.extrema[attr].max ? item[attr] : elements.extrema[attr].max;
+               }
+
                return elements;
             },
             function(elements, item) {
@@ -265,7 +279,11 @@ export default class Dataset
                 return elements;
             },
             function() {
-                return {items: [], count: 0};
+                let extrema = {};
+                for (let i = 0; i < primitiveAttributes.length; i++)
+                    extrema[primitiveAttributes[i]] = {min: Number.MAX_VALUE, max: -Number.MAX_VALUE}
+
+                return {items: [], count: 0, extrema: extrema};
             }
         );
     }

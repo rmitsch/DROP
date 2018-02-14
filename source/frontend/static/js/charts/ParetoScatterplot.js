@@ -117,13 +117,6 @@ export default class ParetoScatterplot extends Scatterplot
                         instance._dataset.numericalToCategoricalValues[originalAttributeName][tickValue] : "";
             });
         }
-
-        NEXT:
-            - !move issues to github!
-            - scrollpanes
-            - highlight bars in histograms (table -> histograms)
-            - fix bug in scatterplot (data points selected in chart x -> inactive points/series are not greyed out)
-            - implement highlighting histograms -> scatterplots
     }
 
     highlight(id, source)
