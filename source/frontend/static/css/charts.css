@@ -60,16 +60,14 @@ span.filter-reduce-row-label-text {
     position: absolute;
 }
 
+.filter-reduce-operator {
+    height: 70%;
+}
+
 .filter-reduce-charts-panel {
-    display: inline-block;
-    width: 65%;
-    vertical-align: top;
 }
 
 .filter-reduce-table-panel {
-    display:inline-block;
-    width: 33%;
-    vertical-align: top;
 }
 
 /* Lower canvas' z-index so that highlighting is visible on top. */

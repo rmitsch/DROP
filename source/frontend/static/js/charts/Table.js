@@ -60,9 +60,6 @@ export default class Table extends Chart
 
         this._cf_chart.rows.add(transformedRecords);
         this._cf_chart.draw();
-        //
-        // NEXT UP:
-        //     - Integration into crossfilter - acting/highlighting
     }
 
     /**
@@ -81,16 +78,17 @@ export default class Table extends Chart
         // Highlight data point on hover in scatterplots & histograms.
         let instance = this;
         $("#" + tableID + " tbody").on('mouseenter', 'td', Utils.debounce(function () {
-            instance._panel._operator.highlight(
-                instance._cf_chart.row(this).data()[0], instance._target
-            );
-        }, 150));
+            if (instance._cf_chart.row(this).data() !== null)
+                instance._panel._operator.highlight(
+                        instance._cf_chart.row(this).data()[0], instance._target
+                );
+        }, 0));
         $("#" + tableID + " tbody").on('mouseout', 'td', Utils.debounce(function () {
             // Clear highlighting.
             instance._panel._operator.highlight(
                 null, instance._target
             );
-        }, 150));
+        }, 0));
     }
 
     _createDivStructure()

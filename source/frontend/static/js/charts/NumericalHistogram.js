@@ -73,7 +73,7 @@ export default class NumericalHistogram extends Histogram
 
                 this._cf_chart.selectAll('rect.bar').each(function(d){
                     if (value >= d.data.value.extrema[xAttribute].min && value <= d.data.value.extrema[xAttribute].max) {
-                        d3.select(this).attr("style", "fill: red");
+                        d3.select(this).attr("fill", "red");
                     }
                 });
             }
@@ -81,7 +81,7 @@ export default class NumericalHistogram extends Histogram
             // Reset all bars to default color.
             else {
                 this._cf_chart.selectAll('rect.bar').each(function(d){
-                    d3.select(this).attr("style", "fill: #1f77b4");
+                    d3.select(this).attr("fill", "#1f77b4");
                 });
             }
         }

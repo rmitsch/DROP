@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="./static/css/dropdown.css">
     <link rel="stylesheet" href="./static/css/skeleton.css">
     <link rel="stylesheet" href="./static/css/charts.css">
+    <link rel="stylesheet" href="./static/css/split-panes.css">
 
 
     <!-- Load icon. -->
@@ -34,26 +35,24 @@
     <!-- Base HTML template. Will be initialized with JS. -->
     <!------------------------------------------------------>
 
-    <div>
-        <div class="header">
-            <div class="pure-menu pure-menu-horizontal">
-                <a class="pure-menu-heading" id='icon-link' href="/"> <img src="./static/img/icon_white.png" class="navIconImage" alt="DROP" width="20px">DROP</a>
+    <div class="header">
+        <div class="pure-menu pure-menu-horizontal">
+            <a class="pure-menu-heading" id='icon-link' href="/"> <img src="./static/img/icon_white.png" class="navIconImage" alt="DROP" width="20px">DROP</a>
 
-                <ul class="pure-menu-list">
-                    <li class="pure-menu-item" id="menu_prototype" onclick="#">
-                        <a href="#menu_protoype" class="pure-menu-link">Prototype</a>
-                    </li>
+            <ul class="pure-menu-list">
+                <li class="pure-menu-item" id="menu_prototype" onclick="#">
+                    <a href="#menu_protoype" class="pure-menu-link">Prototype</a>
+                </li>
 
-                    <li class="pure-menu-item" id="menu_about" onclick="#">
-                        <a href="#menu_about" class="pure-menu-link">About</a>
-                    </li>
-                </ul>
-            </div>
+                <li class="pure-menu-item" id="menu_about" onclick="#">
+                    <a href="#menu_about" class="pure-menu-link">About</a>
+                </li>
+            </ul>
         </div>
+    </div>
 
-        <!-- Dashboard content loaded by jquery. -->
-        <div class="stage" id="stage">
-        </div>
+    <!-- Dashboard content loaded by jquery. -->
+    <div class="stage" id="stage">
     </div>
 
     <!------------------------------------------------------>
@@ -66,6 +65,8 @@
     <!-- jQuery data tables. -->
     <script src="./static/lib/jquery.datatables/jquery.dataTables.min.js"></script>
     <script src="./static/lib/jquery.datatables/dataTables.fixedColumns.min.js"></script>
+    <!-- Split panes. -->
+    <script src="./static/lib/split.min.js"></script>
     <!-- queue.js for dependency loading management (needed?). -->
     <script src="./static/lib/queue.js"></script>
     <!-- Range slider for (scented) widgets. -->

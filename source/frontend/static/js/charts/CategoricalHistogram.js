@@ -58,14 +58,13 @@ export default class CategoricalHistogram extends Histogram
     {
         if (source !== this._target) {
             if (id !== null) {
-                let value           = this._dataset.getDataByID(id)[this._axes_attributes.x];
-                let xAttribute      = this._axes_attributes.x;
+                let value = this._dataset.getDataByID(id)[this._axes_attributes.x];
 
                 this._cf_chart.selectAll('rect.bar').each(function(d){
                     // Since this is a categorical histogram, we can just access this group's key (one group <-> one bar
                     // <-> one category).
                     if (value === d.data.key) {
-                        d3.select(this).attr("style", "fill: red");
+                        d3.select(this).attr("fill", "red");
                     }
                 });
             }
@@ -73,7 +72,7 @@ export default class CategoricalHistogram extends Histogram
             // Reset all bars to default color.
             else {
                 this._cf_chart.selectAll('rect.bar').each(function(d){
-                    d3.select(this).attr("style", "fill: #1f77b4");
+                    d3.select(this).attr("fill", "#1f77b4");
                 });
             }
         }
