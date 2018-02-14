@@ -36,7 +36,6 @@ export default class FilterReduceOperator extends Operator
             "Hyperparameters & Objectives",
             this
         );
-        $("#" + frcPanel._target).addClass("split split-horizontal");
         this._panels[frcPanel.name] = frcPanel;
 
         // 2. Construct panel for selection table.
@@ -44,10 +43,11 @@ export default class FilterReduceOperator extends Operator
             "Model Selection",
             this
         );
-        $("#" + tablePanel._target).addClass("split split-horizontal");
         this._panels[tablePanel.name] = tablePanel;
 
         // Initialize split panes.
+        $("#" + frcPanel._target).addClass("split split-horizontal");
+        $("#" + tablePanel._target).addClass("split split-horizontal");
         Split(["#" + frcPanel._target, "#" + tablePanel._target], {
             sizes: [68, 32]
         });
