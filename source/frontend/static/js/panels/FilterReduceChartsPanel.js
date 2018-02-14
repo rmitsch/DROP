@@ -139,6 +139,7 @@ export default class FilterReduceChartsPanel extends Panel
                 );
             }
 
+            this._charts[histogram.name] = histogram;
             histogram.render();
         }
     }
@@ -200,6 +201,7 @@ export default class FilterReduceChartsPanel extends Panel
                     this._containerDivIDs[hyperparameter.name]
                 );
 
+                this._charts[scatterplot.name] = scatterplot;
                 if (render)
                     scatterplot.render();
 
@@ -264,6 +266,8 @@ export default class FilterReduceChartsPanel extends Panel
                     // Place chart in previously generated container div.
                     this._containerDivIDs[objective1]
                 );
+
+                this._charts[scatterplot.name] = scatterplot;
                 if (render)
                     // Render scatterplot.
                     scatterplot.render();

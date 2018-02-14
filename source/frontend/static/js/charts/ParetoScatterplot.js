@@ -58,13 +58,6 @@ export default class ParetoScatterplot extends Scatterplot
         let dimensions  = this._dataset._cf_dimensions;
         let key         = this._axes_attributes.x + ":" + this._axes_attributes.y;
 
-        // NEXT:
-        //     - use xAxis().tickValues to set ordinal ticks for categorical chart (fix space problem later)
-        //     - add table
-        //     - fix bug: non-selected point in currently active chart shouldn't be displayed'
-        //     - improve: show lines between inactive points in series in gray instead not at all (solution similart to point above)
-        //     - add scrollpanes to layout
-
         // Configure chart.
         this._cf_chart
             .height(instance._style.height)
@@ -123,6 +116,20 @@ export default class ParetoScatterplot extends Scatterplot
                 return tickValue in instance._dataset.numericalToCategoricalValues[originalAttributeName] ?
                         instance._dataset.numericalToCategoricalValues[originalAttributeName][tickValue] : "";
             });
+        }
+
+        NEXT:
+            - !move issues to github!
+            - scrollpanes
+            - highlight bars in histograms (table -> histograms)
+            - fix bug in scatterplot (data points selected in chart x -> inactive points/series are not greyed out)
+            - implement highlighting histograms -> scatterplots
+    }
+
+    highlight(id, source)
+    {
+        if (source !== this._target) {
+            this._cf_chart.highlight(id);
         }
     }
 }

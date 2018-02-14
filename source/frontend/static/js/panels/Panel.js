@@ -38,6 +38,18 @@ export default class Panel
         }
     }
 
+    /**
+     * Highlights data point in all charts in this panel.
+     * @param id
+     * @param source
+     */
+    highlight(id, source)
+    {
+        for (let key in this._charts) {
+            this._charts[key].highlight(id, source);
+        }
+    }
+
     get name()
     {
         return this._name;

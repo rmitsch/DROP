@@ -45,6 +45,18 @@ export default class Operator
         throw new TypeError("Operator.constructPanels(): Abstract method must not be called.");
     }
 
+    /**
+     * Highlights data point in all charts in all panels in this operator.
+     * @param id
+     * @param source
+     */
+    highlight(id, source)
+    {
+        for (let key in this._panels) {
+            this._panels[key].highlight(id, source);
+        }
+    }
+
     get name()
     {
         return this._name;

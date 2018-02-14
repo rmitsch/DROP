@@ -31,6 +31,6 @@ export default class FilterReduceTablePanel extends Panel
             null,
             this._target
         );
+        this._charts[table.name] = table;
     }
-
 }

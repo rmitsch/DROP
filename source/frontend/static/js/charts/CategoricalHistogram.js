@@ -53,4 +53,10 @@ export default class CategoricalHistogram extends Histogram
         // Set number of ticks (x-axis is ignored).
         this._cf_chart.yAxis().ticks(instance._style.numberOfTicks.y);
     }
+
+    highlight(id, source)
+    {
+        if (source !== this._target) {
+        }
+    }
 }

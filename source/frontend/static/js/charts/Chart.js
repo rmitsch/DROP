@@ -56,6 +56,16 @@ export default class Chart
         throw new TypeError("Chart.constructCFChart(): Abstract method must not be called.");
     }
 
+    /**
+     * Highlights representation of record with this ID in this chart.
+     * @param id
+     * @param source
+     */
+    highlight(id, source)
+    {
+        throw new TypeError("Chart.highlight(): Abstract method must not be called.");
+    }
+
     get name()
     {
         return this._name;

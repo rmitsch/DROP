@@ -63,4 +63,10 @@ export default class NumericalHistogram extends Histogram
         let binWidth = this._dataset._cf_intervals[this._axes_attributes.x] / this._dataset._binCount;
         this._cf_chart.xUnits(dc.units.fp.precision(binWidth * 1));
     }
+
+    highlight(id, source)
+    {
+        if (source !== this._target) {
+        }
+    }
 }

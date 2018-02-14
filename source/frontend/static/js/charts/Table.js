@@ -63,7 +63,6 @@ export default class Table extends Chart
         //
         // NEXT UP:
         //     - Integration into crossfilter - acting/highlighting
-        //     - Styling
     }
 
     /**
@@ -75,8 +74,23 @@ export default class Table extends Chart
     {
         this._cf_chart = $("#" + tableID).DataTable({
             scrollX: true,
+            scrollY: false,
             fixedColumns: false
         });
+
+        // Highlight data point on hover in scatterplots & histograms.
+        let instance = this;
+        $("#" + tableID + " tbody").on('mouseenter', 'td', Utils.debounce(function () {
+            instance._panel._operator.highlight(
+                instance._cf_chart.row(this).data()[0], instance._target
+            );
+        }, 150));
+        $("#" + tableID + " tbody").on('mouseout', 'td', Utils.debounce(function () {
+            // Clear highlighting.
+            instance._panel._operator.highlight(
+                null, instance._target
+            );
+        }, 150));
     }
 
     _createDivStructure()
@@ -149,5 +163,12 @@ export default class Table extends Chart
         // Use operators ID as group ID (all panels in operator use the same dataset and therefore should be notified if
         // filter conditions change).
         dc.chartRegistry.register(this._cf_chart, this._panel._operator._target);
+    }
+
+
+    highlight(id, source)
+    {
+        if (source !== this._target) {
+        }
     }
 }

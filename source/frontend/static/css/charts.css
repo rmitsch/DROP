@@ -71,3 +71,8 @@ span.filter-reduce-row-label-text {
     width: 33%;
     vertical-align: top;
 }
+
+/* Lower canvas' z-index so that highlighting is visible on top. */
+.filter-reduce-charts-container canvas {
+    z-index: -1;
+}

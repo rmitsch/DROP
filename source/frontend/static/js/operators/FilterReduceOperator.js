@@ -32,20 +32,17 @@ export default class FilterReduceOperator extends Operator
     constructPanels()
     {
         // 1. Construct panels for charts.
-        // let hypDiv = document.createElement('div');
-        // hypDiv.id = 'hyperparameterObjectivesPanel';
-        // hypDiv.className = 'panel';
-        // $(this._target)[0].append(hypDiv);
-
-        this.chartPanel = new FilterReduceChartsPanel(
+        let frcPanel = new FilterReduceChartsPanel(
             "Hyperparameters & Objectives",
             this
         );
+        this._panels[frcPanel.name] = frcPanel;
 
         // 2. Construct panel for selection table.
-        this.tablePanel = new FilterReduceTablePanel(
+        let tablePanel = new FilterReduceTablePanel(
             "Model Selection",
             this
         );
+        this._panels[tablePanel.name] = tablePanel;
     }
 }
