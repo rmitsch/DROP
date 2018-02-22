@@ -38,7 +38,7 @@
 .chart-placeholder {
     height: 120px;
     width: 120px;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
 }
 
 span.filter-reduce-row-label-text {
@@ -47,7 +47,7 @@ span.filter-reduce-row-label-text {
 }
 
 .histogram {
-    height: 80px;
+    height: 120px;
 }
 
 .parcoords-container {

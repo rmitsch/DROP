@@ -46,7 +46,7 @@ export default class FilterReduceChartsPanel extends Panel
         // Define style options for charts.
         let histogramStyle = {
             showAxisLabels: false,
-            height: 80,
+            height: 120,
             width: 120,
             excludedColor: "#ccc",
             numberOfTicks: {
@@ -108,8 +108,9 @@ export default class FilterReduceChartsPanel extends Panel
         for (let i = 0; i < attributes.length; i++) {
             let attribute   = attributes[i];
             let histogram   = null;
+
             // If attributes is objective or numerical hyperparameter: Spawn NumericalHistogram.
-            // This is hacky and you should be ashamed of yourself.
+            // This is hacky and I should be ashamed of myself.
             if (i < hyperparameters.length &&
                 dataset.metadata.hyperparameters[i].type === "numeric" ||
                 i >= hyperparameters.length) {
@@ -205,20 +206,6 @@ export default class FilterReduceChartsPanel extends Panel
                 if (render)
                     scatterplot.render();
 
-                    // let parCorPlot = new ParallelCoordinates(
-                    //     hyperparameter.name + ":" + objective,
-                    //     this,
-                    //     [hyperparameter.name, objective],
-                    //     dataset,
-                    //     updatedStyle,
-                    //     // Place chart in previously generated container div.
-                    //     this._containerDivIDs[hyperparameter.name]
-                    // );
-                    //
-                    // if (render)
-                    //     parCorPlot.render();
-
-
                 objectiveIndex++;
             }
 
@@ -238,13 +225,6 @@ export default class FilterReduceChartsPanel extends Panel
         // Iterate over objectives.
         for (let i = 0; i < dataset.metadata.objectives.length; i++) {
             let objective1 = dataset.metadata.objectives[i];
-
-            // Temporary: Fill slot with empty div.
-            for (let k = 0; k <= i; k++) {
-                let div         = document.createElement('div');
-                div.className   = 'chart-placeholder';
-                $("#" + this._containerDivIDs[objective1]).append(div);
-            }
 
             // Iterate over objectives.
             for (let j = i + 1; j < dataset.metadata.objectives.length; j++) {
@@ -301,15 +281,28 @@ export default class FilterReduceChartsPanel extends Panel
         let hyperparameters = Utils.unfoldHyperparameterObjectList(dataset.metadata.hyperparameters);
 
         // Iterate over all attributes.
+        let i = 0;
         for (let attribute of hyperparameters.concat(dataset.metadata.objectives)) {
             let div = Utils.spawnChildDiv(this._target, null, "filter-reduce-charts-container");
             containerDivIDs[attribute] = div.id;
 
-            // Add column label.
+            // Add column label/title.
             Utils.spawnChildDiv(div.id, null, "title", attribute);
+
+            // If this is a histogram for an objective-objective plot: Fill slots with placeholders to move obj.-obj.
+            // to push histograms onto the diagonale.
+            for (let k = i - hyperparameters.length; k >= 0; k--) {
+                Utils.spawnChildDiv(div.id, null, "chart-placeholder");
+                // let div         = document.createElement('div');
+                // div.className   = 'chart-placeholder';
+                // $("#" + this._containerDivIDs[attributes[i]]).append(div);
+            }
 
             // Add div for histogram.
             histogramDivIDs[attribute] = Utils.spawnChildDiv(div.id, null, "histogram").id;
+
+            // Keep track of number of processed attributes.
+            i++;
         }
 
         return {
