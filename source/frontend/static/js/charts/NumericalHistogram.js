@@ -47,6 +47,8 @@ export default class NumericalHistogram extends Histogram
             )
             .y(d3.scale.linear().domain([0, extrema[key].max]))
             .brushOn(true)
+            // Filter on end of brushing action, not meanwhile (performance suffers otherwise).
+            .filterOnBrushEnd(true)
             .dimension(dimensions[key])
             .group(this._dataset.cf_groups[key])
             .renderHorizontalGridLines(true)
