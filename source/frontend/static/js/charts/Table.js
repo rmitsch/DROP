@@ -14,6 +14,10 @@ export default class Table extends Chart
      */
     constructor(name, panel, attributes, dataset, style, parentDivID)
     {
+        // ----------------------------------------
+        // 1. Initializing attributes.
+        // ----------------------------------------
+
         super(name, panel, attributes, dataset, style, parentDivID);
 
         // Update involved CSS classes.
@@ -27,6 +31,15 @@ export default class Table extends Chart
 
         // Select dimension to use for later look-ups.
         this._dimension = this._dataset.cf_dimensions[this._dataset.metadata.hyperparameters[0].name];
+
+        // Create storage for filtered IDs.
+        this._filteredIDs       = null;
+        // Defines whether filter has already been added to jQuery's DataTable.
+        this._filterHasBeenSet  = false;
+
+        // ----------------------------------------
+        // 2. Calling initialization procedures.
+        // ----------------------------------------
 
         // Generate table.
         this._constructFCChart(tableID);
@@ -131,17 +144,21 @@ export default class Table extends Chart
         this._cf_chart.redraw       = function() {
             // Update filtered IDs.
             let records = instance._dimension.top(Infinity);
-            let filteredIDs = new Set();
+            instance._filteredIDs = new Set();
             for (let i = 0; i < records.length; i++) {
-                filteredIDs.add(records[i].id)
+                instance._filteredIDs.add(records[i].id)
             }
 
             // Filter table data using an ugly hack 'cause DataTable.js can't do obvious things.
-            $.fn.dataTableExt.afnFiltering.push(
-                function (oSettings, aData, iDataIndex) {
-                    return filteredIDs.has(+aData[0]);
-                }
-            );
+            // Add filter only if it doesn't exist yet.
+            if (!this._filterHasBeenSet)
+                $.fn.dataTableExt.afnFiltering.push(
+                    // oSettings holds information that can be used to differ between different tables -
+                    // might be necessary once several tables use different filters.
+                    function (oSettings, aData, iDataIndex) {
+                        return instance._filteredIDs.has(+aData[0]);
+                    }
+                );
 
             // Redraw chart.
             instance._cf_chart.draw();
