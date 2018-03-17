@@ -14,7 +14,10 @@ class DimensionalityReductionObjective(Objective):
         :param low_dimensional_data: Output of DR algorithm.
         :param high_dimensional_data: The original high-dimensional data set.
         """
-        super().__init__(low_dimensional_data=low_dimensional_data, target_data=high_dimensional_data)
+        super().__init__(
+            low_dimensional_data=low_dimensional_data,
+            target_data=high_dimensional_data
+        )
 
     @abc.abstractmethod
     def compute(self):

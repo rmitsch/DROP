@@ -9,6 +9,7 @@ from tables import *
 from backend.data_generation.TSNEThread import TSNEThread
 from backend.objectives.CorankingObjectiveBundle import CorankingObjectiveBundle
 from backend.data_generation.PersistenceThread import PersistenceThread
+import backend.objectives.CorankingMatrix as CorankingMatrix
 
 
 ######################################################
@@ -105,7 +106,7 @@ distance_matrices = {
 
 # Generate neighbourhood ranking for high dimensional data w.r.t. all used distance metrics.
 high_dim_neighbourhood_rankings = {
-    metric: CorankingObjectiveBundle.generate_neighbourhood_ranking(high_dim_data, metric)
+    metric: CorankingMatrix.generate_neighbourhood_ranking(high_dim_data, metric)
     for metric in parameter_values["metrics"]
 }
 

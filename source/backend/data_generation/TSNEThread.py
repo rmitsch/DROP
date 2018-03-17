@@ -82,7 +82,7 @@ class TSNEThread(threading.Thread):
                 low_dimensional_data=low_dimensional_projection,
                 distance_metric=metric,
                 high_dimensional_neighbourhood_ranking=self.high_dimensional_neighbourhood_rankings[metric]
-            ).compute(k=10)
+            ).compute(k_range=10)
 
             # Append runtime to set of objectives.
             objectives = {

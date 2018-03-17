@@ -5,11 +5,6 @@ from scipy.spatial import distance
 import sklearn
 import networkx as nx
 
-# Next up:
-#     - Move CorankingMatrix to separate class.
-#     - Split up embqual in relevant metrics.
-#     - Integrate metric calculation in data generation script.
-
 
 class CorankingMatrix:
     """
@@ -26,7 +21,7 @@ class CorankingMatrix:
     ):
         self._distance_metric = distance_metric
 
-        self.matrix = self._generate_coranking_matrix(
+        self._matrix = self._generate_coranking_matrix(
             high_dimensional_data=high_dimensional_data,
             low_dimensional_data=low_dimensional_data,
             high_dim_neighbourhood_ranking=high_dimensional_neighbourhood_ranking
@@ -54,12 +49,18 @@ class CorankingMatrix:
             use_geodesic=False
     ):
         """
-        This function allows to construct coranking matrix based on data in state and latent space. Based on implementation
-        https://github.com/samueljackson92/coranking .
+        This function allows to construct coranking matrix based on data in state and latent space. Based on
+        implementations in https://github.com/samueljackson92/coranking and
+        https://git.apere.me/apere/INRIA-Internship/src/1a73ba2619f13ec23cc860309dab7fe69fd18ab9/src/embqual.py.
+        Adaption: Parameter for choice of distance metric,
+        miscellaneous refactoring.
 
-        :param high_dimensional_data: a point cloud in state space
-        :param low_dimensional_data: a point cloud in latent space
+        :param high_dimensional_data:
+        :param low_dimensional_data:
         :param use_geodesic: Whether to use the geodesic distance for state space.
+        :param high_dim_neighbourhood_ranking: Ranking of neighbourhood similarities. Calculated if none is supplied. If
+        supplied, high_dimensional_data is not used.
+        :return: Coranking matrix as 2-dim. ndarry.
         """
 
         n, m = high_dimensional_data.shape
@@ -167,3 +168,9 @@ class CorankingMatrix:
         # Remove rankings which correspond to themselves, return coranking matrix.
         return Q[1:, 1:]
 
+    def matrix(self):
+        """
+        Returns coranking matrix.
+        :return: Coranking matrix.
+        """
+        return self._matrix

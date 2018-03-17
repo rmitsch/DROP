@@ -141,7 +141,7 @@ def mrre_trustworthiness(Q,k):
     columns, rows = np.meshgrid(range(n), range(n))
     rank_c = columns+1
     rank_r = rows+1
-    vals = np.abs( (rank_r-rank_c)/rank_c*Q )
+    vals = np.abs( (rank_r - rank_c) / rank_c * Q)
     # We compute the mask
     mask = np.zeros([n,n])
     mask[:k,:k] = 1.
