@@ -1,10 +1,10 @@
 import numpy
-from .DimensionalityReductionObjective import DimensionalityReductionObjective
 from coranking.metrics import trustworthiness, continuity
 from scipy.spatial import distance
+from .CorankingObjective import CorankingObjective
 
 
-class CorankingObjectiveBundle(DimensionalityReductionObjective):
+class CorankingObjectiveBundle(CorankingObjective):
     """
     Class for calculation of all coranking matrix-based objectives (e. g. trustworthiness and continuity).
     """
@@ -69,37 +69,3 @@ class CorankingObjectiveBundle(DimensionalityReductionObjective):
 
         # Calculate distances, then sort by similarities.
         return distance.squareform(distance.pdist(data, distance_metric)).argsort(axis=1).argsort(axis=1)
-
-    @staticmethod
-    def generate_coranking_matrix(
-            high_dimensional_data: numpy.ndarray,
-            low_dimensional_data: numpy.ndarray,
-            distance_metric: str,
-            high_dim_neighbourhood_ranking: numpy.ndarray = None
-    ):
-        """
-        Calculates coranking matrix (might be used for calculating matrix only once if several coranking-based metrics
-        are to be used).
-        Uses code from https://github.com/samueljackson92/coranking/. Adaption: Parameter for choice of distance metric,
-        miscellaneous refactoring.
-        :param high_dimensional_data:
-        :param low_dimensional_data:
-        :param distance_metric: One of the distance metrics supported by scipy's cdist().
-        :param high_dim_neighbourhood_ranking: Ranking of neighbourhood similarities. Calculated if none is supplied. If
-        supplied, high_dimensional_data is not used.
-        :return: Coranking matrix as 2-dim. ndarry.
-        """
-
-        n, m = high_dimensional_data.shape
-
-        # Calculate ranking of neighbourhood similarities for high- and low-dimensional datasets.
-        high_ranking = high_dim_neighbourhood_ranking if high_dim_neighbourhood_ranking is not None else \
-            CorankingObjectiveBundle.generate_neighbourhood_ranking(high_dimensional_data, distance_metric)
-        low_ranking = \
-            CorankingObjectiveBundle.generate_neighbourhood_ranking(low_dimensional_data, distance_metric)
-
-        # Aggregate coranking matrix.
-        Q, xedges, yedges = numpy.histogram2d(high_ranking.flatten(), low_ranking.flatten(), bins=n)
-
-        # Remove rankings which correspond to themselves, return coranking matrix.
-        return Q[1:, 1:]
