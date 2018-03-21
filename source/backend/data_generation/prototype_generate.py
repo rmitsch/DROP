@@ -1,16 +1,14 @@
-import os.path
 from random import shuffle
+
 import psutil
 from scipy.spatial.distance import cdist
 from sklearn.datasets import load_wine
 from sklearn.preprocessing import StandardScaler
 from tables import *
 
-from backend.data_generation.TSNEThread import TSNEThread
-from backend.objectives.CorankingObjectiveBundle import CorankingObjectiveBundle
+import backend.objectives.topology_preservation_objectives.CorankingMatrix as CorankingMatrix
 from backend.data_generation.PersistenceThread import PersistenceThread
-import backend.objectives.CorankingMatrix as CorankingMatrix
-
+from backend.data_generation.TSNEThread import TSNEThread
 
 ######################################################
 # 1. Generate parameter sets, store in file.

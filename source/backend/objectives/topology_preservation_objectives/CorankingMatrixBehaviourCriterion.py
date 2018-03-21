@@ -1,9 +1,9 @@
 import numpy
-from .CorankingObjective import CorankingObjective
+from .TopologyPreservationObjective import TopologyPreservationObjective
 from .CorankingMatrix import CorankingMatrix
 
 
-class CorankingMatrixQualityCriterion(CorankingObjective):
+class CorankingMatrixBehaviourCriterion(TopologyPreservationObjective):
     """
     Calculates coranking matrix quality criterion (Q_nx).
     """
@@ -49,10 +49,26 @@ class CorankingMatrixQualityCriterion(CorankingObjective):
             mask[:k, :k] = 1.
             # We compute the normalization constant
             norm = k * (n + 1.)
-            # We finally compute the measures
+            # We finally compute the measures.
+            # Note: This calculates q_nx. r_nx = ( (N - 1) * q_nx(K) - K ) / (N - 1 - K)
             objective_values.append((vals * mask).sum() / float(norm))
 
         # todo: Scalarize k-ary neighbourhood values.
         measure = 0
+
+        return measure
+
+    def bnx(self, k):
+        """
+        This method allows to compute the coranking matrix behavior (intrusive if > 0, extrusive otherwise)
+
+        Implementation based on https://github.com/gdkrmr/coRanking .
+
+        :param Q: the coranking matrix
+        :param k: the neighbourhood size
+        """
+
+        # We compute the measure
+        measure = self._coranking_matrix.calculate_intrusion(k) - self._coranking_matrixcalculate_extrusion(k)
 
         return measure

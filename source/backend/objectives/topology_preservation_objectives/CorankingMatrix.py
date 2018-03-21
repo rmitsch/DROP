@@ -1,5 +1,5 @@
 import numpy
-from .DimensionalityReductionObjective import DimensionalityReductionObjective
+from backend.objectives.DimensionalityReductionObjective import DimensionalityReductionObjective
 from coranking.metrics import trustworthiness, continuity
 from scipy.spatial import distance
 import sklearn
@@ -174,3 +174,57 @@ class CorankingMatrix:
         :return: Coranking matrix.
         """
         return self._matrix
+
+    def calculate_intrusion(self, k):
+        """
+        This method allows to compute the fraction of intrusion.
+
+        Implementation based on https://github.com/gdkrmr/coRanking .
+
+        Args:
+            + Q: The coranking matrix
+            + k: The neighbourhood size
+        """
+
+        Q = self._matrix
+
+        # We retrieve the number of points
+        n = Q.shape[0]
+        # We compute the values
+        vals = Q
+        # We compute the mask
+        mask = numpy.zeros([n, n])
+        mask[:k, :k] = numpy.triu(numpy.ones([k, k]))
+        # We compute the normalization constant
+        norm = k * (n + 1.)
+        # We finally compute the measures
+        measure = (vals * mask).sum() / float(norm)
+
+        return measure
+
+    def calculate_extrusion(self, k):
+        """
+        This method allows to compute the fraction of extrusion.
+
+        Implementation based on https://github.com/gdkrmr/coRanking .
+
+        Args:
+            + Q: The coranking matrix
+            + k: The neighbourhood size
+        """
+
+        Q = self._matrix
+
+        # We retrieve the number of points
+        n = Q.shape[0]
+        # We compute the values
+        vals = Q
+        # We compute the mask
+        mask = np.zeros([n, n])
+        mask[:k, :k] = np.tril(np.ones([k, k]))
+        # We compute the normalization constant
+        norm = k * (n + 1.)
+        # We finally compute the measures
+        measure = (vals * mask).sum() / float(norm)
+
+        return measure

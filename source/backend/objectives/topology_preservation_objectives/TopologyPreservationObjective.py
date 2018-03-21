@@ -1,15 +1,10 @@
 import abc
 import numpy
-from .DimensionalityReductionObjective import DimensionalityReductionObjective
+from backend.objectives.DimensionalityReductionObjective import DimensionalityReductionObjective
 from .CorankingMatrix import CorankingMatrix
 
-# Next up:
-#     - Move CorankingMatrix to separate class.
-#     - Split up embqual in relevant metrics.
-#     - Integrate metric calculation in data generation script.
 
-
-class CorankingObjective(DimensionalityReductionObjective):
+class TopologyPreservationObjective(DimensionalityReductionObjective):
     """
     Abstract base class for calculation of coranking matrix-based objectives (e. g. trustworthiness, continuity, LCMC,
     ...).
@@ -32,7 +27,11 @@ class CorankingObjective(DimensionalityReductionObjective):
         for the distance matrix supplied to DR algorithm).
         :param k_interval: Tuple containing interval describing which values of k to consider.
         """
-        super().__init__(low_dimensional_data=low_dimensional_data, high_dimensional_data=high_dimensional_data)
+        super().__init__(
+            low_dimensional_data=low_dimensional_data,
+            high_dimensional_data=high_dimensional_data,
+            distance_metric=distance_metric
+        )
         self._k_interval = k_interval
 
         # Update coranking matrix with supplied value (or calculate, if none was supplied).

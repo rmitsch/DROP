@@ -1,9 +1,9 @@
 import numpy
-from .CorankingObjective import CorankingObjective
+from .TopologyPreservationObjective import TopologyPreservationObjective
 from .CorankingMatrix import CorankingMatrix
 
 
-class MRRE(CorankingObjective):
+class MRRE(TopologyPreservationObjective):
     """
     Calculates mean relative rank error (MRRE).
     """

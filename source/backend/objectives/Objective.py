@@ -17,8 +17,8 @@ class Objective(abc.ABC):
         """
         super().__init__()
 
-        self.target_data = target_data
-        self.low_dimensional_data = low_dimensional_data
+        self._target_data = target_data
+        self._low_dimensional_data = low_dimensional_data
 
     @abc.abstractmethod
     def compute(self):

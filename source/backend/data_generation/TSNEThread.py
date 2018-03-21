@@ -1,9 +1,10 @@
 import threading
-import numpy
-from sklearn.manifold import TSNE
 import time
+
+import numpy
 from MulticoreTSNE import MulticoreTSNE
-from backend.objectives.CorankingObjectiveBundle import CorankingObjectiveBundle
+
+from backend.objectives.topology_preservation_objectives.CorankingObjectiveBundle import CorankingObjectiveBundle
 
 
 class TSNEThread(threading.Thread):
