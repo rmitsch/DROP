@@ -24,7 +24,7 @@ class CorankingMatrixQualityCriterion(TopologyPreservationObjective):
             low_dimensional_data=low_dimensional_data,
             high_dimensional_data=high_dimensional_data,
             distance_metric=distance_metric,
-            coranking_matri=coranking_matrix,
+            coranking_matrix=coranking_matrix,
             k_interval=k_interval
         )
 
@@ -35,7 +35,7 @@ class CorankingMatrixQualityCriterion(TopologyPreservationObjective):
         :return: Criterion averaged/scalarized over chosen k-ary neighbourhood.
         """
 
-        Q = self._coranking_matrix.matrix
+        Q = self._coranking_matrix.matrix()
 
         # We retrieve the number of points
         n = Q.shape[0]

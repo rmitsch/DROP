@@ -78,6 +78,7 @@ def get_metadata_template():
             {"name": "angle", "type": "numeric"},
             {"name": "metric", "type": "categorical"}
         ],
+        # todo: Update list of objectives.
         "objectives": ["runtime", "trustworthiness", "continuity"]
     })
 

@@ -1,5 +1,6 @@
 from random import shuffle
 
+import os
 import psutil
 from scipy.spatial.distance import cdist
 from sklearn.datasets import load_wine
@@ -14,9 +15,12 @@ from backend.data_generation.TSNEThread import TSNEThread
 # 1. Generate parameter sets, store in file.
 ######################################################
 
+# Define name of dataset to use (appended to file name).
+dataset_name = "new_wine"
+
 # Get all parameter configurations (to avoid duplicate model generations).
 existent_parameter_sets = []
-file_name = os.getcwd() + "/../data/drop_wine.h5"
+file_name = os.getcwd() + "/../data/drop_" + dataset_name + ".h5"
 if os.path.isfile(file_name):
     h5file = open_file(filename=file_name, mode="r+")
     for row in h5file.root.metadata:
@@ -38,17 +42,17 @@ if os.path.isfile(file_name):
 
 # Define parameter ranges.
 parameter_values = {
-    "n_components": (1, 2, 3, 4),
-    "perplexity": (10, 25, 50, 80),
-    "early_exaggeration": (5.0, 10.0, 15.0, 20.0),
-    "learning_rate": (10.0, 250.0, 500.0, 1000.0),
-    "n_iter": (250, 1000, 2000, 5000),
+    "n_components": (1, 2), # 3, 4),
+    "perplexity": (10,), # 25, 50, 80),
+    "early_exaggeration": (5.0, ), #10.0, 15.0, 20.0),
+    "learning_rate": (10.0, ), #250.0, 500.0, 1000.0),
+    "n_iter": (250, ), #1000, 2000, 5000),
     # Commenting out min_grad_norm, since a variable value for this since (1) MulticoreTSNE doesn't support dynamic
     # values for this attribute and (2) sklearn's implementation is slow af.
     # If a decently performing implementation (sklearn updates?) that also supports this parameter is ever available,
     # it might be added again.
     #"min_grad_norm": (1e-10, 1e-7, 1e-4, 1e-1),
-    "angle": (0.1, 0.35, 0.65, 0.9),
+    "angle": (0.1, ), #0.35, 0.65, 0.9),
     "metrics": ('seuclidean', 'cosine')
 }
 
@@ -139,8 +143,12 @@ for i in range(0, n_jobs):
     )
 
 # Create thread ensuring persistence of results.
-threads.append(PersistenceThread(
-    results=results, expected_number_of_results=len(parameter_sets), dataset_name="wine")
+threads.append(
+    PersistenceThread(
+        results=results,
+        expected_number_of_results=len(parameter_sets),
+        dataset_name="new_wine"
+    )
 )
 
 ######################################################

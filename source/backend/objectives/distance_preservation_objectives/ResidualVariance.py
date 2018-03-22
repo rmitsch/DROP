@@ -3,6 +3,7 @@ import scipy
 import sklearn
 from .DistancePreservationObjective import DistancePreservationObjective
 import networkx
+from sklearn import metrics
 
 
 class ResidualVariance(DistancePreservationObjective):
@@ -68,6 +69,6 @@ class ResidualVariance(DistancePreservationObjective):
         l_all_distances = scipy.spatial.distance.squareform(l_uni_distances).ravel()
 
         # We compute the residual variance
-        measure = sklearn.metrics.r2_score(s_all_distances, l_all_distances)
+        measure = metrics.r2_score(s_all_distances, l_all_distances)
 
         return measure

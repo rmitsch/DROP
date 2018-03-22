@@ -35,7 +35,7 @@ class MRRE(TopologyPreservationObjective):
         :return: Criterion averaged/scalarized over chosen k-ary neighbourhood.
         """
 
-        Q = self._coranking_matrix.matrix
+        Q = self._coranking_matrix.matrix()
 
         # We retrieve the number of points
         n = Q.shape[0]

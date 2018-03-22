@@ -3,6 +3,7 @@ import scipy
 import sklearn
 from .DistancePreservationObjective import DistancePreservationObjective
 import networkx
+from sklearn.isotonic import IsotonicRegression
 
 
 class Stress(DistancePreservationObjective):
@@ -60,7 +61,7 @@ class Stress(DistancePreservationObjective):
             s_all_distances = s_all_distances.ravel()
         else:
             s_uni_distances = scipy.spatial.distance.pdist(self._low_dimensional_data)
-            s_all_distances = scipy.spatial.squareform(s_uni_distances).ravel()
+            s_all_distances = scipy.spatial.distance.squareform(s_uni_distances).ravel()
         l_uni_distances = scipy.spatial.distance.pdist(self._target_data)
         l_all_distances = scipy.spatial.distance.squareform(l_uni_distances).ravel()
 
@@ -87,10 +88,11 @@ class Stress(DistancePreservationObjective):
         s_all_distances = s_all_distances[l_all_distances.argsort()]
         l_all_distances = l_all_distances[l_all_distances.argsort()]
         # We perform the isotonic regression
-        iso = sklearn.isotonic.IsotonicRegression()
+        iso = IsotonicRegression()
         s_iso_distances = iso.fit_transform(s_all_distances, l_all_distances)
         # We compute the kruskal stress
         measures['kruskal_stress'] = numpy.sqrt(
-            numpy.square(s_iso_distances - l_all_distances).sum() / numpy.square(l_all_distances).sum())
+            numpy.square(s_iso_distances - l_all_distances).sum() / numpy.square(l_all_distances).sum()
+        )
 
         return measures

@@ -28,7 +28,7 @@ class CorankingMatrix:
         )
 
     @staticmethod
-    def _generate_neighbourhood_ranking(data: numpy.ndarray, distance_metric: str):
+    def generate_neighbourhood_ranking(data: numpy.ndarray, distance_metric: str):
         """
         Generates neighbourhood ranking. Used by DimensionalityReductionObjective.generate_coranking_matrix().
         Might be used to generate a ranking once and supplying it to generate_coranking_matrix() instead of calculating
@@ -76,7 +76,7 @@ class CorankingMatrix:
                     data=high_dimensional_data,
                     distance_metric=self._distance_metric
                 ) if use_geodesic else \
-                CorankingMatrix._generate_neighbourhood_ranking(
+                CorankingMatrix.generate_neighbourhood_ranking(
                     high_dimensional_data,
                     distance_metric=self._distance_metric
                 )
@@ -90,7 +90,7 @@ class CorankingMatrix:
         # ------------------------------------------------------------------------------------
 
         # Calculate distances.
-        low_ranking = CorankingMatrix._generate_neighbourhood_ranking(
+        low_ranking = CorankingMatrix.generate_neighbourhood_ranking(
             low_dimensional_data,
             distance_metric=self._distance_metric
         )
@@ -158,9 +158,9 @@ class CorankingMatrix:
 
         # Calculate ranking of neighbourhood similarities for high- and low-dimensional datasets.
         high_ranking = high_dim_neighbourhood_ranking if high_dim_neighbourhood_ranking is not None else \
-            CorankingMatrix._generate_neighbourhood_ranking(high_dimensional_data, distance_metric)
+            CorankingMatrix.generate_neighbourhood_ranking(high_dimensional_data, distance_metric)
         low_ranking = \
-            CorankingMatrix._generate_neighbourhood_ranking(low_dimensional_data, distance_metric)
+            CorankingMatrix.generate_neighbourhood_ranking(low_dimensional_data, distance_metric)
 
         # Aggregate coranking matrix.
         Q, xedges, yedges = numpy.histogram2d(high_ranking.flatten(), low_ranking.flatten(), bins=n)

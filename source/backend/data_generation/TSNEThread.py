@@ -93,6 +93,14 @@ class TSNEThread(threading.Thread):
             )
 
             # MRRE.
+            todo:
+                - add issues to github-tracker
+                - split MRRE in two? i. e. mrre-trustw. and mrre-cont.
+                - normalize - see H_k in https://perso.uclouvain.be/michel.verleysen/papers/esann08jl.pdf
+                - consider perf. optimizations while rendering
+                - consider setup for cuda version of t-SNE
+                    * https://github.com/georgedimitriadis/t_sne_bhcuda
+                    * MulticoreTSNE
             mrre = MRRE(
                 high_dimensional_data=self.distance_matrices[metric],
                 low_dimensional_data=low_dimensional_projection,
@@ -128,14 +136,14 @@ class TSNEThread(threading.Thread):
                 low_dimensional_data=low_dimensional_projection,
                 distance_metric=metric,
                 use_geodesic_distances=False
-            )
+            ).compute()
 
             residual_variance = ResidualVariance(
                 high_dimensional_data=self.distance_matrices[metric],
                 low_dimensional_data=low_dimensional_projection,
                 distance_metric=metric,
                 use_geodesic_distances=False
-            )
+            ).compute()
 
             ###################################################
             # 3. Collect data, terminate.
@@ -147,10 +155,11 @@ class TSNEThread(threading.Thread):
                 "mrre": mrre,
                 "r_nx": r_nx,
                 "b_nx": b_nx,
-                "stress": stress,
+                # Pick Kruskal's stress here. Best choices amongst Sammon, S, Kruskal, quadratic loss?
+                "stress": stress["kruskal_stress"],
                 "residual_variance": residual_variance
             }
-
+            print(objectives)
             # Store parameter set, objective set and low dimensional projection in globally shared object.
             self.results.append({
                 "parameter_set": parameter_set,

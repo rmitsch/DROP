@@ -35,40 +35,9 @@ class CorankingMatrixBehaviourCriterion(TopologyPreservationObjective):
         :return: Criterion averaged/scalarized over chosen k-ary neighbourhood.
         """
 
-        Q = self._coranking_matrix.matrix
-
-        # We retrieve the number of points
-        n = Q.shape[0]
-        # We compute the values
-        vals = Q
-        # We compute the mask
-        mask = numpy.zeros([n, n])
-
-        objective_values = []
-        for k in range(self._k_interval[0], self._k_interval[1]):
-            mask[:k, :k] = 1.
-            # We compute the normalization constant
-            norm = k * (n + 1.)
-            # We finally compute the measures.
-            # Note: This calculates q_nx. r_nx = ( (N - 1) * q_nx(K) - K ) / (N - 1 - K)
-            objective_values.append((vals * mask).sum() / float(norm))
+        # We compute the measure
+        measure = self._coranking_matrix.calculate_intrusion(self._k_interval[0]) - \
+                  self._coranking_matrix.calculate_extrusion(self._k_interval[0])
 
         # todo: Scalarize k-ary neighbourhood values.
-        measure = 0
-
-        return measure
-
-    def bnx(self, k):
-        """
-        This method allows to compute the coranking matrix behavior (intrusive if > 0, extrusive otherwise)
-
-        Implementation based on https://github.com/gdkrmr/coRanking .
-
-        :param Q: the coranking matrix
-        :param k: the neighbourhood size
-        """
-
-        # We compute the measure
-        measure = self._coranking_matrix.calculate_intrusion(k) - self._coranking_matrixcalculate_extrusion(k)
-
         return measure
