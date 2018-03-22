@@ -1,10 +1,10 @@
 import threading
 import time
-
 import numpy
 from MulticoreTSNE import MulticoreTSNE
 
-from backend.objectives.topology_preservation_objectives.CorankingObjectiveBundle import CorankingObjectiveBundle
+from backend.objectives.topology_preservation_objectives import *
+from backend.objectives.distance_preservation_objectives import *
 
 
 class TSNEThread(threading.Thread):
@@ -74,27 +74,82 @@ class TSNEThread(threading.Thread):
             # 2. Calculate objectives.
             ###################################################
 
-            # Runtime.
+            # Start measuring runtime.
             runtime = time.time() - start
 
-            # Coranking-matrix based objectives.
-            coranking_objectives = CorankingObjectiveBundle(
+            # Define neighbourhood interval to be considered (if relevant).
+            k_neighbourhood_interval = (2, 5)
+
+            ###################################
+            # 2. a. Topology-based metrics.
+            ###################################
+
+            # Create coranking matrix for topology-based objectives.
+            coranking_matrix = CorankingMatrix(
+                low_dimensional_data=low_dimensional_projection,
+                high_dimensional_data=self.distance_matrices[metric],
+                distance_metric=metric,
+                high_dimensional_neighbourhood_ranking=self.high_dimensional_neighbourhood_rankings[metric]
+            )
+
+            # MRRE.
+            mrre = MRRE(
                 high_dimensional_data=self.distance_matrices[metric],
                 low_dimensional_data=low_dimensional_projection,
                 distance_metric=metric,
-                high_dimensional_neighbourhood_ranking=self.high_dimensional_neighbourhood_rankings[metric]
-            ).compute(k_range=10)
+                coranking_matrix=coranking_matrix,
+                k_interval=k_neighbourhood_interval
+            ).compute()
 
-            # Append runtime to set of objectives.
-            objectives = {
-                "runtime": runtime,
-                "trustworthiness": coranking_objectives["trustworthiness"],
-                "continuity": coranking_objectives["continuity"]
-            }
+            # R_nx.
+            r_nx = CorankingMatrixQualityCriterion(
+                high_dimensional_data=self.distance_matrices[metric],
+                low_dimensional_data=low_dimensional_projection,
+                distance_metric=metric,
+                coranking_matrix=coranking_matrix,
+                k_interval=k_neighbourhood_interval
+            ).compute()
+
+            # B_nx.
+            b_nx = CorankingMatrixQualityCriterion(
+                high_dimensional_data=self.distance_matrices[metric],
+                low_dimensional_data=low_dimensional_projection,
+                distance_metric=metric,
+                coranking_matrix=coranking_matrix,
+                k_interval=(2, 5)
+            ).compute()
+
+            ###################################
+            # 2. b. Distance-based metrics.
+            ###################################
+
+            stress = Stress(
+                high_dimensional_data=self.distance_matrices[metric],
+                low_dimensional_data=low_dimensional_projection,
+                distance_metric=metric,
+                use_geodesic_distances=False
+            )
+
+            residual_variance = ResidualVariance(
+                high_dimensional_data=self.distance_matrices[metric],
+                low_dimensional_data=low_dimensional_projection,
+                distance_metric=metric,
+                use_geodesic_distances=False
+            )
 
             ###################################################
             # 3. Collect data, terminate.
             ###################################################
+
+            # Append runtime to set of objectives.
+            objectives = {
+                "runtime": runtime,
+                "mrre": mrre,
+                "r_nx": r_nx,
+                "b_nx": b_nx,
+                "stress": stress,
+                "residual_variance": residual_variance
+            }
 
             # Store parameter set, objective set and low dimensional projection in globally shared object.
             self.results.append({

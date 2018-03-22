@@ -47,7 +47,7 @@ class ResidualVariance(DistancePreservationObjective):
         if self._use_geodesic_distances:
             k = 2
             is_connex = False
-            
+
             while is_connex is False:
                 knn = sklearn.neighbors.NearestNeighbors(n_neighbors=k)
                 knn.fit(self._low_dimensional_data)
