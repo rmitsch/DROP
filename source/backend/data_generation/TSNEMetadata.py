@@ -19,11 +19,10 @@ class TSNEMetadata(IsDescription):
     metric = StringCol(20, pos=9)
 
     # Objectives for faithfulness of dimensionality-reduced projection.
-    mrre = Float32Col(pos=10)
-    r_nx = Float32Col(pos=11)
-    b_nx = Float32Col(pos=12)
-    stress = Float32Col(pos=13)
-    residual_variance = Float32Col(pos=14)
-    classification_accuracy = Float32Col(pos=15)
-    runtime = Int8Col(pos=16)
+    r_nx = Float32Col(pos=10)
+    b_nx = Float32Col(pos=11)
+    stress = Float32Col(pos=12)
+    classification_accuracy = Float32Col(pos=13)
+    adjusted_mutual_information = Float32Col(pos=14)
+    runtime = Int8Col(pos=15)
 

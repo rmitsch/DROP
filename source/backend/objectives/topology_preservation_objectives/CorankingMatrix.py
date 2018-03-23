@@ -8,8 +8,7 @@ import networkx as nx
 
 class CorankingMatrix:
     """
-    Abstract base class for calculation of coranking matrix-based objectives (e. g. trustworthiness, continuity, LCMC,
-    ...).
+    Contains representation of coranking matrix including auxiliary functions.
     """
 
     def __init__(

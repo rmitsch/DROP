@@ -72,12 +72,11 @@ class PersistenceThread(threading.Thread):
                     # Objectives.
                     result_objectives = result["objectives"]
                     metadata_row["runtime"] = result_objectives["runtime"]
-                    metadata_row["mrre"] = result_objectives["mrre"]
                     metadata_row["r_nx"] = result_objectives["r_nx"]
                     metadata_row["b_nx"] = result_objectives["b_nx"]
                     metadata_row["stress"] = result_objectives["stress"]
-                    metadata_row["residual_variance"] = result_objectives["residual_variance"]
-                    metadata_row["classification_accuracy"] = 0 #result_objectives["classification_accuracy"]
+                    metadata_row["classification_accuracy"] = result_objectives["classification_accuracy"]
+                    metadata_row["adjusted_mutual_information"] = result_objectives["adjusted_mutual_information"]
 
                     # Append row to file.
                     metadata_row.append()

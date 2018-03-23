@@ -69,19 +69,19 @@ class Stress(DistancePreservationObjective):
         measures = dict()
 
         # 1. Quadratic Loss
-        measures['quadratic_loss'] = numpy.square(s_uni_distances - l_uni_distances).sum()
+        # measures['quadratic_loss'] = numpy.square(s_uni_distances - l_uni_distances).sum()
 
         # 2. Sammon stress
-        measures['sammon_stress'] = (1 / s_uni_distances.sum()) * (
-            numpy.square(s_uni_distances - l_uni_distances) / s_uni_distances
-        ).sum()
+        # measures['sammon_stress'] = (1 / s_uni_distances.sum()) * (
+        #     numpy.square(s_uni_distances - l_uni_distances) / s_uni_distances
+        # ).sum()
 
         # 3. S stress
-        measures['s_stress'] = numpy.sqrt((1 / n) * (
-            numpy.square(
-                (numpy.square(s_uni_distances) - numpy.square(l_uni_distances)).sum()
-            ) / numpy.power(s_uni_distances, 4)
-        )).sum()
+        # measures['s_stress'] = numpy.sqrt((1 / n) * (
+        #     numpy.square(
+        #         (numpy.square(s_uni_distances) - numpy.square(l_uni_distances)).sum()
+        #     ) / numpy.power(s_uni_distances, 4)
+        # )).sum()
 
         # 4. Kruskal stress
         # We reorder the distances under the order of distances in latent space
@@ -90,9 +90,10 @@ class Stress(DistancePreservationObjective):
         # We perform the isotonic regression
         iso = IsotonicRegression()
         s_iso_distances = iso.fit_transform(s_all_distances, l_all_distances)
-        # We compute the kruskal stress
+        # We compute the kruskal stress.
         measures['kruskal_stress'] = numpy.sqrt(
             numpy.square(s_iso_distances - l_all_distances).sum() / numpy.square(l_all_distances).sum()
         )
 
-        return measures
+        # Pick Kruskal's stress here. Best choices amongst Sammon, S, Kruskal, quadratic loss?
+        return measures['kruskal_stress']

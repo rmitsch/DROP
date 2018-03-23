@@ -1,5 +1,4 @@
 from random import shuffle
-
 import os
 import psutil
 from scipy.spatial.distance import cdist
@@ -10,6 +9,7 @@ from tables import *
 import backend.objectives.topology_preservation_objectives.CorankingMatrix as CorankingMatrix
 from backend.data_generation.PersistenceThread import PersistenceThread
 from backend.data_generation.TSNEThread import TSNEThread
+from backend.data_generation.datasets.WineDataset import WineDataset
 
 ######################################################
 # 1. Generate parameter sets, store in file.
@@ -91,9 +91,14 @@ for n_components in parameter_values["n_components"]:
 ######################################################
 
 # Load toy example dataset.
-high_dim_data = load_wine()
-# Scale attributes.
-high_dim_data = StandardScaler().fit_transform(high_dim_data.data)
+high_dim_dataset = WineDataset()
+print(high_dim_dataset.calculate_classification_accuracy())
+next up:
+    - implement classification for low-dim. projection
+    - introduce degree of freedom by allowing for grid searching best k parameter for k-nn classification
+exit()
+# Scale attributes, fetch predictors.
+high_dim_data = high_dim_dataset.features()
 
 ######################################################
 # 3. Calculate distance matrices and the corresponding
@@ -108,7 +113,7 @@ distance_matrices = {
 
 # Generate neighbourhood ranking for high dimensional data w.r.t. all used distance metrics.
 high_dim_neighbourhood_rankings = {
-    metric: CorankingMatrix.generate_neighbourhood_ranking(high_dim_data, metric)
+    metric: CorankingMatrix.generate_neighbourhood_ranking(data=high_dim_data, distance_metric=metric)
     for metric in parameter_values["metrics"]
 }
 
@@ -137,7 +142,7 @@ for i in range(0, n_jobs):
             results=results,
             distance_matrices=distance_matrices,
             parameter_sets=parameter_sets[first_index:last_index],
-            high_dimensional_data=high_dim_data,
+            high_dim_dataset=high_dim_dataset,
             high_dimensional_neighbourhood_rankings=high_dim_neighbourhood_rankings
         )
     )
@@ -147,7 +152,7 @@ threads.append(
     PersistenceThread(
         results=results,
         expected_number_of_results=len(parameter_sets),
-        dataset_name="new_wine"
+        dataset_name=dataset_name
     )
 )
 
