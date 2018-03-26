@@ -3,6 +3,8 @@ import time
 import numpy
 from MulticoreTSNE import MulticoreTSNE
 import hdbscan
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics.cluster import adjusted_mutual_info_score
 
 from backend.data_generation import InputDataset
 from backend.objectives.topology_preservation_objectives import *
@@ -73,6 +75,9 @@ class TSNEThread(threading.Thread):
                 n_jobs=1
             ).fit_transform(self._distance_matrices[metric])
 
+            # Scale projection data for later use.
+            scaled_low_dim_projection = StandardScaler().fit_transform(low_dimensional_projection)
+
             ###################################################
             # 2. Calculate objectives.
             ###################################################
@@ -129,7 +134,7 @@ class TSNEThread(threading.Thread):
             ############################################
 
             classification_accuracy = self._input_dataset.calculate_classification_accuracy(
-                features=low_dimensional_projection
+                features=scaled_low_dim_projection
             )
 
             ############################################
@@ -137,17 +142,22 @@ class TSNEThread(threading.Thread):
             ############################################
 
             # 1. Cluster projection with number of classes.
-    
+            # Determine min_cluster_size as approximate min number of elements in a class
+            unique, counts_per_class = numpy.unique(self._input_dataset.labels(), return_counts=True)
+            # Create HDBSCAN instance and cluster data.
             clusterer = hdbscan.HDBSCAN(
                 alpha=1.0,
-                leaf_size=40,
                 metric='euclidean',
-                min_cluster_size=5,
+                # Use approximate number of entries in least common class as minimal cluster size.
+                min_cluster_size=int(counts_per_class.min() * 0.9),
                 min_samples=None
-            )
-            adjusted_mutual_information = 0
+            ).fit(low_dimensional_projection)
 
             # 2. Calculate AMI.
+            adjusted_mutual_information = adjusted_mutual_info_score(
+                self._input_dataset.labels(),
+                clusterer.labels_
+            )
 
             ###################################################
             # 3. Collect data, terminate.
