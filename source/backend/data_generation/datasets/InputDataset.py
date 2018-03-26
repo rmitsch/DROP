@@ -1,4 +1,9 @@
 import abc
+import sklearn.ensemble
+from sklearn.model_selection import StratifiedShuffleSplit
+import psutil
+import numpy
+from sklearn.preprocessing import StandardScaler
 
 
 class InputDataset:
@@ -14,6 +19,12 @@ class InputDataset:
 
         # Load or generate data.
         self._data = self._load_data()
+
+        # Scale features.
+        self._scaled_features = StandardScaler().fit_transform(self._data.data)
+
+        # Calculate accuracy.
+        self._classification_accuracy = self.calculate_classification_accuracy()
 
     @abc.abstractmethod
     def _load_data(self):
@@ -39,10 +50,40 @@ class InputDataset:
         """
         pass
 
-    @abc.abstractmethod
-    def calculate_classification_accuracy(self):
+    def calculate_classification_accuracy(self, features: numpy.ndarray = None):
         """
         Calculates classification accuracy with original dataset.
+        Random forests are used as default classifier. Can be overwritten by children - important for comparison: Use
+        same procedure for classification in both original and reduced dataset.
+        :param features: Data to be used for classification. Labels are extract from original dataset.
         :return:
         """
-        pass
+
+        # Set features, if not specified in function call.
+        features = self.features() if features is None else features
+        labels = self.labels()
+
+        # Apply straightforward k-nearest neighbour w/o further preprocessing to predict class labels.
+        clf = sklearn.ensemble.RandomForestClassifier(
+            n_estimators=50,
+            max_depth=3,
+            n_jobs=psutil.cpu_count(logical=False)
+        )
+
+        # Loop through stratified splits, average prediction accuracy over all splits.
+        accuracy = 0
+        n_splits = 3
+        for train_indices, test_indices in StratifiedShuffleSplit(
+                n_splits=n_splits,
+                test_size=0.33
+        ).split(features, labels):
+            # Train model.
+            clf.fit(features[train_indices], labels[train_indices])
+
+            # Predict test set.
+            predicted_labels = clf.predict(features[test_indices])
+
+            # Measure accuracy.
+            accuracy += (predicted_labels == labels[test_indices]).sum() / len(predicted_labels)
+
+        return accuracy / n_splits

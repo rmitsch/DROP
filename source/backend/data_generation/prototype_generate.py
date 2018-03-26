@@ -92,11 +92,7 @@ for n_components in parameter_values["n_components"]:
 
 # Load toy example dataset.
 high_dim_dataset = WineDataset()
-print(high_dim_dataset.calculate_classification_accuracy())
-next up:
-    - implement classification for low-dim. projection
-    - introduce degree of freedom by allowing for grid searching best k parameter for k-nn classification
-exit()
+
 # Scale attributes, fetch predictors.
 high_dim_data = high_dim_dataset.features()
 
@@ -142,7 +138,7 @@ for i in range(0, n_jobs):
             results=results,
             distance_matrices=distance_matrices,
             parameter_sets=parameter_sets[first_index:last_index],
-            high_dim_dataset=high_dim_dataset,
+            input_dataset=high_dim_dataset,
             high_dimensional_neighbourhood_rankings=high_dim_neighbourhood_rankings
         )
     )

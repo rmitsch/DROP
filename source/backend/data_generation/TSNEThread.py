@@ -2,6 +2,7 @@ import threading
 import time
 import numpy
 from MulticoreTSNE import MulticoreTSNE
+import hdbscan
 
 from backend.data_generation import InputDataset
 from backend.objectives.topology_preservation_objectives import *
@@ -18,7 +19,7 @@ class TSNEThread(threading.Thread):
             results: list,
             distance_matrices: dict,
             parameter_sets: list,
-            high_dim_dataset: InputDataset,
+            input_dataset: InputDataset,
             high_dimensional_neighbourhood_rankings: dict
     ):
         """
@@ -37,7 +38,7 @@ class TSNEThread(threading.Thread):
         self._distance_matrices = distance_matrices
         self._parameter_sets = parameter_sets
         self._results = results
-        self._high_dim_dataset = high_dim_dataset
+        self._input_dataset = input_dataset
         self._high_dimensional_neighbourhood_rankings = high_dimensional_neighbourhood_rankings
 
     def run(self):
@@ -127,13 +128,26 @@ class TSNEThread(threading.Thread):
             # 2. c. Information-preserving metrics.
             ############################################
 
-            classification_accuracy = 0
+            classification_accuracy = self._input_dataset.calculate_classification_accuracy(
+                features=low_dimensional_projection
+            )
 
             ############################################
             # 2. d. Separability metrics.
             ############################################
 
+            # 1. Cluster projection with number of classes.
+    
+            clusterer = hdbscan.HDBSCAN(
+                alpha=1.0,
+                leaf_size=40,
+                metric='euclidean',
+                min_cluster_size=5,
+                min_samples=None
+            )
             adjusted_mutual_information = 0
+
+            # 2. Calculate AMI.
 
             ###################################################
             # 3. Collect data, terminate.
