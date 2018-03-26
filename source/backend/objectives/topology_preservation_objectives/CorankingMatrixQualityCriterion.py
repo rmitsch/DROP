@@ -51,7 +51,17 @@ class CorankingMatrixQualityCriterion(TopologyPreservationObjective):
             norm = k * (n + 1.)
             # We finally compute the measures.
             # Note: This calculates q_nx. r_nx = ( (N - 1) * q_nx(K) - K ) / (N - 1 - K)
-            objective_values.append((vals * mask).sum() / float(norm))
+            q_nx = (vals * mask).sum() / float(norm)
+            r_nx = ((n - 1) * q_nx - k) / (n - 1 - k)
+            # todo: Calculate area under the curve with a few (interspersed) values of k.
+            # See p. 253, bottom right, on
+            # https://www-sciencedirect-com.uaccess.univie.ac.at/science/article/pii/S0925231215003641 on equation.
+            # Question: Values of k? Other paper used quaternary quantiles in range - might be an option; AUC
+            # calculation weights small neighbourhoods higher.
+            # Note that AUC here is just an average! Has to be divided by the number of k-ary neighbourhoods considered.
+            auc_r_nx = 0
+            # Append r_nx to list of values.
+            objective_values.append(auc_r_nx)
 
         # todo: Scalarize k-ary neighbourhood values.
         measure = 0
