@@ -12,21 +12,23 @@ class PersistenceThread(threading.Thread):
     Checks whether threads calculating t-SNE generated new output. If so, new output is stored in file.
     """
 
-    def __init__(self, results: list, expected_number_of_results: int, dataset_name: str):
+    def __init__(self, results: list, expected_number_of_results: int, dataset_name: str, checking_interval: int = 10):
         """
         Initializes thread for ensuring persistence of t-SNE results calculated by other threads.
         :param results: List of calculated results.
         :param expected_number_of_results: Expected number of datasets to be produced.
         :param dataset_name: Suffix of dataset to be created.
+        :param checking_interval: Intervals in seconds in which thread checks for new models.
         """
         threading.Thread.__init__(self)
 
-        self.results = results
-        self.expected_number_of_results = expected_number_of_results
-        self.dataset_name = dataset_name
+        self._results = results
+        self._expected_number_of_results = expected_number_of_results
+        self._dataset_name = dataset_name
+        self._checking_interval = checking_interval
 
         # Fetch .h5 file handle.
-        self.h5file = self._open_pytables_file()
+        self._h5file = self._open_pytables_file()
 
     def run(self):
         """
@@ -35,21 +37,21 @@ class PersistenceThread(threading.Thread):
         :return:
         """
 
-        metadata_table = self.h5file.root.metadata
+        metadata_table = self._h5file.root.metadata
         metadata_row = metadata_table.row
 
-        # Check on new arrivals every 5 seconds.
+        # Check on new arrivals every self._checking_interval seconds.
         last_processed_index = -1
         num_of_results_so_far = 0
-        while num_of_results_so_far < self.expected_number_of_results:
+        while num_of_results_so_far < self._expected_number_of_results:
             # Check how many results are available so far.
-            num_of_results_so_far = len(self.results)
-            print(num_of_results_so_far / float(self.expected_number_of_results))
+            num_of_results_so_far = len(self._results)
+            print(num_of_results_so_far / float(self._expected_number_of_results))
 
             # If number of records has changed: Add to file.
             if num_of_results_so_far > last_processed_index + 1:
                 # Loop through all entries.
-                for result in self.results[last_processed_index + 1:num_of_results_so_far]:
+                for result in self._results[last_processed_index + 1:num_of_results_so_far]:
                     ######################################################
                     # 1. Add metadata (hyperparameter + objectives).
                     ######################################################
@@ -86,8 +88,8 @@ class PersistenceThread(threading.Thread):
                     # 2. Add low-dimensional projections.
                     ######################################################
 
-                    self.h5file.create_carray(
-                        self.h5file.root.projection_coordinates,
+                    self._h5file.create_carray(
+                        self._h5file.root.projection_coordinates,
                         name="model" + str(valid_model_id),
                         obj=result["low_dimensional_projection"],
                         title="Low dimensional coordinates for model #" + str(valid_model_id),
@@ -101,11 +103,11 @@ class PersistenceThread(threading.Thread):
                 last_processed_index = num_of_results_so_far - 1
 
             # Wait a few seconds before checking whether any new elements have been added.
-            time.sleep(5)
+            time.sleep(self._checking_interval)
 
         # Close file.
-        print(self.h5file)
-        self.h5file.close()
+        print(self._h5file)
+        self._h5file.close()
 
     def _open_pytables_file(self):
         """
@@ -116,7 +118,7 @@ class PersistenceThread(threading.Thread):
         # Used to store how many models are already stored in file.
         self.model_id_offset = 0
 
-        file_name = os.getcwd() + "/../data/drop_" + self.dataset_name + ".h5"
+        file_name = os.getcwd() + "/../data/drop_" + self._dataset_name + ".h5"
         # If file exists: Return handle to existing file (assuming file is not corrupt).
         if os.path.isfile(file_name):
             h5file = open_file(filename=file_name, mode="r+")

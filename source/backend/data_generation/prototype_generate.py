@@ -2,21 +2,21 @@ from random import shuffle
 import os
 import psutil
 from scipy.spatial.distance import cdist
-from sklearn.datasets import load_wine
-from sklearn.preprocessing import StandardScaler
 from tables import *
 
 import backend.objectives.topology_preservation_objectives.CorankingMatrix as CorankingMatrix
 from backend.data_generation.PersistenceThread import PersistenceThread
 from backend.data_generation.TSNEThread import TSNEThread
-from backend.data_generation.datasets.WineDataset import WineDataset
+from backend.data_generation.datasets.SwissRoll import SwissRoll
 
 ######################################################
 # 1. Generate parameter sets, store in file.
 ######################################################
 
 # Define name of dataset to use (appended to file name).
-dataset_name = "new_wine"
+from backend.data_generation.datasets.WineDataset import WineDataset
+
+dataset_name = "swiss_roll"
 
 # Get all parameter configurations (to avoid duplicate model generations).
 existent_parameter_sets = []
@@ -42,10 +42,10 @@ if os.path.isfile(file_name):
 
 # Define parameter ranges.
 parameter_values = {
-    "n_components": (1, 2, 3, 4),
-    "perplexity": (10, 25, 50, 80),
+    "n_components": (1, ), #2, 3, 4),
+    "perplexity": (10, ), #25, 50, 80),
     "early_exaggeration": (5.0, ), #10.0, 15.0, 20.0),
-    "learning_rate": (10.0, 250.0, 500.0, 1000.0),
+    "learning_rate": (10.0, 250.0), # 500.0, 1000.0),
     "n_iter": (250, ), #1000, 2000, 5000),
     # Commenting out min_grad_norm, since a variable value for this since (1) MulticoreTSNE doesn't support dynamic
     # values for this attribute and (2) sklearn's implementation is slow af.
@@ -92,7 +92,8 @@ for n_components in parameter_values["n_components"]:
 ######################################################
 
 # Load toy example dataset.
-high_dim_dataset = WineDataset()
+#high_dim_dataset = WineDataset()
+high_dim_dataset = SwissRoll()
 
 # Scale attributes, fetch predictors.
 high_dim_data = high_dim_dataset.features()

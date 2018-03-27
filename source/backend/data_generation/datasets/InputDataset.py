@@ -3,7 +3,6 @@ import sklearn.ensemble
 from sklearn.model_selection import StratifiedShuffleSplit
 import psutil
 import numpy
-from sklearn.preprocessing import StandardScaler
 
 
 class InputDataset:
@@ -20,8 +19,8 @@ class InputDataset:
         # Load or generate data.
         self._data = self._load_data()
 
-        # Scale features.
-        self._scaled_features = StandardScaler().fit_transform(self._data.data)
+        # Preprocess features.
+        self._preprocessed_features = self._preprocess_features()
 
         # Calculate accuracy.
         self._classification_accuracy = self.calculate_classification_accuracy()
@@ -29,8 +28,16 @@ class InputDataset:
     @abc.abstractmethod
     def _load_data(self):
         """
-        Loads or generates data.
+        Loads or generates data for this dataset.
         :return:
+        """
+        pass
+
+    @abc.abstractmethod
+    def _preprocess_features(self):
+        """
+        Executes all necessary preprocessing.
+        :return: Set of preprocessed features. Is stored in self._scaled_features.
         """
         pass
 
@@ -41,6 +48,14 @@ class InputDataset:
         :return:
         """
         pass
+
+    def preprocessed_features(self):
+        """
+        Returns preprocssed features in this dataset.
+        :return:
+        """
+
+        return self._preprocessed_features
 
     @abc.abstractmethod
     def labels(self):
@@ -60,7 +75,7 @@ class InputDataset:
         """
 
         # Set features, if not specified in function call.
-        features = self.features() if features is None else features
+        features = self.preprocessed_features() if features is None else features
         labels = self.labels()
 
         # Apply straightforward k-nearest neighbour w/o further preprocessing to predict class labels.
