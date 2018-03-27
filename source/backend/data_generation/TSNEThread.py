@@ -105,17 +105,15 @@ class TSNEThread(threading.Thread):
                 high_dimensional_data=self._distance_matrices[metric],
                 low_dimensional_data=low_dimensional_projection,
                 distance_metric=metric,
-                coranking_matrix=coranking_matrix,
-                k_interval=k_neighbourhood_interval
+                coranking_matrix=coranking_matrix
             ).compute()
 
             # B_nx.
-            b_nx = CorankingMatrixQualityCriterion(
+            b_nx = CorankingMatrixBehaviourCriterion(
                 high_dimensional_data=self._distance_matrices[metric],
                 low_dimensional_data=low_dimensional_projection,
                 distance_metric=metric,
-                coranking_matrix=coranking_matrix,
-                k_interval=(2, 5)
+                coranking_matrix=coranking_matrix
             ).compute()
 
             ############################################
@@ -142,6 +140,7 @@ class TSNEThread(threading.Thread):
             ############################################
 
             # 1. Cluster projection with number of classes.
+            # Alternative Approach: 1-kNN comparison - check if nearest neighbour is in same class.
             # Determine min_cluster_size as approximate min number of elements in a class
             unique, counts_per_class = numpy.unique(self._input_dataset.labels(), return_counts=True)
             # Create HDBSCAN instance and cluster data.

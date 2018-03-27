@@ -174,15 +174,15 @@ class CorankingMatrix:
         """
         return self._matrix
 
-    def calculate_intrusion(self, k):
+    def calculate_intrusion(self, k_values: list):
         """
         This method allows to compute the fraction of intrusion.
 
         Implementation based on https://github.com/gdkrmr/coRanking .
 
-        Args:
-            + Q: The coranking matrix
-            + k: The neighbourhood size
+        :param Q: The coranking matrix
+        :param k_values: The neighbourhood sizes to sample.
+        :returns List of intrusion values for each k.
         """
 
         Q = self._matrix
@@ -191,25 +191,28 @@ class CorankingMatrix:
         n = Q.shape[0]
         # We compute the values
         vals = Q
-        # We compute the mask
-        mask = numpy.zeros([n, n])
-        mask[:k, :k] = numpy.triu(numpy.ones([k, k]))
-        # We compute the normalization constant
-        norm = k * (n + 1.)
-        # We finally compute the measures
-        measure = (vals * mask).sum() / float(norm)
 
-        return measure
+        measures = []
+        for k in k_values:
+            # We compute the mask.
+            mask = numpy.zeros([n, n])
+            mask[:k, :k] = numpy.triu(numpy.ones([k, k]))
+            # We compute the normalization constant
+            norm = k * (n + 1.)
+            # We finally compute the measures
+            measures.append((vals * mask).sum() / float(norm))
 
-    def calculate_extrusion(self, k):
+        return measures
+
+    def calculate_extrusion(self, k_values: list):
         """
         This method allows to compute the fraction of extrusion.
 
         Implementation based on https://github.com/gdkrmr/coRanking .
 
-        Args:
-            + Q: The coranking matrix
-            + k: The neighbourhood size
+        :param Q: The coranking matrix
+        :param k_values: The neighbourhood sizes to sample.
+        :returns List of extrusion values for each k.
         """
 
         Q = self._matrix
@@ -218,12 +221,15 @@ class CorankingMatrix:
         n = Q.shape[0]
         # We compute the values
         vals = Q
-        # We compute the mask
-        mask = np.zeros([n, n])
-        mask[:k, :k] = np.tril(np.ones([k, k]))
-        # We compute the normalization constant
-        norm = k * (n + 1.)
-        # We finally compute the measures
-        measure = (vals * mask).sum() / float(norm)
 
-        return measure
+        measures = []
+        for k in k_values:
+            # We compute the mask
+            mask = numpy.zeros([n, n])
+            mask[:k, :k] = numpy.tril(numpy.ones([k, k]))
+            # We compute the normalization constant
+            norm = k * (n + 1.)
+            # We finally compute the measures
+            measures.append((vals * mask).sum() / float(norm))
+
+        return measures

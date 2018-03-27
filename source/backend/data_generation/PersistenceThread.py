@@ -30,7 +30,8 @@ class PersistenceThread(threading.Thread):
 
     def run(self):
         """
-        Persistence thread starts to monitor shared list object holding results. If new elements are added
+        Persistence thread starts to monitor shared list object holding results. If new elements are added, changes are
+        pushed to disk.
         :return:
         """
 

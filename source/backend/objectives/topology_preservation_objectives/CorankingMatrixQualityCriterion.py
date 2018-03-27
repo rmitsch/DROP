@@ -13,8 +13,7 @@ class CorankingMatrixQualityCriterion(TopologyPreservationObjective):
             low_dimensional_data: numpy.ndarray,
             high_dimensional_data: numpy.ndarray,
             distance_metric: str = 'euclidean',
-            coranking_matrix: CorankingMatrix = None,
-            k_interval: tuple = (5, 5)
+            coranking_matrix: CorankingMatrix = None
     ):
         """
         Initializes coranking-based objectives.
@@ -24,8 +23,7 @@ class CorankingMatrixQualityCriterion(TopologyPreservationObjective):
             low_dimensional_data=low_dimensional_data,
             high_dimensional_data=high_dimensional_data,
             distance_metric=distance_metric,
-            coranking_matrix=coranking_matrix,
-            k_interval=k_interval
+            coranking_matrix=coranking_matrix
         )
 
     def compute(self):
@@ -35,35 +33,55 @@ class CorankingMatrixQualityCriterion(TopologyPreservationObjective):
         :return: Criterion averaged/scalarized over chosen k-ary neighbourhood.
         """
 
-        Q = self._coranking_matrix.matrix()
+        ########################################
+        # 1. Prepare coranking matrix data.
+        ########################################
 
+        Q = self._coranking_matrix.matrix()
         # We retrieve the number of points
         n = Q.shape[0]
         # We compute the values
         vals = Q
-        # We compute the mask
-        mask = numpy.zeros([n, n])
 
-        objective_values = []
-        for k in range(self._k_interval[0], self._k_interval[1]):
+        ########################################
+        # 2. Pick k values to sample.
+        ########################################
+
+        # Pick immediate neighbourhood + 4 equidistant values of k beyond that for sampling purposes.
+        k_samples = [1, 5, 10]
+        k_samples.extend(numpy.linspace(
+            start=1,
+            stop=n - 2,
+            num=4,
+            endpoint=False,
+            dtype=numpy.int
+        ))
+
+        ########################################
+        # 3. Calculate AUC for r_nx.
+        ########################################
+
+        auc_r_nx = 0
+        # Range for k is (1, n - 2) - see https://www-sciencedirect-com/science/article/pii/S0925231215003641 for
+        # derivation.
+        for k in k_samples:
+            # We compute the mask
+            mask = numpy.zeros([n, n])
             mask[:k, :k] = 1.
             # We compute the normalization constant
             norm = k * (n + 1.)
+
             # We finally compute the measures.
-            # Note: This calculates q_nx. r_nx = ( (N - 1) * q_nx(K) - K ) / (N - 1 - K)
+            # Note: This calculates q_nx.
             q_nx = (vals * mask).sum() / float(norm)
+
+            # r_nx = ( (N - 1) * q_nx(K) - K ) / (N - 1 - K)
             r_nx = ((n - 1) * q_nx - k) / (n - 1 - k)
-            # todo: Calculate area under the curve with a few (interspersed) values of k.
+
             # See p. 253, bottom right, on
             # https://www-sciencedirect-com.uaccess.univie.ac.at/science/article/pii/S0925231215003641 on equation.
-            # Question: Values of k? Other paper used quaternary quantiles in range - might be an option; AUC
-            # calculation weights small neighbourhoods higher.
-            # Note that AUC here is just an average! Has to be divided by the number of k-ary neighbourhoods considered.
-            auc_r_nx = 0
-            # Append r_nx to list of values.
-            objective_values.append(auc_r_nx)
+            # Note that AUC here is just a weighted average! Has to be divided by the number of k-ary neighbourhoods
+            # considered.
+            auc_r_nx += r_nx / k
 
-        # todo: Scalarize k-ary neighbourhood values.
-        measure = 0
-
-        return measure
+        return auc_r_nx / sum([1 / k for k in k_samples])

@@ -15,8 +15,7 @@ class TopologyPreservationObjective(DimensionalityReductionObjective):
             low_dimensional_data: numpy.ndarray,
             high_dimensional_data: numpy.ndarray,
             distance_metric: str = 'euclidean',
-            coranking_matrix: CorankingMatrix = None,
-            k_interval: tuple = (5, 5)
+            coranking_matrix: CorankingMatrix = None
     ):
         """
         Initializes coranking-based objectives.
@@ -32,7 +31,6 @@ class TopologyPreservationObjective(DimensionalityReductionObjective):
             high_dimensional_data=high_dimensional_data,
             distance_metric=distance_metric
         )
-        self._k_interval = k_interval
 
         # Update coranking matrix with supplied value (or calculate, if none was supplied).
         self._coranking_matrix = coranking_matrix if coranking_matrix is not None else CorankingMatrix(
