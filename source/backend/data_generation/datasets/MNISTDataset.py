@@ -6,7 +6,7 @@ from sklearn.datasets import load_wine
 from sklearn.preprocessing import StandardScaler
 
 
-class MNIST(InputDataset):
+class MNISTDataset(InputDataset):
     """
     Load MNIST datasets using sklearn.
     """

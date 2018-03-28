@@ -4,7 +4,7 @@ from sklearn.datasets.samples_generator import make_swiss_roll
 from sklearn.neighbors import kneighbors_graph
 
 
-class SwissRoll(InputDataset):
+class SwissRollDataset(InputDataset):
     """
     Generate swiss roll dataset using sklearn.
     Following tutorial here:

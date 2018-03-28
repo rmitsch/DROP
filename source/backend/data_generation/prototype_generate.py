@@ -7,14 +7,14 @@ from tables import *
 import backend.objectives.topology_preservation_objectives.CorankingMatrix as CorankingMatrix
 from backend.data_generation.PersistenceThread import PersistenceThread
 from backend.data_generation.TSNEThread import TSNEThread
-from backend.data_generation.datasets.MNIST import MNIST
+from backend.data_generation.datasets.MNISTDataset import MNISTDataset
 
 ######################################################
 # 1. Generate parameter sets, store in file.
 ######################################################
 
 # Define name of dataset to use (appended to file name).
-from backend.data_generation.datasets.SwissRoll import SwissRoll
+from backend.data_generation.datasets.SwissRollDataset import SwissRollDataset
 from backend.data_generation.datasets.WineDataset import WineDataset
 
 dataset_name = "mnist"
@@ -93,11 +93,15 @@ for n_components in parameter_values["n_components"]:
 ######################################################
 
 # Load toy example dataset.
-high_dim_dataset = MNIST()
+high_dim_dataset = MNISTDataset()
 # NEXT UP:
 #     - Datasets
-#         * MNIST
 #         * VIS papers (doc2vec? fasttext doc. vectors? topic models?)
+#               + Finish scraping keyvis.
+#               + Dump data to file.
+#               + Decide on course of action for classification foundation (doc2vec? fastText? Topic models?) - use
+#                 clusters as class labels.
+#               + Construct Dataset descendant for paper dataset.
 #         * (optional, probably better later, if more data/examples are needed) genome data with ancestry
 #     - Offload t-SNE to GPU
 #     - Update frontend for new set of objectives
