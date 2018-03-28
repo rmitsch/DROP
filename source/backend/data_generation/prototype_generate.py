@@ -7,16 +7,17 @@ from tables import *
 import backend.objectives.topology_preservation_objectives.CorankingMatrix as CorankingMatrix
 from backend.data_generation.PersistenceThread import PersistenceThread
 from backend.data_generation.TSNEThread import TSNEThread
-from backend.data_generation.datasets.SwissRoll import SwissRoll
+from backend.data_generation.datasets.MNIST import MNIST
 
 ######################################################
 # 1. Generate parameter sets, store in file.
 ######################################################
 
 # Define name of dataset to use (appended to file name).
+from backend.data_generation.datasets.SwissRoll import SwissRoll
 from backend.data_generation.datasets.WineDataset import WineDataset
 
-dataset_name = "swiss_roll"
+dataset_name = "mnist"
 
 # Get all parameter configurations (to avoid duplicate model generations).
 existent_parameter_sets = []
@@ -53,7 +54,7 @@ parameter_values = {
     # it might be added again.
     #"min_grad_norm": (1e-10, 1e-7, 1e-4, 1e-1),
     "angle": (0.1, ), #0.35, 0.65, 0.9),
-    "metrics": ('seuclidean', 'cosine')
+    "metrics": ('cosine', 'euclidean')
 }
 
 # Filter out already existing model parametrizations.
@@ -92,26 +93,33 @@ for n_components in parameter_values["n_components"]:
 ######################################################
 
 # Load toy example dataset.
-#high_dim_dataset = WineDataset()
-high_dim_dataset = SwissRoll()
+high_dim_dataset = MNIST()
+# NEXT UP:
+#     - Datasets
+#         * MNIST
+#         * VIS papers (doc2vec? fasttext doc. vectors? topic models?)
+#         * (optional, probably better later, if more data/examples are needed) genome data with ancestry
+#     - Offload t-SNE to GPU
+#     - Update frontend for new set of objectives
+#     - Run data generation
 
 # Scale attributes, fetch predictors.
-high_dim_data = high_dim_dataset.features()
+high_dim_features = high_dim_dataset.features()
 
 ######################################################
 # 3. Calculate distance matrices and the corresponding
 # coranking matrices.
 ######################################################
 
-# Assumes all specified distances can be calculated by scipy's cdist().
+print("Preprocessing.")
 distance_matrices = {
-    metric: cdist(high_dim_data.data, high_dim_data.data, metric)
+    metric: cdist(high_dim_features, high_dim_features, metric)
     for metric in parameter_values["metrics"]
 }
 
 # Generate neighbourhood ranking for high dimensional data w.r.t. all used distance metrics.
 high_dim_neighbourhood_rankings = {
-    metric: CorankingMatrix.generate_neighbourhood_ranking(data=high_dim_data, distance_metric=metric)
+    metric: CorankingMatrix.generate_neighbourhood_ranking(distance_matrix=distance_matrices[metric])
     for metric in parameter_values["metrics"]
 }
 
@@ -122,7 +130,7 @@ high_dim_neighbourhood_rankings = {
 # Shuffle list with parameter sets so that they are kinda evenly distributed.
 shuffle(parameter_sets)
 # Determine number of workers.
-n_jobs = psutil.cpu_count(logical=True) - 1
+n_jobs = 1 # psutil.cpu_count(logical=True) - 1
 threads = []
 # Shared list holding results.
 results = []
@@ -158,6 +166,7 @@ threads.append(
 # 3. Calculate low-dim. represenatations.
 ######################################################
 
+print("Generating models.")
 for thread in threads:
     thread.start()
 for thread in threads:

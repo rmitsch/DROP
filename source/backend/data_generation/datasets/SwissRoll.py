@@ -2,7 +2,6 @@ from backend.data_generation import InputDataset
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.datasets.samples_generator import make_swiss_roll
 from sklearn.neighbors import kneighbors_graph
-import numpy
 
 
 class SwissRoll(InputDataset):
@@ -41,13 +40,11 @@ class SwissRoll(InputDataset):
         connectivity = kneighbors_graph(X, n_neighbors=10, include_self=False)
 
         # Cluster using connectivity graph.
-        ward = AgglomerativeClustering(
+        data["labels"] = AgglomerativeClustering(
             n_clusters=6,
             connectivity=connectivity,
             linkage='ward'
-        ).fit(X)
-
-        data["labels"] = ward.labels_
+        ).fit(X).labels_
 
         return data
 

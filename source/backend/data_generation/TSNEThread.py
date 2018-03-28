@@ -85,9 +85,6 @@ class TSNEThread(threading.Thread):
             # Start measuring runtime.
             runtime = time.time() - start
 
-            # Define neighbourhood interval to be considered (if relevant).
-            k_neighbourhood_interval = (2, 5)
-
             ############################################
             # 2. a. Topology-based metrics.
             ############################################

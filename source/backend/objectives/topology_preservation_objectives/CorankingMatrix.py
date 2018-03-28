@@ -19,6 +19,8 @@ class CorankingMatrix:
             high_dimensional_neighbourhood_ranking: numpy.ndarray = None
     ):
         self._distance_metric = distance_metric
+        self._high_dim_ranking = None
+        self._low_dim_ranking = None
 
         self._matrix = self._generate_coranking_matrix(
             high_dimensional_data=high_dimensional_data,
@@ -27,9 +29,24 @@ class CorankingMatrix:
         )
 
     @staticmethod
-    def generate_neighbourhood_ranking(data: numpy.ndarray, distance_metric: str):
+    def generate_neighbourhood_ranking(distance_matrix: numpy.ndarray):
         """
-        Generates neighbourhood ranking. Used by DimensionalityReductionObjective.generate_coranking_matrix().
+        Generates neighbourhood ranking. Used externally, accepts pre-calculated distance matrix.
+        Might be used to generate a ranking once and supplying it to generate_coranking_matrix() instead of calculating
+        it over and over.
+        :param distance_matrix
+        :return: ndarray of sorted and ranked neigbourhood similarity.
+        """
+
+        # Original approach: Re-calculate with chosen data and distance metric.
+        # Calculate distances, then sort by similarities.
+        return distance_matrix.argsort(axis=1).argsort(axis=1)
+
+    @staticmethod
+    def _generate_neighbourhood_ranking(data: numpy.ndarray, distance_metric: str):
+        """
+        Generates neighbourhood ranking. Used internally, accepts original data and chosen distance metric.
+
         Might be used to generate a ranking once and supplying it to generate_coranking_matrix() instead of calculating
         it over and over.
         :param data:
@@ -37,6 +54,7 @@ class CorankingMatrix:
         :return: ndarray of sorted and ranked neigbourhood similarity.
         """
 
+        # Original approach: Re-calculate with chosen data and distance metric.
         # Calculate distances, then sort by similarities.
         return distance.squareform(distance.pdist(data, distance_metric)).argsort(axis=1).argsort(axis=1)
 
@@ -70,26 +88,26 @@ class CorankingMatrix:
 
         if high_dim_neighbourhood_ranking is None:
             # Check use_geodesic to determine whether to use geodesic or spatial distances.
-            high_ranking = \
+            self._high_dim_ranking = \
                 CorankingMatrix._calculate_geodesic_ranking(
                     data=high_dimensional_data,
                     distance_metric=self._distance_metric
                 ) if use_geodesic else \
-                CorankingMatrix.generate_neighbourhood_ranking(
+                CorankingMatrix._generate_neighbourhood_ranking(
                     high_dimensional_data,
                     distance_metric=self._distance_metric
                 )
 
         # If high_dim_neighbourhood ranking was already supplied, use it instead of calculating anew.
         else:
-            high_ranking = high_dim_neighbourhood_ranking
+            self._high_dim_ranking = high_dim_neighbourhood_ranking
 
         # ------------------------------------------------------------------------------------
         # 2. Calculate ranking in low-dimensional space.
         # ------------------------------------------------------------------------------------
 
         # Calculate distances.
-        low_ranking = CorankingMatrix.generate_neighbourhood_ranking(
+        self._low_dim_ranking = CorankingMatrix._generate_neighbourhood_ranking(
             low_dimensional_data,
             distance_metric=self._distance_metric
         )
@@ -99,8 +117,8 @@ class CorankingMatrix:
         # ------------------------------------------------------------------------------------
 
         Q, xedges, yedges = numpy.histogram2d(
-            high_ranking.flatten(),
-            low_ranking.flatten(),
+            self._high_dim_ranking.flatten(),
+            self._low_dim_ranking.flatten(),
             bins=n
         )
 
@@ -157,9 +175,9 @@ class CorankingMatrix:
 
         # Calculate ranking of neighbourhood similarities for high- and low-dimensional datasets.
         high_ranking = high_dim_neighbourhood_ranking if high_dim_neighbourhood_ranking is not None else \
-            CorankingMatrix.generate_neighbourhood_ranking(high_dimensional_data, distance_metric)
+            CorankingMatrix._generate_neighbourhood_ranking(high_dimensional_data, distance_metric)
         low_ranking = \
-            CorankingMatrix.generate_neighbourhood_ranking(low_dimensional_data, distance_metric)
+            CorankingMatrix._generate_neighbourhood_ranking(low_dimensional_data, distance_metric)
 
         # Aggregate coranking matrix.
         Q, xedges, yedges = numpy.histogram2d(high_ranking.flatten(), low_ranking.flatten(), bins=n)
@@ -233,3 +251,19 @@ class CorankingMatrix:
             measures.append((vals * mask).sum() / float(norm))
 
         return measures
+
+    def high_dimensional_neighbourhood_ranking(self):
+        """
+        Returns ranking of neighbours in high-dimensional space.
+        :return:
+        """
+
+        return self._high_dim_ranking
+
+    def low_dimensional_neighbourhood_ranking(self):
+        """
+        Returns ranking of neighbours in low-dimensional space.
+        :return:
+        """
+
+        return self._low_dim_ranking
