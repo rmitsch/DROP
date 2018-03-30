@@ -49,7 +49,7 @@ with open('vis_papers.csv', 'a') as output_file:
     dict_writer.writeheader()
     error_file = open('vis_paper_erros.txt', 'a')
 
-    # Note: Stopped last time with cluster .
+    # Note: Stopped last time with cluster Cameras, Camera Views and Projections (no papers from this cluster yet).
     for i, cluster_title in enumerate(parsed_content_list):
         if cluster_title != "":
             # Remove trailing and leading whitespaces.
