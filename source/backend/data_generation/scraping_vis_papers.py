@@ -42,27 +42,29 @@ data = {
 paper_scraper.train(url, data)
 
 # Loop through clusters, aggregate information.
-# Stopped last time
 with open('vis_papers.csv', 'a') as output_file:
     # Initialize files.
-    dict_writer = csv.DictWriter(output_file, ["cluster_title", "conference", "year", "title", "abstract", "url"])
+    dict_writer = csv.DictWriter(output_file,
+                                 ["cluster_title", "conference", "year", "title", "abstract", "keywords", "url"]
+    )
     dict_writer.writeheader()
     error_file = open('vis_paper_erros.txt', 'a')
 
     # Note: Stopped last time with cluster Cameras, Camera Views and Projections (no papers from this cluster yet).
     for i, cluster_title in enumerate(parsed_content_list):
+
         if cluster_title != "":
             # Remove trailing and leading whitespaces.
             clean_cluster_title = cluster_title.strip()
 
             # Print progress.
-            print(str(i / float(len(parsed_content_list)) * 100) + "% | " + clean_cluster_title)
+            print(str(i) + " | " + str(i / float(len(parsed_content_list)) * 100) + "% | " + clean_cluster_title)
 
             # Get detailled paper information.
             response = urlopen(
                 Request(
                     'http://keyvis.org/load3.php',
-                    urlencode({'expert': str(i)}).encode()
+                    urlencode({'expert': str(i - 1)}).encode()
                 )
             ).read().decode()
             parsed_paper_response = h.handle(response)
@@ -83,6 +85,7 @@ with open('vis_papers.csv', 'a') as output_file:
                     "year": None,
                     "title": None,
                     "abstract": None,
+                    "keywords": None,
                     "url": None
                 }
 
@@ -93,6 +96,15 @@ with open('vis_papers.csv', 'a') as output_file:
                     if len(paper_parts) > 1:
                         paper_info["conference"] = paper_parts[0].strip()
                         paper_info["year"] = paper_parts[1].strip()
+                        # Get keywords - remove everything up to first occurence of [, then start replacing abstract
+                        # with normalized separators.
+                        keywords_raw = paper_parts[len(paper_parts) - 1]
+                        paper_info["keywords"] = keywords_raw[keywords_raw.index('[') + 1:] \
+                            .replace('[ ', ',') \
+                            .replace('[', ',') \
+                            .replace('\n', '') \
+                            .replace('  ', '') \
+                            .strip()
 
                         # For URL to paper: Find last occurence of round bracket, read URL except closing round
                         # bracket).
