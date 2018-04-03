@@ -119,6 +119,7 @@ logs
 # Ignore data directory.
 data
 data/
+!data/vis_papers
 
 # Ignore external dependencies.
 source/external_depencies
