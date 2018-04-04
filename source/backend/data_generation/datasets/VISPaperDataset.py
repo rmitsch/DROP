@@ -47,10 +47,6 @@ class VISPaperDataset(InputDataset):
         Preprocesses VIS paper texts.
         :return:
         """
-        data = self._data["features"]
-
-        # Append new column holding the ready-to-train text.
-        data["assembled_text"] = ""
 
         ####################################
         # 1. Preprocess paper text.
@@ -64,6 +60,32 @@ class VISPaperDataset(InputDataset):
             "given", "visualizing", "many", "newly", "developed", "address", "problem", "show", "introduce", "present",
             "novel", "analyzing", "present", "every", "also", "within"
         ])
+
+        # Preprocess text - apply modification to all rows.
+        self._data["features"] = self._preprocess_paper_records(stopwords=stopwords)
+
+        # Update value of labels.
+        self._data["labels"] = self._data["features"]["cluster_title"]
+
+        ####################################
+        # 2. Build fastText model.
+        ####################################
+
+        self._model = self._build_fasttext_model()
+
+        return self._data["features"]
+
+    def _preprocess_paper_records(self, stopwords: list):
+        """
+        Preprocesses all records in specified dataframe.
+        :param stopwords:
+        :return: Preprocessed dataframe.
+        """
+
+        data = self._data["features"]
+
+        # Append new column holding the ready-to-train text.
+        data["assembled_text"] = ""
 
         # Preprocess text - apply modification to all rows.
         for i in data.index:
@@ -112,15 +134,6 @@ class VISPaperDataset(InputDataset):
                 keywords + " " + \
                 data.ix[i, 'abstract']
 
-        # Update value of labels.
-        self._data["labels"] = data["cluster_title"]
-
-        ####################################
-        # 2. Build fastText model.
-        ####################################
-
-        self._model = self._build_fasttext_model()
-
         return data
 
     def _build_fasttext_model(self):
@@ -149,6 +162,16 @@ class VISPaperDataset(InputDataset):
             )
 
     def calculate_classification_accuracy(self, features: numpy.ndarray = None):
+        # ********** TODOS **********
+        #     - Datasets
+        #         * VIS papers
+        #               + calc. class. accuracy.
+        #               + solve distance matrix organization - either let inputdataset calc. it or provided a numeric
+        #                 represenation of word vectors (after model generation?).
+        #               + decide & implement approach for class. accuracy of low-dim. projections - still using fasttext class.?
+        #                 usual random forest instead? if ft: how to replace original with low-dim. vectors?
+        #                 conclusio: random forest for low-dim. probably more reasonable.
+
         print("calculating accuracy")
         # Set features, if not specified in function call.
         features = self.preprocessed_features() if features is None else features

@@ -92,21 +92,12 @@ for n_components in parameter_values["n_components"]:
 # Load toy example dataset.
 high_dim_dataset = VISPaperDataset()
 # NEXT UP:
-#     - Datasets
-#         * VIS papers
-#               + calc. class. accuracy.
-#               + solve distance matrix organization - either let inputdataset calc. it or provided a numeric
-#                 represenation of word vectors (after model generation?).
-#               + decide & implement approach for class. accuracy of low-dim. projections - still using fasttext class.?
-#                 usual random forest instead? if ft: how to replace original with low-dim. vectors?
-#                 conclusio: random forest for low-dim. probably more reasonable.
-#         * (optional, probably better later, if more data/examples are needed) genome data with ancestry
 #     - Offload t-SNE to GPU
 #     - Update frontend for new set of objectives
 #     - Run data generation
 
 # Scale attributes, fetch predictors.
-high_dim_features = high_dim_dataset.features()
+high_dim_features = high_dim_dataset.preprocessed_features()
 
 ######################################################
 # 3. Calculate distance matrices and the corresponding
