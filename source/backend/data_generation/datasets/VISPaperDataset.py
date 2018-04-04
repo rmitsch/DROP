@@ -1,12 +1,12 @@
-import os
-import csv
 import pandas
 import nltk
 from pattern3 import vector as pattern_vector
 import tempfile
 import re
 import numpy
-from fastText import train_supervised
+import fastText
+from sklearn.model_selection import StratifiedShuffleSplit
+
 from backend.data_generation import InputDataset
 
 
@@ -17,8 +17,6 @@ class VISPaperDataset(InputDataset):
 
     def __init__(self):
         super().__init__()
-
-        self._model = None
 
     def labels(self):
         return self._data["labels"]
@@ -49,7 +47,7 @@ class VISPaperDataset(InputDataset):
         """
 
         ####################################
-        # 1. Preprocess paper text.
+        # Preprocess paper texts.
         ####################################
 
         # Define stopwords.
@@ -64,16 +62,28 @@ class VISPaperDataset(InputDataset):
         # Preprocess text - apply modification to all rows.
         self._data["features"] = self._preprocess_paper_records(stopwords=stopwords)
 
-        # Update value of labels.
+        # Drop all records being the only representatives of a cluster.
+        self._data["features"] = self._data["features"][
+            self._data["features"]['cluster_title'].isin(self._select_nonsingular_clusters())
+        ]
+
+        # Update values of labels after preprocessing.
         self._data["labels"] = self._data["features"]["cluster_title"]
 
-        ####################################
-        # 2. Build fastText model.
-        ####################################
-
-        self._model = self._build_fasttext_model()
-
         return self._data["features"]
+
+    def _select_nonsingular_clusters(self):
+        """
+        Selects titles of non-singular (i. e. with more than one entry) clusters.
+        Necessary since we can't create models with only one member per class.
+        :return: List containing titles of non-singular clusters.
+        """
+
+        data = self._data["features"]
+        unique, counts = numpy.unique(data["cluster_title"], return_counts=True)
+        cluster_memberships = {k: v for k, v in dict(zip(unique, counts)).items() if v > 1}
+
+        return cluster_memberships.keys()
 
     def _preprocess_paper_records(self, stopwords: list):
         """
@@ -86,6 +96,7 @@ class VISPaperDataset(InputDataset):
 
         # Append new column holding the ready-to-train text.
         data["assembled_text"] = ""
+        data["assembled_text_wo_cluster_title"] = ""
 
         # Preprocess text - apply modification to all rows.
         for i in data.index:
@@ -133,24 +144,30 @@ class VISPaperDataset(InputDataset):
                 data.ix[i, 'title'] + " " + \
                 keywords + " " + \
                 data.ix[i, 'abstract']
+            # Assemble preprocessed abstract, title and labels w/o cluster title.
+            data.ix[i, 'assembled_text_wo_cluster_title'] = \
+                data.ix[i, 'title'] + " " + \
+                keywords + " " + \
+                data.ix[i, 'abstract']
 
         return data
 
-    def _build_fasttext_model(self):
+    def _build_fasttext_model(self, indices: numpy.ndarray):
         """
         Build fastText model based on available data.
+        :param indices: Indices in self._data["features"] to use for building the model.
         :return:
         """
-        # Create temporary file so fastText reads the data.
+        # Create temporary file so fastText can read the data.
         with tempfile.NamedTemporaryFile(mode="wt") as temp:
             # Dump content to file.
-            for item in self._data["features"]["assembled_text"].tolist():
+            for item in self._data["features"]["assembled_text"].values[indices]:
                 temp.write("%s\n" % item)
             # Rewind temp. file before reading from it.
             temp.seek(0)
 
             # Train fastText model.
-            return train_supervised(
+            return fastText.train_supervised(
                 input=temp.name,
                 epoch=100,
                 dim=150,
@@ -159,6 +176,27 @@ class VISPaperDataset(InputDataset):
                 wordNgrams=2,
                 verbose=2,
                 minCount=1
+            )
+
+    def _evalute_fasttext_model(self, fasttext_model: fastText.FastText._FastText, indices: numpy.ndarray):
+        """
+        Evaluate fastText model based on available data.
+        :param fasttext_model:
+        :param indices: Indices in self._data["features"] to use for evaluating the model.
+        :return:
+        """
+        # Create temporary file so fastText can read the data.
+        with tempfile.NamedTemporaryFile(mode="wt") as temp:
+            # Dump content to file.
+            for item in self._data["features"]["assembled_text"].values[indices]:
+                temp.write("%s\n" % item)
+            # Rewind temp. file before reading from it.
+            temp.seek(0)
+
+            # Train fastText model.
+            return fasttext_model.test(
+                path=temp.name,
+                k=1
             )
 
     def calculate_classification_accuracy(self, features: numpy.ndarray = None):
@@ -172,13 +210,27 @@ class VISPaperDataset(InputDataset):
         #                 usual random forest instead? if ft: how to replace original with low-dim. vectors?
         #                 conclusio: random forest for low-dim. probably more reasonable.
 
-        print("calculating accuracy")
-        # Set features, if not specified in function call.
-        features = self.preprocessed_features() if features is None else features
+        # Get labels.
         labels = self.labels()
 
-        # Split data. Use several iterations.
+        # If this is the original dataset: Classify using fastText.
+        if features is None:
+            print("calculating accuracy")
+
+            # Set features, if not specified in function call.
+            features = self.preprocessed_features()
+
+            # Loop through stratified splits, average prediction accuracy over all splits.
+            accuracy = 0
+            n_splits = 3
+            for train_indices, test_indices in StratifiedShuffleSplit(
+                    n_splits=n_splits,
+                    test_size=0.33
+            ).split(features["assembled_text_wo_cluster_title"].values, labels.values):
+                model = self._build_fasttext_model(train_indices)
+                eval = self._evalute_fasttext_model(fasttext_model=model, indices=test_indices)
+                print(eval)
 
 
-
+        exit()
         return 0
