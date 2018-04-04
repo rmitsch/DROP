@@ -1,23 +1,20 @@
 from random import shuffle
 import os
-import psutil
 from scipy.spatial.distance import cdist
 from tables import *
 
 import backend.objectives.topology_preservation_objectives.CorankingMatrix as CorankingMatrix
 from backend.data_generation.PersistenceThread import PersistenceThread
 from backend.data_generation.TSNEThread import TSNEThread
-from backend.data_generation.datasets.MNISTDataset import MNISTDataset
 
 ######################################################
 # 1. Generate parameter sets, store in file.
 ######################################################
 
 # Define name of dataset to use (appended to file name).
-from backend.data_generation.datasets.SwissRollDataset import SwissRollDataset
-from backend.data_generation.datasets.WineDataset import WineDataset
+from backend.data_generation.datasets.VISPaperDataset import VISPaperDataset
 
-dataset_name = "mnist"
+dataset_name = "vis"
 
 # Get all parameter configurations (to avoid duplicate model generations).
 existent_parameter_sets = []
@@ -93,15 +90,16 @@ for n_components in parameter_values["n_components"]:
 ######################################################
 
 # Load toy example dataset.
-high_dim_dataset = MNISTDataset()
+high_dim_dataset = VISPaperDataset()
 # NEXT UP:
 #     - Datasets
-#         * VIS papers (doc2vec? fasttext doc. vectors? topic models?)
-#               + Finish scraping keyvis.
-#               + Dump data to file.
-#               + Decide on course of action for classification foundation (doc2vec? fastText? Topic models?) - use
-#                 clusters as class labels.
-#               + Construct Dataset descendant for paper dataset.
+#         * VIS papers
+#               + calc. class. accuracy.
+#               + solve distance matrix organization - either let inputdataset calc. it or provided a numeric
+#                 represenation of word vectors (after model generation?).
+#               + decide & implement approach for class. accuracy of low-dim. projections - still using fasttext class.?
+#                 usual random forest instead? if ft: how to replace original with low-dim. vectors?
+#                 conclusio: random forest for low-dim. probably more reasonable.
 #         * (optional, probably better later, if more data/examples are needed) genome data with ancestry
 #     - Offload t-SNE to GPU
 #     - Update frontend for new set of objectives
@@ -116,6 +114,8 @@ high_dim_features = high_dim_dataset.features()
 ######################################################
 
 print("Preprocessing.")
+# todo: Move calculation of distance matrices and neighbourhood rankings into InputDataset (textual data requires
+# different approach than numeric data).
 distance_matrices = {
     metric: cdist(high_dim_features, high_dim_features, metric)
     for metric in parameter_values["metrics"]
