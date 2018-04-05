@@ -3,6 +3,8 @@ import sklearn.ensemble
 from sklearn.model_selection import StratifiedShuffleSplit
 import psutil
 import numpy
+from scipy.spatial.distance import cdist
+from backend.utils import Utils
 
 
 class InputDataset:
@@ -15,6 +17,9 @@ class InputDataset:
         """
         Defines variables to be used in inheriting classes.
         """
+
+        # Get logger.
+        self._logger = Utils.logger
 
         # Load or generate data.
         self._data = self._load_data()
@@ -102,3 +107,12 @@ class InputDataset:
             accuracy += (predicted_labels == labels[test_indices]).sum() / len(predicted_labels)
 
         return accuracy / n_splits
+
+    def compute_distance_matrix(self, metric: str):
+        """
+        Compute distance matrix for all records in high-dimensional dataset.
+        :param metric:
+        :return: Distance matrix as numpy.ndarry.
+        """
+
+        return cdist(self._preprocessed_features(), self._preprocessed_features(), metric)

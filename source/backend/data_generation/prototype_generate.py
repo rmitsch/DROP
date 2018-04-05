@@ -6,14 +6,17 @@ from tables import *
 import backend.objectives.topology_preservation_objectives.CorankingMatrix as CorankingMatrix
 from backend.data_generation.PersistenceThread import PersistenceThread
 from backend.data_generation.TSNEThread import TSNEThread
+from backend.data_generation.datasets.VISPaperDataset import VISPaperDataset
+from backend.utils import Utils
+
+# Create logger.
+logger = Utils.create_logger()
 
 ######################################################
 # 1. Generate parameter sets, store in file.
 ######################################################
 
 # Define name of dataset to use (appended to file name).
-from backend.data_generation.datasets.VISPaperDataset import VISPaperDataset
-
 dataset_name = "vis"
 
 # Get all parameter configurations (to avoid duplicate model generations).
@@ -89,12 +92,10 @@ for n_components in parameter_values["n_components"]:
 # 2. Load high-dimensional data.
 ######################################################
 
-# Load toy example dataset.
+logger.info("Creating dataset.")
+
+# Load dataset.
 high_dim_dataset = VISPaperDataset()
-# NEXT UP:
-#     - Offload t-SNE to GPU
-#     - Update frontend for new set of objectives
-#     - Run data generation
 
 # Scale attributes, fetch predictors.
 high_dim_features = high_dim_dataset.preprocessed_features()
@@ -104,20 +105,19 @@ high_dim_features = high_dim_dataset.preprocessed_features()
 # coranking matrices.
 ######################################################
 
-print("Preprocessing.")
-# todo: Move calculation of distance matrices and neighbourhood rankings into InputDataset (textual data requires
-# different approach than numeric data).
+logger.info("Calculating distance matrices.")
 distance_matrices = {
-    metric: cdist(high_dim_features, high_dim_features, metric)
+    metric: high_dim_dataset.compute_distance_matrix(metric=metric)
     for metric in parameter_values["metrics"]
 }
 
 # Generate neighbourhood ranking for high dimensional data w.r.t. all used distance metrics.
+logger.info("Generating neighbourhood rankings.")
 high_dim_neighbourhood_rankings = {
     metric: CorankingMatrix.generate_neighbourhood_ranking(distance_matrix=distance_matrices[metric])
     for metric in parameter_values["metrics"]
 }
-
+exit()
 ######################################################
 # 3. Set up multithreading.
 ######################################################
