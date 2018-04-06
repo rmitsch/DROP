@@ -12,7 +12,7 @@ class PersistenceThread(threading.Thread):
     Checks whether threads calculating t-SNE generated new output. If so, new output is stored in file.
     """
 
-    def __init__(self, results: list, expected_number_of_results: int, dataset_name: str, checking_interval: int = 10):
+    def __init__(self, results: list, expected_number_of_results: int, dataset_name: str, checking_interval: int = 20):
         """
         Initializes thread for ensuring persistence of t-SNE results calculated by other threads.
         :param results: List of calculated results.

@@ -10,7 +10,8 @@ from scipy.spatial.distance import cdist
 import sklearn.ensemble
 import psutil
 from sklearn.preprocessing import MultiLabelBinarizer
-from sklearn.metrics import f1_score, recall_score, precision_score
+from sklearn.metrics import f1_score
+import hdbscan
 from backend.data_generation import InputDataset
 
 
@@ -41,10 +42,6 @@ class VISPaperDataset(InputDataset):
             ),
             "labels": None
         }
-
-        # For testing purposes: Limit number of rows.
-        data["features"] = data["features"][:1000]
-        data["features"] = data["features"].reset_index(drop=True)
 
         # Preprocess data.
         data["labels"] = data["features"]["keywords"].str.split(",")
@@ -276,9 +273,11 @@ class VISPaperDataset(InputDataset):
         else:
             # Apply straightforward k-nearest neighbour w/o further preprocessing to predict class labels.
             clf = sklearn.ensemble.RandomForestClassifier(
-                n_estimators=100,
-                n_jobs=psutil.cpu_count(logical=False)
+                n_estimators=10,
+                n_jobs=1
             )
+
+            print("low-dim class. - shape: " + str(features.shape))
 
             # Loop through stratified splits, average prediction accuracy over all splits.
             for i in range(0, n_splits):
@@ -325,10 +324,59 @@ class VISPaperDataset(InputDataset):
         :return: Normalized score between 0 and 1 indicating how well labels are separated in low-dim. projection.
         """
 
+        ##########################################################################
         # 1. Create dictionary holding number of occurences per label in cluster.
-        # 2. For each label in each cluster: (num_label_in_cluster / num_all_labels_in_cluster)
-        # 3. Sum up 2. for all labels in current cluster.
-        # 4. Repeat for all clusters.
-        # 5. Normalize with all clusters, use number of label occurences as cluster weights.
+        ##########################################################################
 
-        return 0
+        #  Create HDBSCAN instance and cluster data.
+        clusterer = hdbscan.HDBSCAN(
+            alpha=1.0,
+            metric='euclidean',
+            # Use approximate number of entries in least common class as minimal cluster size.
+            min_cluster_size=int(len(features) * 0.05),
+            min_samples=None
+        ).fit(features)
+
+        # Dictionary for cluster -> true label relations.
+        cluster_properties = {}
+
+        for true_labels, cluster_label in zip(self._data["labels"], clusterer.labels_):
+            if cluster_label not in cluster_properties:
+                cluster_properties[cluster_label] = {
+                    "total_label_count": 0,
+                    "total_record_count": 0,
+                    "label_data": [],
+                    "label_counts": {}
+                }
+            # Append true label data.
+            cluster_properties[cluster_label]["label_data"].append(true_labels)
+
+            # Keep track of number of records.
+            cluster_properties[cluster_label]["total_record_count"] += 1
+
+            # Increase occurence count of labels in this cluster.
+            for true_label in true_labels:
+                if true_label not in cluster_properties[cluster_label]["label_counts"]:
+                    cluster_properties[cluster_label]["label_counts"][true_label] = 0
+                cluster_properties[cluster_label]["label_counts"][true_label] += 1
+                cluster_properties[cluster_label]["total_label_count"] += 1
+
+        ##########################################################################
+        # 2. For each label in each cluster:
+        # (num_label_in_cluster / num_records_in_cluster) to get dispersion of
+        # this label, divide by number of unique labels to normalize.
+        ##########################################################################
+
+        purity = 0
+        for cluster_label in cluster_properties:
+            # Calculate purity of this cluster regarding it's records true labels as count of records with given true
+            # label divided by the occurence count of all labels.
+            purity += sum([
+                (
+                    cluster_properties[cluster_label]["label_counts"][true_label] /
+                    cluster_properties[cluster_label]["total_record_count"]
+                ) / len(cluster_properties[cluster_label]["label_counts"].keys())
+                for true_label in cluster_properties[cluster_label]["label_counts"]
+            ])
+
+        return purity

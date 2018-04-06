@@ -139,7 +139,7 @@ class TSNEThread(threading.Thread):
             ############################################
 
             separability_metric = self._input_dataset.compute_separability_metric(
-                features=low_dimensional_projection
+                features=scaled_low_dim_projection
             )
 
             ###################################################
