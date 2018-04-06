@@ -46,7 +46,7 @@ parameter_values = {
     "n_components": (1, ), #2, 3, 4),
     "perplexity": (10, ), #25, 50, 80),
     "early_exaggeration": (5.0, ), #10.0, 15.0, 20.0),
-    "learning_rate": (10.0, 250.0), # 500.0, 1000.0),
+    "learning_rate": (10.0,), #, 250.0), # 500.0, 1000.0),
     "n_iter": (250, ), #1000, 2000, 5000),
     # Commenting out min_grad_norm, since a variable value for this since (1) MulticoreTSNE doesn't support dynamic
     # values for this attribute and (2) sklearn's implementation is slow af.
@@ -54,7 +54,7 @@ parameter_values = {
     # it might be added again.
     #"min_grad_norm": (1e-10, 1e-7, 1e-4, 1e-1),
     "angle": (0.1, ), #0.35, 0.65, 0.9),
-    "metrics": ('cosine', 'euclidean')
+    "metrics": ('cosine',) #, 'euclidean')
 }
 
 # Filter out already existing model parametrizations.
@@ -117,7 +117,7 @@ high_dim_neighbourhood_rankings = {
     metric: CorankingMatrix.generate_neighbourhood_ranking(distance_matrix=distance_matrices[metric])
     for metric in parameter_values["metrics"]
 }
-exit()
+
 ######################################################
 # 3. Set up multithreading.
 ######################################################
@@ -131,6 +131,7 @@ threads = []
 results = []
 
 # Split parameter sets amongst workers.
+logger.info("Generating t-SNE models.")
 num_parameter_sets = int(len(parameter_sets) / n_jobs)
 for i in range(0, n_jobs):
     first_index = num_parameter_sets * i

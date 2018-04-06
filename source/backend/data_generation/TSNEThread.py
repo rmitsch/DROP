@@ -9,6 +9,7 @@ from sklearn.metrics.cluster import adjusted_mutual_info_score
 from backend.data_generation import InputDataset
 from backend.objectives.topology_preservation_objectives import *
 from backend.objectives.distance_preservation_objectives import *
+from backend.utils import Utils
 
 
 class TSNEThread(threading.Thread):
@@ -56,24 +57,25 @@ class TSNEThread(threading.Thread):
         for parameter_set in self._parameter_sets:
             metric = parameter_set["metric"]
 
-            # Calculate t-SNE.
+            # Calculate t-SNE. Surpress output while doing so.
             start = time.time()
-            low_dimensional_projection = MulticoreTSNE(
-                n_components=parameter_set["n_components"],
-                perplexity=parameter_set["perplexity"],
-                early_exaggeration=parameter_set["early_exaggeration"],
-                learning_rate=parameter_set["learning_rate"],
-                n_iter=parameter_set["n_iter"],
-                # min_grad_norm=parameter_set["min_grad_norm"],
-                angle=parameter_set["angle"],
-                # Always set metric to 'precomputed', since distance matrices are calculated previously. If other
-                # metrics are desired, the corresponding preprocessing step has to be extended.
-                metric='precomputed',
-                method='barnes_hut' if parameter_set["n_components"] < 4 else 'exact',
-                # Set n_jobs to 1, since we parallelize at a higher level by splitting up model parametrizations amongst
-                # threads.
-                n_jobs=1
-            ).fit_transform(self._distance_matrices[metric])
+            with Utils.suppress_stdout():
+                low_dimensional_projection = MulticoreTSNE(
+                    n_components=parameter_set["n_components"],
+                    perplexity=parameter_set["perplexity"],
+                    early_exaggeration=parameter_set["early_exaggeration"],
+                    learning_rate=parameter_set["learning_rate"],
+                    n_iter=parameter_set["n_iter"],
+                    # min_grad_norm=parameter_set["min_grad_norm"],
+                    angle=parameter_set["angle"],
+                    # Always set metric to 'precomputed', since distance matrices are calculated previously. If other
+                    # metrics are desired, the corresponding preprocessing step has to be extended.
+                    metric='precomputed',
+                    method='barnes_hut' if parameter_set["n_components"] < 4 else 'exact',
+                    # Set n_jobs to 1, since we parallelize at a higher level by splitting up model parametrizations amongst
+                    # threads.
+                    n_jobs=4
+                ).fit_transform(self._distance_matrices[metric])
 
             # Scale projection data for later use.
             scaled_low_dim_projection = StandardScaler().fit_transform(low_dimensional_projection)
@@ -136,23 +138,8 @@ class TSNEThread(threading.Thread):
             # 2. d. Separability metrics.
             ############################################
 
-            # 1. Cluster projection with number of classes.
-            # Alternative Approach: 1-kNN comparison - check if nearest neighbour is in same class.
-            # Determine min_cluster_size as approximate min number of elements in a class
-            unique, counts_per_class = numpy.unique(self._input_dataset.labels(), return_counts=True)
-            # Create HDBSCAN instance and cluster data.
-            clusterer = hdbscan.HDBSCAN(
-                alpha=1.0,
-                metric='euclidean',
-                # Use approximate number of entries in least common class as minimal cluster size.
-                min_cluster_size=int(counts_per_class.min() * 0.9),
-                min_samples=None
-            ).fit(low_dimensional_projection)
-
-            # 2. Calculate AMI.
-            adjusted_mutual_information = adjusted_mutual_info_score(
-                self._input_dataset.labels(),
-                clusterer.labels_
+            separability_metric = self._input_dataset.compute_separability_metric(
+                features=low_dimensional_projection
             )
 
             ###################################################
@@ -166,7 +153,7 @@ class TSNEThread(threading.Thread):
                 "b_nx": b_nx,
                 "stress": stress,
                 "classification_accuracy": classification_accuracy,
-                "adjusted_mutual_information": adjusted_mutual_information
+                "separability_metric": separability_metric
             }
 
             # Store parameter set, objective set and low dimensional projection in globally shared object.

@@ -7,7 +7,10 @@ import numpy
 import fastText
 from sklearn.model_selection import train_test_split
 from scipy.spatial.distance import cdist
-
+import sklearn.ensemble
+import psutil
+from sklearn.preprocessing import MultiLabelBinarizer
+from sklearn.metrics import f1_score, recall_score, precision_score
 from backend.data_generation import InputDataset
 
 
@@ -38,6 +41,10 @@ class VISPaperDataset(InputDataset):
             ),
             "labels": None
         }
+
+        # For testing purposes: Limit number of rows.
+        data["features"] = data["features"][:1000]
+        data["features"] = data["features"].reset_index(drop=True)
 
         # Preprocess data.
         data["labels"] = data["features"]["keywords"].str.split(",")
@@ -239,22 +246,20 @@ class VISPaperDataset(InputDataset):
         # ********** TODOS **********
         #     - Datasets
         #         * VIS papers
-        #               + solve distance matrix organization - either let inputdataset calc. it or provided a numeric
-        #                 represenation of word vectors (after model generation?).
         #               + decide & implement approach for class. accuracy of low-dim. projections - still using fasttext class.?
         #                 usual random forest instead? if ft: how to replace original with low-dim. vectors?
         #                 conclusio: random forest for low-dim. probably more reasonable.
         self._logger.info("Calculating classification accuracy.")
 
         accuracy = 0
-        n_splits = 3
+        n_splits = 1
 
         # If this is the original dataset: Classify with fastText using sentence embeddings.
         if features is None:
             # Set features, if not specified in function call.
             features = self.preprocessed_features()
 
-            # Loop through stratified splits, average prediction accuracy over all splits.
+            # Loop through splits, average prediction accuracy over all splits.
             for i in range(0, n_splits):
                 train_indices, test_indices = train_test_split(
                     numpy.arange(len(features)),
@@ -264,13 +269,42 @@ class VISPaperDataset(InputDataset):
                 self._model = self._build_fasttext_model(train_indices)
                 ft_eval = self._evalute_fasttext_model(indices=test_indices, k=5)
 
-                # Calculate accuracy as avg. of precision and recall (crude, I know).
-                accuracy += (ft_eval[1] + ft_eval[2]) / 2.0
+                # Calculate accuracy as f1-score.
+                accuracy += 2 * (ft_eval[1] * ft_eval[2]) / (ft_eval[1] + ft_eval[2])
 
         # If not: Use multi-label random forest using low-dim. projection.
         else:
-            pass
+            # Apply straightforward k-nearest neighbour w/o further preprocessing to predict class labels.
+            clf = sklearn.ensemble.RandomForestClassifier(
+                n_estimators=100,
+                n_jobs=psutil.cpu_count(logical=False)
+            )
 
+            # Loop through stratified splits, average prediction accuracy over all splits.
+            for i in range(0, n_splits):
+                train_indices, test_indices = train_test_split(
+                    numpy.arange(len(features)),
+                    test_size=0.33
+                )
+
+                # Binarize labels.
+                binarized_labels = MultiLabelBinarizer().fit_transform(
+                    self._data["labels"].values.tolist()
+                )
+
+                # Train model.
+                clf.fit(features[train_indices], binarized_labels[train_indices])
+
+                # Predict test set.
+                predicted_labels = clf.predict(features[test_indices]).astype(int)
+
+                # Calculate accuracy as F1 score.
+                accuracy += f1_score(
+                    binarized_labels[test_indices],
+                    predicted_labels,
+                    average='weighted')
+
+        print("accuracy = " + str(accuracy / n_splits))
         return accuracy / n_splits
 
     def compute_distance_matrix(self, metric: str):
@@ -282,3 +316,19 @@ class VISPaperDataset(InputDataset):
 
         # 2. Calculate distance matrix.
         return cdist(numpy.asarray(numerical_values), numpy.asarray(numerical_values), metric)
+
+    def compute_separability_metric(self, features: numpy.ndarray):
+        """
+        Computes separability metric for this dataset.
+        Uses a kind of generalized purity score for clusters, since this is a multilabeled dataset.
+        :param features: Coordinates of low-dimensional projection.
+        :return: Normalized score between 0 and 1 indicating how well labels are separated in low-dim. projection.
+        """
+
+        # 1. Create dictionary holding number of occurences per label in cluster.
+        # 2. For each label in each cluster: (num_label_in_cluster / num_all_labels_in_cluster)
+        # 3. Sum up 2. for all labels in current cluster.
+        # 4. Repeat for all clusters.
+        # 5. Normalize with all clusters, use number of label occurences as cluster weights.
+
+        return 0

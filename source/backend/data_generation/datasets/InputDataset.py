@@ -4,6 +4,8 @@ from sklearn.model_selection import StratifiedShuffleSplit
 import psutil
 import numpy
 from scipy.spatial.distance import cdist
+import hdbscan
+from sklearn.metrics.cluster import adjusted_mutual_info_score
 from backend.utils import Utils
 
 
@@ -83,9 +85,9 @@ class InputDataset:
         features = self.preprocessed_features() if features is None else features
         labels = self.labels()
 
-        # Apply straightforward k-nearest neighbour w/o further preprocessing to predict class labels.
+        # Apply random forest w/o further preprocessing to predict class labels.
         clf = sklearn.ensemble.RandomForestClassifier(
-            n_estimators=50,
+            n_estimators=100,
             max_depth=3,
             n_jobs=psutil.cpu_count(logical=False)
         )
@@ -116,3 +118,32 @@ class InputDataset:
         """
 
         return cdist(self._preprocessed_features(), self._preprocessed_features(), metric)
+
+    def compute_separability_metric(self, features: numpy.ndarray):
+        """
+        Computes separability metric for this dataset.
+        :param features: Coordinates of low-dimensional projection.
+        :return: Normalized score between 0 and 1 indicating how well labels are separated in low-dim. projection.
+        """
+
+        # 1. Cluster projection with number of classes.
+        # Alternative Approach: 1-kNN comparison - check if nearest neighbour is in same class.
+        # Determine min_cluster_size as approximate min number of elements in a class
+        unique, counts_per_class = numpy.unique(self.labels(), return_counts=True)
+
+        # Create HDBSCAN instance and cluster data.
+        clusterer = hdbscan.HDBSCAN(
+            alpha=1.0,
+            metric='euclidean',
+            # Use approximate number of entries in least common class as minimal cluster size.
+            min_cluster_size=int(counts_per_class.min() * 0.9),
+            min_samples=None
+        ).fit(features)
+
+        # 2. Calculate AMI.
+        adjusted_mutual_information = adjusted_mutual_info_score(
+            self.labels(),
+            clusterer.labels_
+        )
+
+        return adjusted_mutual_information

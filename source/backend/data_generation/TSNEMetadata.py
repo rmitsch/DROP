@@ -23,6 +23,6 @@ class TSNEMetadata(IsDescription):
     b_nx = Float32Col(pos=11)
     stress = Float32Col(pos=12)
     classification_accuracy = Float32Col(pos=13)
-    adjusted_mutual_information = Float32Col(pos=14)
+    separability_metric = Float32Col(pos=14)
     runtime = Int8Col(pos=15)
 

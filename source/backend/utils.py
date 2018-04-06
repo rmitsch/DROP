@@ -1,5 +1,7 @@
 import logging
-
+from contextlib import contextmanager
+import sys
+import os
 
 # Class for various, non-essential tasks.
 class Utils:
@@ -26,3 +28,22 @@ class Utils:
 
         # Return logger object.
         return Utils.logger
+
+    @staticmethod
+    @contextmanager
+    def suppress_stdout():
+        """
+        Surpresses output by creating a context object.
+        Source: https://thesmithfam.org/blog/2012/10/25/temporarily-suppress-console-output-in-python/
+        :return:
+        """
+        with open(os.devnull, "w") as devnull:
+            old_stderr = sys.stderr
+            old_stdout = sys.stdout
+            sys.stdout = devnull
+            sys.stderr = devnull
+            try:
+                yield
+            finally:
+                sys.stdout = old_stdout
+                sys.stderr = old_stderr
