@@ -273,11 +273,10 @@ class VISPaperDataset(InputDataset):
         else:
             # Apply straightforward k-nearest neighbour w/o further preprocessing to predict class labels.
             clf = sklearn.ensemble.RandomForestClassifier(
-                n_estimators=10,
-                n_jobs=1
+                n_estimators=25,
+                n_jobs=1,
+                max_depth=50
             )
-
-            print("low-dim class. - shape: " + str(features.shape))
 
             # Loop through stratified splits, average prediction accuracy over all splits.
             for i in range(0, n_splits):
@@ -303,7 +302,6 @@ class VISPaperDataset(InputDataset):
                     predicted_labels,
                     average='weighted')
 
-        print("accuracy = " + str(accuracy / n_splits))
         return accuracy / n_splits
 
     def compute_distance_matrix(self, metric: str):
@@ -374,9 +372,9 @@ class VISPaperDataset(InputDataset):
             purity += sum([
                 (
                     cluster_properties[cluster_label]["label_counts"][true_label] /
-                    cluster_properties[cluster_label]["total_record_count"]
+                    float(cluster_properties[cluster_label]["total_record_count"])
                 ) / len(cluster_properties[cluster_label]["label_counts"].keys())
                 for true_label in cluster_properties[cluster_label]["label_counts"]
             ])
-
+        print("purity: " + str(purity))
         return purity

@@ -5,7 +5,7 @@ import psutil
 import numpy
 from scipy.spatial.distance import cdist
 import hdbscan
-from sklearn.metrics.cluster import adjusted_mutual_info_score
+import sklearn.metrics
 from backend.utils import Utils
 
 
@@ -117,7 +117,7 @@ class InputDataset:
         :return: Distance matrix as numpy.ndarry.
         """
 
-        return cdist(self._preprocessed_features(), self._preprocessed_features(), metric)
+        return cdist(self.preprocessed_features(), self.preprocessed_features(), metric)
 
     def compute_separability_metric(self, features: numpy.ndarray):
         """
@@ -140,10 +140,13 @@ class InputDataset:
             min_samples=None
         ).fit(features)
 
-        # 2. Calculate AMI.
-        adjusted_mutual_information = adjusted_mutual_info_score(
-            self.labels(),
-            clusterer.labels_
+        # 2. Calculate Silhouette score.
+        # Distance matrix: 1 if labels are equal, 0 otherwise -> Hamming distance.
+        print("Calculating silhouette score")
+        silhouette_score = sklearn.metrics.silhouette_score(
+            X=self.labels().reshape(-1, 1),
+            metric='hamming',
+            labels=clusterer.labels_
         )
 
-        return adjusted_mutual_information
+        return silhouette_score

@@ -1,15 +1,11 @@
 import threading
 import time
-import numpy
 from MulticoreTSNE import MulticoreTSNE
-import hdbscan
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics.cluster import adjusted_mutual_info_score
 
 from backend.data_generation import InputDataset
 from backend.objectives.topology_preservation_objectives import *
 from backend.objectives.distance_preservation_objectives import *
-from backend.utils import Utils
 
 
 class TSNEThread(threading.Thread):
@@ -59,23 +55,22 @@ class TSNEThread(threading.Thread):
 
             # Calculate t-SNE. Surpress output while doing so.
             start = time.time()
-            with Utils.suppress_stdout():
-                low_dimensional_projection = MulticoreTSNE(
-                    n_components=parameter_set["n_components"],
-                    perplexity=parameter_set["perplexity"],
-                    early_exaggeration=parameter_set["early_exaggeration"],
-                    learning_rate=parameter_set["learning_rate"],
-                    n_iter=parameter_set["n_iter"],
-                    # min_grad_norm=parameter_set["min_grad_norm"],
-                    angle=parameter_set["angle"],
-                    # Always set metric to 'precomputed', since distance matrices are calculated previously. If other
-                    # metrics are desired, the corresponding preprocessing step has to be extended.
-                    metric='precomputed',
-                    method='barnes_hut' if parameter_set["n_components"] < 4 else 'exact',
-                    # Set n_jobs to 1, since we parallelize at a higher level by splitting up model parametrizations amongst
-                    # threads.
-                    n_jobs=4
-                ).fit_transform(self._distance_matrices[metric])
+            low_dimensional_projection = MulticoreTSNE(
+                n_components=parameter_set["n_components"],
+                perplexity=parameter_set["perplexity"],
+                early_exaggeration=parameter_set["early_exaggeration"],
+                learning_rate=parameter_set["learning_rate"],
+                n_iter=parameter_set["n_iter"],
+                # min_grad_norm=parameter_set["min_grad_norm"],
+                angle=parameter_set["angle"],
+                # Always set metric to 'precomputed', since distance matrices are calculated previously. If other
+                # metrics are desired, the corresponding preprocessing step has to be extended.
+                metric='precomputed',
+                method='barnes_hut' if parameter_set["n_components"] < 4 else 'exact',
+                # Set n_jobs to 1, since we parallelize at a higher level by splitting up model parametrizations amongst
+                # threads.
+                n_jobs=4
+            ).fit_transform(self._distance_matrices[metric])
 
             # Scale projection data for later use.
             scaled_low_dim_projection = StandardScaler().fit_transform(low_dimensional_projection)
