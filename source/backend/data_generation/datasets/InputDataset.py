@@ -126,8 +126,11 @@ class InputDataset:
         :return: Normalized score between 0 and 1 indicating how well labels are separated in low-dim. projection.
         """
 
+        ########################################################################
         # 1. Cluster projection with number of classes.
+        ########################################################################
         # Alternative Approach: 1-kNN comparison - check if nearest neighbour is in same class.
+
         # Determine min_cluster_size as approximate min number of elements in a class
         unique, counts_per_class = numpy.unique(self.labels(), return_counts=True)
 
@@ -140,13 +143,13 @@ class InputDataset:
             min_samples=None
         ).fit(features)
 
-        # 2. Calculate Silhouette score.
+        # 2. Calculate Silhouette score based on true labels.
         # Distance matrix: 1 if labels are equal, 0 otherwise -> Hamming distance.
-        print("Calculating silhouette score")
         silhouette_score = sklearn.metrics.silhouette_score(
             X=self.labels().reshape(-1, 1),
             metric='hamming',
             labels=clusterer.labels_
         )
 
-        return silhouette_score
+        # Normalize to 0 <= x <= 1.
+        return (silhouette_score + 1) / 2.0

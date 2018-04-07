@@ -8,7 +8,6 @@ import fastText
 from sklearn.model_selection import train_test_split
 from scipy.spatial.distance import cdist
 import sklearn.ensemble
-import psutil
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.metrics import f1_score
 import hdbscan
@@ -317,14 +316,14 @@ class VISPaperDataset(InputDataset):
     def compute_separability_metric(self, features: numpy.ndarray):
         """
         Computes separability metric for this dataset.
-        Uses a kind of generalized purity score for clusters, since this is a multilabeled dataset.
+        Uses Silhouette score.
         :param features: Coordinates of low-dimensional projection.
         :return: Normalized score between 0 and 1 indicating how well labels are separated in low-dim. projection.
         """
 
-        ##########################################################################
-        # 1. Create dictionary holding number of occurences per label in cluster.
-        ##########################################################################
+        ########################################################################
+        # 1. Cluster data by coordinates.
+        ########################################################################
 
         #  Create HDBSCAN instance and cluster data.
         clusterer = hdbscan.HDBSCAN(
@@ -335,46 +334,18 @@ class VISPaperDataset(InputDataset):
             min_samples=None
         ).fit(features)
 
-        # Dictionary for cluster -> true label relations.
-        cluster_properties = {}
+        ########################################################################
+        # 2. Compute Silhouette score.
+        ########################################################################
 
-        for true_labels, cluster_label in zip(self._data["labels"], clusterer.labels_):
-            if cluster_label not in cluster_properties:
-                cluster_properties[cluster_label] = {
-                    "total_label_count": 0,
-                    "total_record_count": 0,
-                    "label_data": [],
-                    "label_counts": {}
-                }
-            # Append true label data.
-            cluster_properties[cluster_label]["label_data"].append(true_labels)
+        silhouette_score = sklearn.metrics.silhouette_score(
+            # Use binarized form of textual labels.
+            X=MultiLabelBinarizer().fit_transform(
+                self._data["labels"].values.tolist()
+            ),
+            metric='hamming',
+            labels=clusterer.labels_
+        )
 
-            # Keep track of number of records.
-            cluster_properties[cluster_label]["total_record_count"] += 1
-
-            # Increase occurence count of labels in this cluster.
-            for true_label in true_labels:
-                if true_label not in cluster_properties[cluster_label]["label_counts"]:
-                    cluster_properties[cluster_label]["label_counts"][true_label] = 0
-                cluster_properties[cluster_label]["label_counts"][true_label] += 1
-                cluster_properties[cluster_label]["total_label_count"] += 1
-
-        ##########################################################################
-        # 2. For each label in each cluster:
-        # (num_label_in_cluster / num_records_in_cluster) to get dispersion of
-        # this label, divide by number of unique labels to normalize.
-        ##########################################################################
-
-        purity = 0
-        for cluster_label in cluster_properties:
-            # Calculate purity of this cluster regarding it's records true labels as count of records with given true
-            # label divided by the occurence count of all labels.
-            purity += sum([
-                (
-                    cluster_properties[cluster_label]["label_counts"][true_label] /
-                    float(cluster_properties[cluster_label]["total_record_count"])
-                ) / len(cluster_properties[cluster_label]["label_counts"].keys())
-                for true_label in cluster_properties[cluster_label]["label_counts"]
-            ])
-        print("purity: " + str(purity))
-        return purity
+        # Normalize to 0 <= x <= 1.
+        return (silhouette_score + 1) / 2.0

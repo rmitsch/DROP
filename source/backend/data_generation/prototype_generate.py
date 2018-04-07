@@ -7,7 +7,6 @@ import backend.objectives.topology_preservation_objectives.CorankingMatrix as Co
 from backend.data_generation.PersistenceThread import PersistenceThread
 from backend.data_generation.TSNEThread import TSNEThread
 from backend.data_generation.datasets.VISPaperDataset import VISPaperDataset
-from backend.data_generation.datasets.WineDataset import WineDataset
 from backend.utils import Utils
 
 # Create logger.
@@ -96,7 +95,7 @@ for n_components in parameter_values["n_components"]:
 logger.info("Creating dataset.")
 
 # Load dataset.
-high_dim_dataset = WineDataset()
+high_dim_dataset = VISPaperDataset()
 
 # Scale attributes, fetch predictors.
 high_dim_features = high_dim_dataset.preprocessed_features()
