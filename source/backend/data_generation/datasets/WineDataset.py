@@ -8,8 +8,12 @@ class WineDataset(InputDataset):
     Loads wine dataset from sklearn.
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, data=None, preprocessed_features=None, classification_accuracy=None):
+        super().__init__(
+            data=data,
+            preprocessed_features=preprocessed_features,
+            classification_accuracy=classification_accuracy
+        )
 
     def _load_data(self):
         return load_wine()

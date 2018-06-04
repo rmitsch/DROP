@@ -63,24 +63,33 @@ def get_metadata():
 @app.route('/get_metadata_template', methods=["GET"])
 def get_metadata_template():
     """
-    Assembles metadata template (i. e. which hyperparameters and objectives there are).
+    Assembles metadata template (i. e. which hyperparameters and objectives are available).
     :return: Dictionary: {"hyperparameters": [...], "objectives": [...]}
     """
     # todo Should be customized (e. g. filename should be selected in UI).
 
-    return jsonify({
-        "hyperparameters": [
-            {"name": "n_components", "type": "numeric"},
-            {"name": "perplexity", "type": "numeric"},
-            {"name": "early_exaggeration", "type": "numeric"},
-            {"name": "learning_rate", "type": "numeric"},
-            {"name": "n_iter", "type": "numeric"},
-            {"name": "angle", "type": "numeric"},
-            {"name": "metric", "type": "categorical"}
-        ],
-        # todo: Update list of objectives.
-        "objectives": ["runtime", "trustworthiness", "continuity"]
-    })
+    return jsonify(
+        {
+            "hyperparameters": [
+                {"name": "n_components", "type": "numeric"},
+                {"name": "perplexity", "type": "numeric"},
+                {"name": "early_exaggeration", "type": "numeric"},
+                {"name": "learning_rate", "type": "numeric"},
+                {"name": "n_iter", "type": "numeric"},
+                {"name": "angle", "type": "numeric"},
+                {"name": "metric", "type": "categorical"}
+            ],
+
+            "objectives": [
+                "runtime",
+                "r_nx",
+                "b_nx",
+                "stress",
+                "classification_accuracy",
+                "separability_metric"
+            ]
+        }
+    )
 
 # Launch on :2483.
 if __name__ == "__main__":

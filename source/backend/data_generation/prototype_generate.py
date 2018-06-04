@@ -1,5 +1,8 @@
+import threading
 from random import shuffle
 import os
+
+import psutil
 from scipy.spatial.distance import cdist
 from tables import *
 
@@ -7,6 +10,9 @@ import backend.objectives.topology_preservation_objectives.CorankingMatrix as Co
 from backend.data_generation.PersistenceThread import PersistenceThread
 from backend.data_generation.TSNEThread import TSNEThread
 from backend.data_generation.datasets.VISPaperDataset import VISPaperDataset
+from backend.data_generation.datasets.WineDataset import WineDataset
+from backend.data_generation.datasets.MNISTDataset import MNISTDataset
+from backend.data_generation.datasets.SwissRollDataset import SwissRollDataset
 from backend.utils import Utils
 
 # Create logger.
@@ -17,7 +23,7 @@ logger = Utils.create_logger()
 ######################################################
 
 # Define name of dataset to use (appended to file name).
-dataset_name = "vis"
+dataset_name = "wine"
 
 # Get all parameter configurations (to avoid duplicate model generations).
 existent_parameter_sets = []
@@ -43,10 +49,10 @@ if os.path.isfile(file_name):
 
 # Define parameter ranges.
 parameter_values = {
-    "n_components": (1, ), #2, 3, 4),
+    "n_components": (1, 2), #2, 3, 4),
     "perplexity": (10, ), #25, 50, 80),
     "early_exaggeration": (5.0, ), #10.0, 15.0, 20.0),
-    "learning_rate": (10.0,), #, 250.0), # 500.0, 1000.0),
+    "learning_rate": (10.0, ), #, 250.0), # 500.0, 1000.0),
     "n_iter": (250, ), #1000, 2000, 5000),
     # Commenting out min_grad_norm, since a variable value for this since (1) MulticoreTSNE doesn't support dynamic
     # values for this attribute and (2) sklearn's implementation is slow af.
@@ -54,7 +60,7 @@ parameter_values = {
     # it might be added again.
     #"min_grad_norm": (1e-10, 1e-7, 1e-4, 1e-1),
     "angle": (0.1, ), #0.35, 0.65, 0.9),
-    "metrics": ('cosine',) #, 'euclidean')
+    "metrics": ('cosine', ) #, 'euclidean')
 }
 
 # Filter out already existing model parametrizations.
@@ -95,7 +101,7 @@ for n_components in parameter_values["n_components"]:
 logger.info("Creating dataset.")
 
 # Load dataset.
-high_dim_dataset = VISPaperDataset()
+high_dim_dataset = WineDataset()
 
 # Scale attributes, fetch predictors.
 high_dim_features = high_dim_dataset.preprocessed_features()
@@ -125,7 +131,7 @@ high_dim_neighbourhood_rankings = {
 # Shuffle list with parameter sets so that they are kinda evenly distributed.
 shuffle(parameter_sets)
 # Determine number of workers.
-n_jobs = 1 # psutil.cpu_count(logical=True) - 1
+n_jobs = psutil.cpu_count(logical=True) - 1
 threads = []
 # Shared list holding results.
 results = []

@@ -3,7 +3,7 @@ import time
 from MulticoreTSNE import MulticoreTSNE
 from sklearn.preprocessing import StandardScaler
 
-from backend.data_generation import InputDataset
+from backend.data_generation import InputDataset, sklearn
 from backend.objectives.topology_preservation_objectives import *
 from backend.objectives.distance_preservation_objectives import *
 
@@ -27,10 +27,10 @@ class TSNEThread(threading.Thread):
         :param results:
         :param distance_matrices:
         :param parameter_sets:
-        :param high_dimensional_data:
-        :param labels: List of class labels for dataset.
+        :param input_dataset:
         :param high_dimensional_neighbourhood_rankings: Neighbourhood rankings in original high-dimensional space. Dict.
         with one entry per distance metric.
+        :param lock: RLock used to avoid sklearn's RF multithreading embarrassment.
         """
         threading.Thread.__init__(self)
 
@@ -43,7 +43,7 @@ class TSNEThread(threading.Thread):
     def run(self):
         """
         Runs thread and calculates all t-SNE models specified in parameter_sets.
-        :return: List of 2D-ndarrays containing coordinates of instances in low-dimensional space.
+        :return: List of 2D ndarrays containing coordinates of instances in low-dimensional space.
         """
 
         ###################################################

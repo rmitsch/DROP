@@ -7,7 +7,8 @@ from scipy.spatial.distance import cdist
 import hdbscan
 import sklearn.metrics
 from backend.utils import Utils
-
+import copy
+import threading
 
 class InputDataset:
     """
@@ -15,22 +16,28 @@ class InputDataset:
     Contains actual data as well information on ground truth.
     """
 
-    def __init__(self):
+    def __init__(self, data=None, preprocessed_features=None, classification_accuracy=None):
         """
         Defines variables to be used in inheriting classes.
+        Takes some variable speeding up cloning an instance.
+        :param data: Loaded primitive dataset.
+        :param preprocessed_features: Preprocessed features.
+        :param classification_accuracy: Classification accuracy of this dataset.
         """
 
         # Get logger.
         self._logger = Utils.logger
 
-        # Load or generate data.
-        self._data = self._load_data()
+        # Set primitive data set.
+        self._data = copy.deepcopy(data) if data is not None else self._load_data()
 
         # Preprocess features.
-        self._preprocessed_features = self._preprocess_features()
+        self._preprocessed_features = copy.deepcopy(preprocessed_features) if preprocessed_features is not None \
+            else self._preprocess_features()
 
         # Calculate accuracy.
-        self._classification_accuracy = self.calculate_classification_accuracy()
+        self._classification_accuracy = classification_accuracy if classification_accuracy is not None \
+            else self.calculate_classification_accuracy()
 
     @abc.abstractmethod
     def _load_data(self):
@@ -61,8 +68,14 @@ class InputDataset:
         Returns preprocssed features in this dataset.
         :return:
         """
-
         return self._preprocessed_features
+
+    def classification_accuracy(self):
+        """
+        Returns classification accuracy.
+        :return:
+        """
+        return self._classification_accuracy
 
     @abc.abstractmethod
     def labels(self):
@@ -71,6 +84,13 @@ class InputDataset:
         :return:
         """
         pass
+
+    def data(self):
+        """
+        Returns loaded data.
+        :return:
+        """
+        return self._data
 
     def calculate_classification_accuracy(self, features: numpy.ndarray = None):
         """
@@ -85,19 +105,22 @@ class InputDataset:
         features = self.preprocessed_features() if features is None else features
         labels = self.labels()
 
-        # Apply random forest w/o further preprocessing to predict class labels.
-        clf = sklearn.ensemble.RandomForestClassifier(
-            n_estimators=100,
-            max_depth=3,
-            n_jobs=psutil.cpu_count(logical=False)
-        )
-
         # Loop through stratified splits, average prediction accuracy over all splits.
         accuracy = 0
         n_splits = 3
+
+        # Apply random forest w/o further preprocessing to predict class labels.
+        # NOTE: Fixed by manually applying
+        # https://github.com/amueller/scikit-learn/blob/8d640b9a7cab93cde925431948297814d32b31f4/sklearn/base.py.
+        clf = sklearn.ensemble.RandomForestClassifier(
+            n_estimators=100,
+            max_depth=3,
+            n_jobs=1  # psutil.cpu_count(logical=False)
+        )
+
         for train_indices, test_indices in StratifiedShuffleSplit(
                 n_splits=n_splits,
-                test_size=0.33
+                test_size=0.3
         ).split(features, labels):
             # Train model.
             clf.fit(features[train_indices], labels[train_indices])
@@ -139,7 +162,7 @@ class InputDataset:
             alpha=1.0,
             metric='euclidean',
             # Use approximate number of entries in least common class as minimal cluster size.
-            min_cluster_size=int(counts_per_class.min() * 0.9),
+            min_cluster_size=int(counts_per_class.min() * 0.3),
             min_samples=None
         ).fit(features)
 
@@ -150,6 +173,8 @@ class InputDataset:
             metric='hamming',
             labels=clusterer.labels_
         )
+        # Workaround: Use worst value if number is NaN - why does this happen?
+        silhouette_score = -1 if numpy.isnan(silhouette_score) else silhouette_score
 
         # Normalize to 0 <= x <= 1.
         return (silhouette_score + 1) / 2.0

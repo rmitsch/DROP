@@ -239,12 +239,6 @@ class VISPaperDataset(InputDataset):
             )
 
     def calculate_classification_accuracy(self, features: numpy.ndarray = None):
-        # ********** TODOS **********
-        #     - Datasets
-        #         * VIS papers
-        #               + decide & implement approach for class. accuracy of low-dim. projections - still using fasttext class.?
-        #                 usual random forest instead? if ft: how to replace original with low-dim. vectors?
-        #                 conclusio: random forest for low-dim. probably more reasonable.
         self._logger.info("Calculating classification accuracy.")
 
         accuracy = 0
@@ -299,7 +293,8 @@ class VISPaperDataset(InputDataset):
                 accuracy += f1_score(
                     binarized_labels[test_indices],
                     predicted_labels,
-                    average='weighted')
+                    average='weighted'
+                )
 
         return accuracy / n_splits
 
