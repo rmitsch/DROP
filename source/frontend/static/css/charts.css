@@ -10,14 +10,16 @@
 
 .filter-reduce-charts-container {
     display: inline-block;
-    width: 120px;
+    width: 95px;
 }
 
 .filter-reduce-labels-container {
     display: inline-block;
-    width: 20px;
-    margin-top: 190px;
+    width: 30px;
+    margin-top: 150px;
     vertical-align: top;
+    height:70%;
+    overflow: hidden;
 }
 
 .filter-reduce-row-label {
@@ -25,7 +27,7 @@
     font-size: 16px;
     text-align: right;
     width: 0px;
-    height: 120px;
+    height: 90px;
     position: relative;
 }
 
@@ -36,9 +38,9 @@
 }
 
 .chart-placeholder {
-    height: 120px;
-    width: 120px;
-    margin-bottom: 4px;
+    height: 84px;
+    width: 90px;
+    margin-bottom: 0px;
 }
 
 span.filter-reduce-row-label-text {
@@ -47,11 +49,11 @@ span.filter-reduce-row-label-text {
 }
 
 .histogram {
-    height: 120px;
+    height: 90px;
 }
 
 .parcoords-container {
-    height:calc(120px - 8px);
+    height:calc(90px - 8px);
     /* Approxiate workaround to level other charts with parallel coordintes. */
     padding-top: 8px;
 }

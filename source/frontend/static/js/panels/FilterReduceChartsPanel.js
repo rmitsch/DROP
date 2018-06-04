@@ -46,8 +46,8 @@ export default class FilterReduceChartsPanel extends Panel
         // Define style options for charts.
         let histogramStyle = {
             showAxisLabels: false,
-            height: 120,
-            width: 120,
+            height: 90,
+            width: 90,
             excludedColor: "#ccc",
             numberOfTicks: {
                 x: 2,
@@ -59,8 +59,8 @@ export default class FilterReduceChartsPanel extends Panel
         // Define style options for charts.
         let scatterplotStyle = {
             showAxisLabels: false,
-            height: 120,
-            width: 120,
+            height: 80,
+            width: 80,
             symbolSize: 1,
             excludedOpacity: 1,
             excludedSymbolSize: 1,

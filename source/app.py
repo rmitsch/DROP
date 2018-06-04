@@ -43,7 +43,7 @@ def index():
 @app.route('/get_metadata', methods=["GET"])
 def get_metadata():
     """
-    Reads metadata content (i. e. model parametrizations and objectives)  of specified .h5 file.
+    Reads metadata content (i. e. model parametrizations and objectives) of specified .h5 file.
     :return:
     """
     # Open .h5 file.
@@ -54,6 +54,7 @@ def get_metadata():
         h5file = tables.open_file(filename=file_name, mode="r")
         # Cast to dataframe, then return as JSON.
         df = pandas.DataFrame(h5file.root.metadata[:]).set_index("id")
+        print(df)
         return jsonify(df.to_json(orient='index'))
 
     else:
@@ -68,8 +69,7 @@ def get_metadata_template():
     """
     # todo Should be customized (e. g. filename should be selected in UI).
 
-    return jsonify(
-        {
+    return jsonify({
             "hyperparameters": [
                 {"name": "n_components", "type": "numeric"},
                 {"name": "perplexity", "type": "numeric"},
@@ -88,8 +88,7 @@ def get_metadata_template():
                 "classification_accuracy",
                 "separability_metric"
             ]
-        }
-    )
+    })
 
 # Launch on :2483.
 if __name__ == "__main__":

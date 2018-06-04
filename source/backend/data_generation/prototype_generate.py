@@ -1,9 +1,7 @@
-import threading
 from random import shuffle
 import os
 
 import psutil
-from scipy.spatial.distance import cdist
 from tables import *
 
 import backend.objectives.topology_preservation_objectives.CorankingMatrix as CorankingMatrix
@@ -50,17 +48,17 @@ if os.path.isfile(file_name):
 # Define parameter ranges.
 parameter_values = {
     "n_components": (1, 2), #2, 3, 4),
-    "perplexity": (10, ), #25, 50, 80),
-    "early_exaggeration": (5.0, ), #10.0, 15.0, 20.0),
-    "learning_rate": (10.0, ), #, 250.0), # 500.0, 1000.0),
-    "n_iter": (250, ), #1000, 2000, 5000),
+    "perplexity": (10, 25), #25, 50, 80),
+    "early_exaggeration": (5.0, 10), #10.0, 15.0, 20.0),
+    "learning_rate": (10.0, 250), #, 250.0), # 500.0, 1000.0),
+    "n_iter": (250, 500), #1000, 2000, 5000),
     # Commenting out min_grad_norm, since a variable value for this since (1) MulticoreTSNE doesn't support dynamic
     # values for this attribute and (2) sklearn's implementation is slow af.
     # If a decently performing implementation (sklearn updates?) that also supports this parameter is ever available,
     # it might be added again.
     #"min_grad_norm": (1e-10, 1e-7, 1e-4, 1e-1),
-    "angle": (0.1, ), #0.35, 0.65, 0.9),
-    "metrics": ('cosine', ) #, 'euclidean')
+    "angle": (0.1, 0.35), #0.35, 0.65, 0.9),
+    "metrics": ('cosine', 'euclidean') #, 'euclidean')
 }
 
 # Filter out already existing model parametrizations.

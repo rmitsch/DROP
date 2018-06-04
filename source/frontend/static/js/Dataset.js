@@ -91,6 +91,7 @@ export default class Dataset
         // Calculate extrema for histograms.
         let histogramAttribute  = attribute + "#histogram";
         let sortedData          = this._cf_groups[histogramAttribute].all();
+
         // Sort data by number of entries in this attribute's histogram.
         sortedData.sort(function(entryA, entryB) {
             let countA = dataType === "numerical" ? entryA.value.count : entryA.value;
