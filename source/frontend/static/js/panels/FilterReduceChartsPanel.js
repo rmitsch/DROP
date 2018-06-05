@@ -4,6 +4,7 @@ import ParetoScatterplot from "../charts/ParetoScatterplot.js";
 import NumericalHistogram from "../charts/NumericalHistogram.js";
 import CategoricalHistogram from "../charts/CategoricalHistogram.js";
 import ParallelCoordinates from "../charts/ParallelCoordinates.js"
+import Dataset from "../Dataset.js";
 
 /**
  * Panel holding scatterplots and histograms in operator FilterReduce.
@@ -46,8 +47,9 @@ export default class FilterReduceChartsPanel extends Panel
         // Define style options for charts.
         let histogramStyle = {
             showAxisLabels: false,
-            height: 90,
-            width: 90,
+            // Use current container dimensions as size for chart.
+            height: 80,
+            width: $("#"+this._containerDivIDs["n_components"]).width(),
             excludedColor: "#ccc",
             numberOfTicks: {
                 x: 2,
@@ -59,8 +61,9 @@ export default class FilterReduceChartsPanel extends Panel
         // Define style options for charts.
         let scatterplotStyle = {
             showAxisLabels: false,
+            // Use current container dimensions as size for chart.
             height: 80,
-            width: 80,
+            width: $("#"+this._containerDivIDs["n_components"]).width(),
             symbolSize: 1,
             excludedOpacity: 1,
             excludedSymbolSize: 1,
@@ -234,6 +237,8 @@ export default class FilterReduceChartsPanel extends Panel
                 let updatedStyle                = $.extend(true, {}, style);
                 updatedStyle.numberOfTicks.y    = 0;
                 updatedStyle.numberOfTicks.x    = j === dataset.metadata.objectives.length - 1 ? updatedStyle.numberOfXTicksInLastRow : updatedStyle.numberOfTicks.x;
+                // Note: Categorical barchart apparently does not allow unlabeld x-axis.
+                updatedStyle.showAxisLabels     = false;
 
 
                 // Instantiate new scatterplot.
@@ -270,7 +275,12 @@ export default class FilterReduceChartsPanel extends Panel
         // Add labels to container.
         for (let objective of dataset.metadata.objectives) {
             let label = Utils.spawnChildDiv(labelContainer.id, null, 'filter-reduce-row-label');
-            Utils.spawnChildSpan(label.id, null, 'filter-reduce-row-label-text', objective);
+            Utils.spawnChildSpan(
+                label.id,
+                null,
+                'filter-reduce-row-label-text',
+                Dataset.translateAttributeNames()[objective]
+            );
         }
 
         // -----------------------------------
@@ -287,15 +297,15 @@ export default class FilterReduceChartsPanel extends Panel
             containerDivIDs[attribute] = div.id;
 
             // Add column label/title.
-            Utils.spawnChildDiv(div.id, null, "title", attribute);
+            let titleDiv = Utils.spawnChildDiv(div.id, null, "title", Dataset.translateAttributeNames()[attribute]);
+            // Place column title accordingly.
+            let numberOfPlaceholders = Math.max(i - hyperparameters.length + 1, 0);
+            $("#" + titleDiv.id).css({"top": (-25 + 84 * numberOfPlaceholders)  + "px"});
 
             // If this is a histogram for an objective-objective plot: Fill slots with placeholders to move obj.-obj.
             // to push histograms onto the diagonale.
             for (let k = i - hyperparameters.length; k >= 0; k--) {
                 Utils.spawnChildDiv(div.id, null, "chart-placeholder");
-                // let div         = document.createElement('div');
-                // div.className   = 'chart-placeholder';
-                // $("#" + this._containerDivIDs[attributes[i]]).append(div);
             }
 
             // Add div for histogram.

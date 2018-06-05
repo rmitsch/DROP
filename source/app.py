@@ -54,7 +54,7 @@ def get_metadata():
         h5file = tables.open_file(filename=file_name, mode="r")
         # Cast to dataframe, then return as JSON.
         df = pandas.DataFrame(h5file.root.metadata[:]).set_index("id")
-        print(df)
+
         return jsonify(df.to_json(orient='index'))
 
     else:

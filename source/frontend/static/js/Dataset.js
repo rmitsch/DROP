@@ -64,6 +64,29 @@ export default class Dataset
     }
 
     /**
+     * Returns dict for translating column headers in JSON/dataframe into human-readable titles.
+     * @returns {{n_components: string, perplexity: string, early_exaggeration: string, learning_rate: string, n_iter: string, angle: string, metric: string, r_nx: string, b_nx: string, stress: string, classification_accuracy: string, separability_metric: string, runtime: string}}
+     */
+    static translateAttributeNames()
+    {
+        return {
+            "n_components": "Dimensions",
+            "perplexity": "Perplexity",
+            "early_exaggeration": "Early exagg.",
+            "learning_rate": "Learning rate",
+            "n_iter": "Iterations",
+            "angle": "Angle",
+            "metric": "Distance metric",
+            "r_nx": "R<sub>nx</sub>",
+            "b_nx": "B<sub>nx</sub>",
+            "stress": "Stress",
+            "classification_accuracy": "Class. acc.",
+            "separability_metric": "Silhouette",
+            "runtime": "Runtime"
+        }
+    }
+
+    /**
      * Calculates extrema for all singular dimensions.
      * @param attribute
      */

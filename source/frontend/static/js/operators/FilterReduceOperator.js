@@ -49,7 +49,7 @@ export default class FilterReduceOperator extends Operator
         $("#" + frcPanel._target).addClass("split split-horizontal");
         $("#" + tablePanel._target).addClass("split split-horizontal");
         Split(["#" + frcPanel._target, "#" + tablePanel._target], {
-            sizes: [68, 32]
+            sizes: [99, 1]
         });
     }
 }

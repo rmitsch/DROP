@@ -10,15 +10,17 @@
 
 .filter-reduce-charts-container {
     display: inline-block;
-    width: 95px;
+    min-width: 20px;
+    width: 7%;
+    margin-top: 25px;
+    position: relative;
 }
 
 .filter-reduce-labels-container {
     display: inline-block;
-    width: 30px;
-    margin-top: 150px;
+    width: 75px;
+    margin-top: 130px;
     vertical-align: top;
-    height:70%;
     overflow: hidden;
 }
 
@@ -27,29 +29,32 @@
     font-size: 16px;
     text-align: right;
     width: 0px;
-    height: 90px;
+    height: 10px;
+    margin-bottom: 75px;
     position: relative;
 }
 
 .filter-reduce-charts-container .title {
     font-size: 16px;
-    text-align: center;
-    margin-bottom: 10px;
+    text-align: left;
+    position: absolute;
+    top: -25px;
+    width: 150px;
+    left: 35px;
 }
 
 .chart-placeholder {
-    height: 84px;
-    width: 90px;
-    margin-bottom: 0px;
+    height: 80px;
+    width: 7%;
+    margin-bottom: 4px;
 }
 
 span.filter-reduce-row-label-text {
     display: block;
-    transform: rotate(-90deg);
 }
 
 .histogram {
-    height: 90px;
+    height: 80px;
 }
 
 .parcoords-container {
