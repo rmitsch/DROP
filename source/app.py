@@ -20,7 +20,7 @@ def init_flask_app():
     )
 
     # Define version.
-    flask_app.config["VERSION"] = "0.2.2"
+    flask_app.config["VERSION"] = "0.2.3"
 
     # Limit of 100 MB for upload.
     flask_app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024

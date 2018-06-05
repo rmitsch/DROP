@@ -315,6 +315,20 @@ export default class FilterReduceChartsPanel extends Panel
             i++;
         }
 
+        // -----------------------------------
+        // Create title and options container.
+        // -----------------------------------
+
+        let infoDiv = Utils.spawnChildDiv(this._target, null, "filter-reduce-info");
+        $("#" + infoDiv.id).html(
+            "<span class='title'>Hyperparameter & Objectives</span>" +
+            "<a id='filter-reduce-info-settings-icon' href='/'>" +
+            "    <img src='./static/img/icon_settings.png' class='info-icon' alt='Settings' width='20px'>" +
+            "</a>" +
+            "<a id='filter-reduce-info-table-icon' href='/'>" +
+            "    <img src='./static/img/icon_table.png' class='info-icon' alt='View in table' width='20px'>" +
+            "</a>"
+        )
         return {
             containerDivIDs: containerDivIDs,
             histogramDivIDs: histogramDivIDs
