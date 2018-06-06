@@ -46,10 +46,20 @@ export default class FilterReduceOperator extends Operator
         this._panels[tablePanel.name] = tablePanel;
 
         // Initialize split panes.
-        $("#" + frcPanel._target).addClass("split split-horizontal");
-        $("#" + tablePanel._target).addClass("split split-horizontal");
-        Split(["#" + frcPanel._target, "#" + tablePanel._target], {
-            sizes: [99, 1]
+        // $("#" + frcPanel._target).addClass("split split-horizontal");
+        // $("#" + tablePanel._target).addClass("split split-horizontal");
+        // Split(["#" + frcPanel._target, "#" + tablePanel._target], {
+        //     sizes: [99, 1]
+        // });
+
+        // Set click listener for FRC panel's table modal.
+        let scope = this;
+        $("#filter-reduce-info-table-icon").click(function() {
+            $("#" + scope._panels[tablePanel.name]._target).dialog({
+                title: "All models",
+                width: $("#" + scope._target).width() / 2,
+                height: $("#" + scope._target).height()
+            });
         });
     }
 }

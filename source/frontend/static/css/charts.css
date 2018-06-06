@@ -11,7 +11,7 @@
 .filter-reduce-charts-container {
     display: inline-block;
     min-width: 20px;
-    width: 7%;
+    width: 7.3%;
     margin-top: 25px;
     position: relative;
 }
@@ -45,7 +45,7 @@
 
 .chart-placeholder {
     height: 80px;
-    width: 7%;
+    width: 7.3%;
     margin-bottom: 4px;
 }
 
@@ -75,6 +75,7 @@ span.filter-reduce-row-label-text {
 }
 
 .filter-reduce-table-panel {
+    display: none;
 }
 
 /* Lower canvas' z-index so that highlighting is visible on top. */
@@ -87,10 +88,11 @@ span.filter-reduce-row-label-text {
     height: 100px;
     position: absolute;
     top: 55px;
-    right: 100px;
+    right: 35px;
     font-size: 24px;
 }
 
 .filter-reduce-info .title {
     margin-right: 10px;
+    font-weight: bold;
 }
