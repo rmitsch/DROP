@@ -17,7 +17,8 @@ export default class FilterReduceChartsPanel extends Panel
      * @param operator
      * @param parentDivID
      */
-    constructor(name, operator, parentDivID) {
+    constructor(name, operator, parentDivID)
+    {
         super(name, operator, parentDivID);
 
         // Update involved CSS classes.
@@ -29,7 +30,7 @@ export default class FilterReduceChartsPanel extends Panel
         this._histogramDivIDs   = divStructure.histogramDivIDs;
 
         // Generate charts.
-        this.generateCharts();
+        this._generateCharts();
 
         // Render all charts in prototype stage (work with groups instead of using .renderAll()!).
         console.log("Rendering...");
@@ -40,7 +41,7 @@ export default class FilterReduceChartsPanel extends Panel
     /**
      * Generates all chart objects. Does _not_ render them.
      */
-    generateCharts()
+    _generateCharts()
     {
         console.log("Generating...");
 
@@ -48,8 +49,8 @@ export default class FilterReduceChartsPanel extends Panel
         let histogramStyle = {
             showAxisLabels: false,
             // Use current container dimensions as size for chart.
-            height: 80,
-            width: $("#"+this._containerDivIDs["n_components"]).width(),
+            height: 65,
+            width: $("#" + this._containerDivIDs["n_components"]).width(),
             excludedColor: "#ccc",
             numberOfTicks: {
                 x: 2,
@@ -62,7 +63,7 @@ export default class FilterReduceChartsPanel extends Panel
         let scatterplotStyle = {
             showAxisLabels: false,
             // Use current container dimensions as size for chart.
-            height: 80,
+            height: 65,
             width: $("#"+this._containerDivIDs["n_components"]).width(),
             symbolSize: 1,
             excludedOpacity: 1,
@@ -300,7 +301,7 @@ export default class FilterReduceChartsPanel extends Panel
             let titleDiv = Utils.spawnChildDiv(div.id, null, "title", Dataset.translateAttributeNames()[attribute]);
             // Place column title accordingly.
             let numberOfPlaceholders = Math.max(i - hyperparameters.length + 1, 0);
-            $("#" + titleDiv.id).css({"top": (-25 + 84 * numberOfPlaceholders)  + "px"});
+            $("#" + titleDiv.id).css({"top": (-25 + 69 * numberOfPlaceholders)  + "px"});
 
             // If this is a histogram for an objective-objective plot: Fill slots with placeholders to move obj.-obj.
             // to push histograms onto the diagonale.

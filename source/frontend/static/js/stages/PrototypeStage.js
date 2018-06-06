@@ -6,6 +6,7 @@
 // Import base class.
 import Stage from './Stage.js'
 import FilterReduceOperator from "../operators/FilterReduceOperator.js";
+import SurrogateModelOperator from "../operators/SurrogateModelOperator.js";
 
 /**
  * Stage for prototype (2018-02).
@@ -43,5 +44,18 @@ export default class PrototypeStage extends Stage
             this,
             this._datasets["prototypeDataset"]
         );
+
+        // --------------------------------
+        // 2. Operators for exploration of surrogate model (read-only).
+        // --------------------------------
+
+        this.operators["SurrogateModel"] = new SurrogateModelOperator(
+            "SurrogateModel:DecisionTree",
+            this,
+            this._datasets["prototypeDataset"],
+            "Tree"
+        );
     }
+
+
 }

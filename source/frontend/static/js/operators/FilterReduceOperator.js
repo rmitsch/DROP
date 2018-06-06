@@ -3,7 +3,7 @@ import FilterReduceChartsPanel from "../panels/FilterReduceChartsPanel.js";
 import FilterReduceTablePanel from "../panels/FilterReduceTablePanel.js";
 
 /**
- * Abstract base class for FilterReduce operators.
+ * Class for FilterReduceOperators with scattered (scree) and violin plots.
  * One operator operates on exactly one dataset (-> one instance of class Dataset).
  */
 export default class FilterReduceOperator extends Operator

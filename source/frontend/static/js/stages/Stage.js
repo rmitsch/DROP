@@ -1,6 +1,7 @@
 /**
  * Holds all elements to be shown in a certain view.
  * Note that a dashboard corresponds to exactly one view, pop-ups/detail views correspond to another view.
+ * Hence: One Stage represents one concept/one idea for a finished product.
  */
 export default class Stage
 {

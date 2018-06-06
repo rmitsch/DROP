@@ -39,6 +39,14 @@ export default class Panel
     }
 
     /**
+     * Generates all chart objects. Does _not_ render them.
+     */
+    _generateCharts()
+    {
+        throw new TypeError("Panel._generateCharts(): Cannot execute abstract method.");
+    }
+
+    /**
      * Highlights data point in all charts in this panel.
      * @param id
      * @param source

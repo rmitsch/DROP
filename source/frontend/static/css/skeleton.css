@@ -77,3 +77,8 @@ li.pure-menu-item.pure-menu-selected {
 .info-icon {
     margin-top: 3px;
 }
+
+.ui-dialog-titlebar {
+    background-color: #3d4a57;
+    color: #fff;
+}

@@ -76,11 +76,11 @@ export default class Dataset
             "learning_rate": "Learning rate",
             "n_iter": "Iterations",
             "angle": "Angle",
-            "metric": "Distance metric",
+            "metric": "Dist. metric",
             "r_nx": "R<sub>nx</sub>",
             "b_nx": "B<sub>nx</sub>",
             "stress": "Stress",
-            "classification_accuracy": "Class. acc.",
+            "classification_accuracy": "Accuracy",
             "separability_metric": "Silhouette",
             "runtime": "Runtime"
         }

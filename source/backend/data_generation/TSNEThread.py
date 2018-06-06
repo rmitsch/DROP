@@ -69,7 +69,7 @@ class TSNEThread(threading.Thread):
                 method='barnes_hut' if parameter_set["n_components"] < 4 else 'exact',
                 # Set n_jobs to 1, since we parallelize at a higher level by splitting up model parametrizations amongst
                 # threads.
-                n_jobs=4
+                n_jobs=1
             ).fit_transform(self._distance_matrices[metric])
 
             # Scale projection data for later use.
