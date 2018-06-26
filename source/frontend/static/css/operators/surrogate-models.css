@@ -1,0 +1,17 @@
+.surrogate-model-operator {
+    position: relative;
+    display: block;
+}
+
+.surrogate-info {
+    height: 100px;
+    position: absolute;
+    top: 20px;
+    right: 35px;
+    font-size: 24px;
+}
+
+.surrogate-info .title {
+    margin-right: 10px;
+    font-weight: bold;
+}

@@ -267,6 +267,7 @@ export default class FilterReduceChartsPanel extends Panel
      */
     _createDivStructure()
     {
+        let scope = this;
         let containerDivIDs = {};
         let histogramDivIDs = {};
         let dataset         = this._operator._dataset;
@@ -324,7 +325,7 @@ export default class FilterReduceChartsPanel extends Panel
         // panel.
         let infoDiv = Utils.spawnChildDiv(this._target, null, "filter-reduce-info");
         $("#" + infoDiv.id).html(
-            "<span class='title'>Hyperparameter & Objectives</span>" +
+            "<span class='title'>" + scope._name + "</span>" +
             "<a id='filter-reduce-info-settings-icon' href='#'>" +
             "    <img src='./static/img/icon_settings.png' class='info-icon' alt='Settings' width='20px'>" +
             "</a>" +
