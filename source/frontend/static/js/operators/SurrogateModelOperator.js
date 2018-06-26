@@ -5,6 +5,7 @@ import SurrogateModelPanel from "../panels/SurrogateModelPanel.js";
 /**
  * Class for SurrogateModel operators.
  * One operator operates on exactly one dataset (-> one instance of class Dataset).
+ * See https://bl.ocks.org/ajschumacher/65eda1df2b0dd2cf616f.
  */
 export default class SurrogateModelOperator extends Operator
 {
@@ -22,6 +23,12 @@ export default class SurrogateModelOperator extends Operator
     constructor(name, stage, dataset, modelType, parentDivID)
     {
         super(name, stage, "1", "0", dataset, parentDivID);
+
+        // Update involved CSS classes.
+        $("#" + this._target).addClass("surrogate-model-operator");
+
+        // Save which model (influences inference model and visualization)
+        // should be used as surrogate - e. g. decision tree.
         this._modelType = modelType;
 
         // Construct all necessary panels.
@@ -40,6 +47,4 @@ export default class SurrogateModelOperator extends Operator
         );
         this._panels[surrModelPanel.name] = surrModelPanel;
     }
-
-    // See https://bl.ocks.org/ajschumacher/65eda1df2b0dd2cf616f.
 }

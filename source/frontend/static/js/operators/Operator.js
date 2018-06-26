@@ -28,8 +28,10 @@ export default class Operator
         // Create div structure for this operator.
         let div         = document.createElement('div');
         div.id          = this._target;
-        div.className   = 'operator filter-reduce-operator';
-        $("#" + (typeof parentDivID == "undefined" ? this._stage.target : parentDivID)).append(div);
+        div.className   = 'operator';
+        $("#" + (
+            (typeof parentDivID == "undefined" || parentDivID == null) ? this._stage.target : parentDivID
+        )).append(div);
 
         // Make class abstract.
         if (new.target === Operator) {

@@ -32,3 +32,16 @@
     height: 100%;
     float: left;
 }
+
+/* Container for split divs in lower half. */
+.split-bottom-container {
+    height: calc(100% - 54%);
+}
+
+.gutter.gutter-vertical {
+    height: 9px;
+}
+
+.gutter.gutter-horizontal {
+    width: 9px;
+}

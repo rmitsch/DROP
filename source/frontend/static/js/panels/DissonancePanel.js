@@ -3,12 +3,13 @@ import Utils from "../Utils.js";
 import Dataset from "../Dataset.js";
 
 /**
- * Panel holding charts for surrogate model in SurrogateModelOperator.
+ * Panel holding elements for comparison of inter-model disagreement for datapoints
+ * in selected model instances.
  */
-export default class SurrogateModelPanel extends Panel
+export default class DissonancePanel extends Panel
 {
     /**
-     * Constructs new FilterReduce charts panel.
+     * Constructs new panel for charts for DissonanceOperator.
      * @param name
      * @param operator
      * @param parentDivID
@@ -18,7 +19,7 @@ export default class SurrogateModelPanel extends Panel
         super(name, operator, parentDivID);
 
         // Update involved CSS classes.
-        $("#" + this._target).addClass("surrogate-model-panel");
+        $("#" + this._target).addClass("dissonance-panel");
 
         // Create div structure for child nodes.
         this._divStructure = this._createDivStructure();
@@ -32,7 +33,7 @@ export default class SurrogateModelPanel extends Panel
      */
     _generateCharts()
     {
-        console.log("Generating SurrogateModelPanel...");
+        console.log("Generating DissonancePanel...");
 
         // Fetch reference to dataset.
         let dataset = this._operator._dataset;

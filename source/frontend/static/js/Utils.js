@@ -34,6 +34,7 @@ export default class Utils
     static spawnChildDiv(parentDivID, childDivID, childDivCSSClasses, text)
     {
         let div         = document.createElement('div');
+        // If no child div ID specified: Generate random ID.
         div.id         = (typeof childDivID == "undefined") || (childDivID == null) ? Utils.uuidv4() : childDivID;
         div.className  = childDivCSSClasses;
         if (text != null && typeof text != "undefined")

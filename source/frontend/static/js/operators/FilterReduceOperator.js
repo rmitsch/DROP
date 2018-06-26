@@ -22,6 +22,9 @@ export default class FilterReduceOperator extends Operator
     {
         super(name, stage, "1", "n", dataset, parentDivID);
 
+        // Update involved CSS classes.
+        $("#" + this._target).addClass("filter-reduce-operator");
+
         // Construct all necessary panels.
         this.constructPanels();
     }
@@ -45,14 +48,7 @@ export default class FilterReduceOperator extends Operator
         );
         this._panels[tablePanel.name] = tablePanel;
 
-        // Initialize split panes.
-        // $("#" + frcPanel._target).addClass("split split-horizontal");
-        // $("#" + tablePanel._target).addClass("split split-horizontal");
-        // Split(["#" + frcPanel._target, "#" + tablePanel._target], {
-        //     sizes: [99, 1]
-        // });
-
-        // Set click listener for FRC panel's table modal.
+        // 3. Set click listener for FRC panel's table modal.
         let scope = this;
         $("#filter-reduce-info-table-icon").click(function() {
             $("#" + scope._panels[tablePanel.name]._target).dialog({

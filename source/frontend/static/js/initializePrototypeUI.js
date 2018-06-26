@@ -39,7 +39,9 @@ $(document).ready(function() {
                         "PrototypeStage",
                         "stage",
                         {
-                            prototypeDataset: dataset
+                            modelMetadata: dataset,
+                            surrogateModel: null,
+                            dissonance: null
                         }
                     );
                 }
