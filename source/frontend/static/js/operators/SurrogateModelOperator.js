@@ -1,5 +1,6 @@
 import Operator from "./Operator.js";
 import SurrogateModelPanel from "../panels/SurrogateModelPanel.js";
+import SurrogateModelChart from "../charts/SurrogateModelChart.js";
 
 
 /**
@@ -47,5 +48,15 @@ export default class SurrogateModelOperator extends Operator
             this
         );
         this._panels[surrModelPanel.name] = surrModelPanel;
+    }
+
+    /**
+     * (Re-)Renders all panels.
+     */
+    render()
+    {
+        for (let panelName in this._panels) {
+            this._panels[panelName].render();
+        }
     }
 }

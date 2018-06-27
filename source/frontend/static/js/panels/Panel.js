@@ -43,7 +43,15 @@ export default class Panel
      */
     _generateCharts()
     {
-        throw new TypeError("Panel._generateCharts(): Cannot execute abstract method.");
+        throw new TypeError("Panel._generateCharts(): Abstract method must not be called.");
+    }
+
+    /**
+     * (Re-)Renders all charts in this panel.
+     */
+    render()
+    {
+        throw new TypeError("Panel.render(): Abstract method must not be called.");
     }
 
     /**

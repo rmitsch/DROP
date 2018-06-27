@@ -34,77 +34,95 @@ export default class PrototypeStage extends Stage
      */
     constructOperators()
     {
-        // Operators to be constructed:
-        //  * Hyperparameter and objective selection.
-
-        // ---------------------------------------------------------
-        // 1. Operator for hyperparameter and objective selection.
-        // ---------------------------------------------------------
-
-        // For panels at bottom: Spawn container.
-        let splitTopDiv = Utils.spawnChildDiv(this._target, null, "split-top-container");
-
-        this.operators["FilterReduce"] = new FilterReduceOperator(
-            "FilterReduce:TSNE",
-            this,
-            this._datasets["modelMetadata"],
-            splitTopDiv.id
+        // Fetch (test) dataset for surrogate model first, then initialize panels.
+        let surrModelDataRequest = fetch(
+            "/get_surrogate_model_data?modeltype=tree",
+            {
+                headers: { "Content-Type": "application/json; charset=utf-8"},
+                method: "GET"
+            }
         );
 
-        // ---------------------------------------------------------
-        // 2. Operator for exploration of surrogate model (read-only).
-        // ---------------------------------------------------------
+        // Initialize operators after data has arrived.
+        surrModelDataRequest
+            .then(res => res.json())
+            .then(response => {
+                // Q: How to get decision tree data?
+                this._datasets["surrogateModel"] = response;
 
-        // For panels at bottom: Spawn container. Used for surrogate and dissonance panel.
-        let splitBottomDiv = Utils.spawnChildDiv(this._target, null, "split-bottom-container");
+                // For panels at bottom: Spawn container.
+                let splitTopDiv = Utils.spawnChildDiv(this._target, null, "split-top-container");
+                // For panels at bottom: Spawn container. Used for surrogate and dissonance panel.
+                let splitBottomDiv = Utils.spawnChildDiv(this._target, null, "split-bottom-container");
 
-        // Q: How to get decision tree data?
-        this._datasets["surrogateModel"] = null;
+                //---------------------------------------------------------
+                // 1. Operator for hyperparameter and objective selection.
+                // ---------------------------------------------------------
 
-        this.operators["SurrogateModel"] = new SurrogateModelOperator(
-            "GlobalSurrogateModel:DecisionTree",
-            this,
-            this._datasets["surrogateModel"],
-            "Tree",
-            splitBottomDiv.id
-        );
+                this._operators["FilterReduce"] = new FilterReduceOperator(
+                    "FilterReduce:TSNE",
+                    this,
+                    this._datasets["modelMetadata"],
+                    splitTopDiv.id
+                );
 
-        // ---------------------------------------------------------
-        // 3. Operator for exploration of inter-model disagreement.
-        // ---------------------------------------------------------
+                // ---------------------------------------------------------
+                // 2. Operator for exploration of surrogate model (read-only).
+                // ---------------------------------------------------------
 
-        // Q: How to get dissonance data? Has to be of pattern
-        //      model.id -> sample.id, sample.value -> variance (or any other
-        //      measure of disagreement to be used).
-        this._datasets["dissonance"] = null;
+                this._operators["SurrogateModel"] = new SurrogateModelOperator(
+                    "GlobalSurrogateModel:DecisionTree",
+                    this,
+                    this._datasets["surrogateModel"],
+                    "Tree",
+                    splitBottomDiv.id
+                );
 
-        this.operators["Dissonance"] = new DissonanceOperator(
-            "GlobalSurrogateModel:DecisionTree",
-            this,
-            this._datasets["dissonance"],
-            splitBottomDiv.id
-        );
+                // ---------------------------------------------------------
+                // 3. Operator for exploration of inter-model disagreement.
+                // ---------------------------------------------------------
 
-        // ---------------------------------------------------------
-        // 4. Initialize split panes.
-        // ---------------------------------------------------------
+                // Q: How to get dissonance data? Has to be of pattern
+                //      model.id -> sample.id, sample.value -> variance (or any other
+                //      measure of disagreement to be used).
+                this._datasets["dissonance"] = null;
 
-        // Horizontal split.
-        let surrTarget = this.operators["SurrogateModel"]._target;
-        let dissTarget = this.operators["Dissonance"]._target
-        $("#" + surrTarget).addClass("split split-horizontal");
-        $("#" + dissTarget).addClass("split split-horizontal");
-        Split(["#" + surrTarget, "#" + dissTarget], {
-            direction: "horizontal",
-            sizes: [50, 50]
-        });
+                this._operators["Dissonance"] = new DissonanceOperator(
+                    "GlobalSurrogateModel:DecisionTree",
+                    this,
+                    this._datasets["dissonance"],
+                    splitBottomDiv.id
+                );
 
-        // Vertical split.
-        $("#" + splitTopDiv.id).addClass("split split-vertical");
-        $("#" + splitBottomDiv.id).addClass("split split-vertical");
-        Split(["#" + splitTopDiv.id, "#" + splitBottomDiv.id], {
-            direction: "vertical",
-            sizes: [53, 47]
-        });
+                // ---------------------------------------------------------
+                // 4. Initialize split panes.
+                // ---------------------------------------------------------
+
+                // Horizontal split.
+                let surrTarget = this._operators["SurrogateModel"]._target;
+                let dissTarget = this._operators["Dissonance"]._target
+                $("#" + surrTarget).addClass("split split-horizontal");
+                $("#" + dissTarget).addClass("split split-horizontal");
+                Split(["#" + surrTarget, "#" + dissTarget], {
+                    direction: "horizontal",
+                    sizes: [50, 50]
+                });
+
+                // Vertical split.
+                $("#" + splitTopDiv.id).addClass("split split-vertical");
+                $("#" + splitBottomDiv.id).addClass("split split-vertical");
+                Split(["#" + splitTopDiv.id, "#" + splitBottomDiv.id], {
+                    direction: "vertical",
+                    sizes: [53, 47]
+                });
+
+                // After split: Render (resize-sensitive) charts.
+                this._operators["SurrogateModel"].render();
+            });
+                    // $.ajax({
+        //     url: '/get_surrogate_model_data?modeltype=tree',
+        //     type: 'GET',
+        //     success: function (surrogateModelDataset) {
+        //
     }
 }

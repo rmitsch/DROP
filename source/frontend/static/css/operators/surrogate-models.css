@@ -7,13 +7,23 @@
     height: 100px;
     position: absolute;
     top: 20px;
-    right: 35px;
+    left: 35px;
     font-size: 24px;
 }
 
 .surrogate-info .title {
     margin-right: 10px;
     font-weight: bold;
+}
+
+.surrogate-model-chart-container {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+.surrogate-model-panel {
+    padding-left: 0px;
 }
 
 /* Start: Decision tree CSS. Source: https://bl.ocks.org/ajschumacher/65eda1df2b0dd2cf616f. */

@@ -48,6 +48,14 @@ export default class Operator
     }
 
     /**
+     * (Re-)Renders all panels.
+     */
+    render()
+    {
+        throw new TypeError("Operator.render(): Abstract method must not be called.");
+    }
+
+    /**
      * Highlights data point in all charts in all panels in this operator.
      * @param id
      * @param source

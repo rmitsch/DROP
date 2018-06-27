@@ -64,7 +64,7 @@ export default class FilterReduceChartsPanel extends Panel
             showAxisLabels: false,
             // Use current container dimensions as size for chart.
             height: 65,
-            width: $("#"+this._containerDivIDs["n_components"]).width(),
+            width: $("#" + this._containerDivIDs["n_components"]).width(),
             symbolSize: 1,
             excludedOpacity: 1,
             excludedSymbolSize: 1,
