@@ -2,6 +2,7 @@ from flask import Flask
 from flask import render_template
 from flask import request
 from flask import jsonify
+from flask import json
 from backend.utils import Utils
 import os
 import tables
@@ -46,10 +47,10 @@ def get_metadata():
     Reads metadata content (i. e. model parametrizations and objectives) of specified .h5 file.
     :return:
     """
-    # Open .h5 file.
     # todo Should be customized (e. g. filename should be selected in UI).
+
+    # Open .h5 file.
     file_name = os.getcwd() + "/../data/drop_wine.h5"
-    print(file_name)
     if os.path.isfile(file_name):
         h5file = tables.open_file(filename=file_name, mode="r")
         # Cast to dataframe, then return as JSON.
@@ -89,6 +90,28 @@ def get_metadata_template():
                 "separability_metric"
             ]
     })
+
+
+@app.route('/get_surrogate_model_data', methods=["GET"])
+def get_surrogate_model_data():
+    """
+    Yields structural data for surrogate model.
+    Model type can be specified with GET param. "modeltype". Following surrogate
+    model types are supported:
+        - Decision tree (param. value modeltype=tree).
+    :return:
+    """
+    # todo Should be customized (e. g. filename should be selected in UI).
+
+    surrogate_model_type = request.args["modeltype"]
+
+    if surrogate_model_type not in ["tree"]:
+        return "Surrogate model " + surrogate_model_type + " is not supported.", 400
+
+    # Return model data.
+    # todo Fetch/generate correct decision tree for this dataset and model type.
+    return jsonify(json.load(open(os.getcwd() + "/../data/treetest.json")))
+
 
 # Launch on :2483.
 if __name__ == "__main__":

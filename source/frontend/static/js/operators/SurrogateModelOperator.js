@@ -22,6 +22,7 @@ export default class SurrogateModelOperator extends Operator
      */
     constructor(name, stage, dataset, modelType, parentDivID)
     {
+        // Relationship cardinality is 1:0, since one dataset is read and none is produced.
         super(name, stage, "1", "0", dataset, parentDivID);
 
         // Update involved CSS classes.

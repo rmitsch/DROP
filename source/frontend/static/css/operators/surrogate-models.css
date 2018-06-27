@@ -15,3 +15,27 @@
     margin-right: 10px;
     font-weight: bold;
 }
+
+/* Start: Decision tree CSS. Source: https://bl.ocks.org/ajschumacher/65eda1df2b0dd2cf616f. */
+
+.surrogate-model-panel .node {
+  cursor: pointer;
+}
+
+.surrogate-model-panel .node circle {
+  fill: #fff;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+
+.surrogate-model-panel .node text {
+  font: 10px sans-serif;
+}
+
+.surrogate-model-panel .link {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 1.5px;
+}
+
+/* End: Decision tree CSS. */
