@@ -59,9 +59,6 @@ export default class DissonancePanel extends Panel
         // -----------------------------------
 
         let chartsContainerDiv  = Utils.spawnChildDiv(this._target, null, "dissonance-charts-container");
-        let sampleHistogramDiv  = Utils.spawnChildDiv(chartsContainerDiv.id, null, "dissonance-variance horizontal");
-        let heatmapDiv          = Utils.spawnChildDiv(chartsContainerDiv.id, null, "dissonance-heatmap");
-        let kHistogramDiv       = Utils.spawnChildDiv(chartsContainerDiv.id, null, "dissonance-variance-chart vertical");
 
         // -----------------------------------
         // 2. Create title and options container.
@@ -81,10 +78,7 @@ export default class DissonancePanel extends Panel
         )
 
         return {
-            chartsContainerDivID: chartsContainerDiv.id,
-            sampleHistogramDivID: sampleHistogramDiv.id,
-            heatmapDivID: heatmapDiv.id,
-            kHistogramDivID: kHistogramDiv.id
+            chartsContainerDivID: chartsContainerDiv.id
         };
     }
 

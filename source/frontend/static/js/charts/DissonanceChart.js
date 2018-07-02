@@ -22,16 +22,15 @@ export default class DissonanceChart extends Chart
     {
         super(name, panel, attributes, dataset, style, parentDivID);
 
+        // Generate div structure for child nodes.
+        this._divStructure = this._createDivStructure();
+
         // Construct graph.
         this.constructCFChart();
     }
 
     constructCFChart()
     {
-        // Create shorthand references.
-        let dataset     = this._dataset;
-        let extrema     = dataset._cf_extrema;
-        let dimensions  = dataset._cf_dimensions;
         // Use operator's target ID as group name.
         let dcGroupName = this._panel._operator._target;
 
@@ -69,7 +68,7 @@ export default class DissonanceChart extends Chart
             this._sampleVarianceBySampleHistogram.margins().right
         );
         this._sampleVarianceByKHistogram.width(newHeight);
-        $("#" + this._panel._divStructure.kHistogramDivID).css({
+        $("#" + this._divStructure.kHistogramDivID).css({
             "margin-top": newOffset + "px",
             "margin-right": -(
                 newOffset +
@@ -105,7 +104,7 @@ export default class DissonanceChart extends Chart
         let dimensions  = dataset._cf_dimensions;
 
         // Generate dc.js chart object.
-        this._sampleVarianceBySampleHistogram = dc.barChart("#" + this._panel._divStructure.sampleHistogramDivID, dcGroupName);
+        this._sampleVarianceBySampleHistogram = dc.barChart("#" + this._divStructure.sampleHistogramDivID, dcGroupName);
 
         // Use arbitrary axis attribute for prototype purposes.
         let axesAttribute = "r_nx";
@@ -117,7 +116,7 @@ export default class DissonanceChart extends Chart
         this._sampleVarianceBySampleHistogram
             .height(40)
             // 0.8: Relative width of parent div.
-            .width($("#" + this._panel._divStructure.chartsContainerDivID).width())
+            .width($("#" + this._target).width())
             .valueAccessor( function(d) { return d.value.count; } )
             .elasticY(false)
             .x(d3.scale.linear().domain(
@@ -157,7 +156,7 @@ export default class DissonanceChart extends Chart
         let dimensions  = dataset._cf_dimensions;
 
         // Generate dc.js chart object.
-        this._sampleVarianceByKHistogram = dc.barChart("#" + this._panel._divStructure.kHistogramDivID, dcGroupName);
+        this._sampleVarianceByKHistogram = dc.barChart("#" + this._divStructure.kHistogramDivID, dcGroupName);
 
         // Use arbitrary axis attribute for prototype purposes.
         let axesAttribute = "b_nx";
@@ -194,5 +193,26 @@ export default class DissonanceChart extends Chart
         // Update bin width.
         let binWidth = dataset._cf_intervals[axesAttribute] / dataset._binCount;
         this._sampleVarianceByKHistogram.xUnits(dc.units.fp.precision(binWidth * 1));
-     }
+    }
+
+     /**
+     * Create (hardcoded) div structure for child nodes.
+     * @returns {Object}
+     */
+    _createDivStructure()
+    {
+        // -----------------------------------
+        // Create charts container.
+        // -----------------------------------
+
+        let sampleHistogramDiv  = Utils.spawnChildDiv(this._target, null, "dissonance-variance horizontal");
+        let heatmapDiv          = Utils.spawnChildDiv(this._target, null, "dissonance-heatmap");
+        let kHistogramDiv       = Utils.spawnChildDiv(this._target, null, "dissonance-variance-chart vertical");
+
+        return {
+            sampleHistogramDivID: sampleHistogramDiv.id,
+            heatmapDivID: heatmapDiv.id,
+            kHistogramDivID: kHistogramDiv.id
+        };
+    }
 }
