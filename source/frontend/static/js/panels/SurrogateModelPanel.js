@@ -86,7 +86,6 @@ export default class SurrogateModelPanel extends Panel
 
     render()
     {
-        console.log("rendering surrogatemodelpanel");
         this._chart.render();
     }
 }

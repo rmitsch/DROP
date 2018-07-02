@@ -65,10 +65,10 @@ class CorankingMatrixQualityCriterion(TopologyPreservationObjective):
         # Range for k is (1, n - 2) - see https://www-sciencedirect-com/science/article/pii/S0925231215003641 for
         # derivation.
         for k in k_samples:
-            # We compute the mask
+            # We compute the mask.
             mask = numpy.zeros([n, n])
             mask[:k, :k] = 1.
-            # We compute the normalization constant
+            # We compute the normalization constant.
             norm = k * (n + 1.)
 
             # We finally compute the measures.

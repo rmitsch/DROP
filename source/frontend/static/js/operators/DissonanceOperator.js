@@ -34,9 +34,16 @@ export default class DissonanceOperator extends Operator
     {
         // Construct panel for surrogate model visualization.
         let dissPanel = new DissonancePanel(
-            "Dissonance Panel",
+            "Model Disagreement",
             this
         );
         this._panels[dissPanel.name] = dissPanel;
+    }
+
+    render()
+    {
+        for (let panelName in this._panels) {
+            this._panels[panelName].render();
+        }
     }
 }

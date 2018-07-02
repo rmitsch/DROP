@@ -85,7 +85,8 @@ export default class PrototypeStage extends Stage
                 // Q: How to get dissonance data? Has to be of pattern
                 //      model.id -> sample.id, sample.value -> variance (or any other
                 //      measure of disagreement to be used).
-                this._datasets["dissonance"] = null;
+                // For testing: Use metadata dataset.
+                this._datasets["dissonance"] = this._datasets["modelMetadata"];
 
                 this._operators["Dissonance"] = new DissonanceOperator(
                     "GlobalSurrogateModel:DecisionTree",
@@ -118,6 +119,7 @@ export default class PrototypeStage extends Stage
 
                 // After split: Render (resize-sensitive) charts.
                 this._operators["SurrogateModel"].render();
+                this._operators["Dissonance"].render();
             });
                     // $.ajax({
         //     url: '/get_surrogate_model_data?modeltype=tree',

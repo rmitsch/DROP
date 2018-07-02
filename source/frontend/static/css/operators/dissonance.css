@@ -1,6 +1,14 @@
 .dissonance-operator {
     position: relative;
     display: block;
+    width: calc(50% - 20px);
+}
+
+.dissonance-panel {
+    width: 100%;
+    height: calc(100% - 55px);
+    padding-left: 0px;
+    padding-top: 55px;
 }
 
 .dissonance-info {
@@ -14,4 +22,19 @@
 .dissonance-info .title {
     margin-right: 10px;
     font-weight: bold;
+}
+
+.dissonance-charts-container {
+    width: 80%;
+    height: calc(100% - 20px);
+    position: relative;
+    background: #ccc;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.dissonance-variance-chart.vertical {
+    transform: rotate(90deg);
+    display: block;
+    float: right;
 }
