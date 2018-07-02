@@ -88,6 +88,16 @@ export default class DissonanceChart extends Chart
      */
     _generateDissonanceHeatmap(dcGroupName)
     {
+        Next steps:
+            - Draw common scatterplot (with useCanvas = true and filterOnBrushEnd: true).
+            - Follow stackoverflow.com/questions/51122700/dc-js-rectangular-brush-for-heat-_generateDissonanceHeatmap on
+              turning scatterplot into heatmap (separate class justified?).
+            - Continue with other issues -
+                * Sample interpolation,
+                * design of other panels,
+                * data generation,
+                * UMAP instead of t-SNE,
+                * using real instead of mocked data for model-sample dissonance and surrogate model.
 
     }
 

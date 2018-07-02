@@ -78,7 +78,6 @@ export default class ParetoScatterplot extends Scatterplot
             .existenceAccessor(function(d) {
                 return d.value.items.length > 0;
             })
-            .mouseZoomable(true)
             .excludedSize(instance._style.excludedSymbolSize)
             .excludedOpacity(instance._style.excludedOpacity)
             .excludedColor(instance._style.excludedColor)
