@@ -5,6 +5,8 @@ import Utils from "../Utils.js"
 /**
  * Creates chart for surrogate model.
  * Supported so far: Decision tree.
+ * Code for tree: https://bl.ocks.org/ajschumacher/65eda1df2b0dd2cf616f.
+ * Alternative: http://bl.ocks.org/pprett/3813537.
  */
 export default class SurrogateModelChart extends Chart
 {
@@ -38,9 +40,9 @@ export default class SurrogateModelChart extends Chart
      */
     render()
     {
-        let baseWidth = $("#" + this._panel._operator._target).width() - 0;
-        let baseHeight = $("#" + this._panel._operator._target).height() - 5;
-        let treeData = this._dataset;
+        let baseWidth   = $("#" + this._panel._operator._target).width() - 0;
+        let baseHeight  = $("#" + this._panel._operator._target).height() - 5;
+        let treeData    = this._dataset;
 
         // Generate chart.
         var margin = {top: 0, right: 120, bottom: 20, left: 180},
@@ -64,7 +66,6 @@ export default class SurrogateModelChart extends Chart
             .attr("height", height + margin.top + margin.bottom)
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
 
         root = treeData;
         root.x0 = height / 2;
