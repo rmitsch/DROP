@@ -1,5 +1,5 @@
 import PrototypeStage from './stages/PrototypeStage.js';
-import Dataset from './Dataset.js';
+import Dataset from './data/DRMetaDataset.js';
 import Utils from './Utils.js'
 
 // IDs of menu buttons.

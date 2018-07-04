@@ -4,7 +4,7 @@ import FilterReduceTablePanel from "../panels/FilterReduceTablePanel.js";
 
 /**
  * Class for FilterReduceOperators with scattered (scree) and violin plots.
- * One operator operates on exactly one dataset (-> one instance of class Dataset).
+ * One operator operates on exactly one dataset (-> one instance of class DRMetaDataset).
  */
 export default class FilterReduceOperator extends Operator
 {
@@ -15,7 +15,7 @@ export default class FilterReduceOperator extends Operator
      * stored in a class attribute only (as opposed to branching the Operator class tree further).
      * @param name
      * @param stage
-     * @param dataset Instance of Dataset class.
+     * @param dataset Instance of DRMetaDataset class.
      * @param parentDivID
      */
     constructor(name, stage, dataset, parentDivID)

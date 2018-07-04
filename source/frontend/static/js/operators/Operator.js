@@ -11,7 +11,7 @@ export default class Operator
      * @param stage
      * @param inputCardinality
      * @param outputCardinality
-     * @param dataset Instance of Dataset class. Holds exactly one dataset.
+     * @param dataset Instance of DRMetaDataset class. Holds exactly one dataset.
      * @param parentDivID
      */
     constructor(name, stage, inputCardinality, outputCardinality, dataset, parentDivID)

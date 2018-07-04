@@ -4,7 +4,7 @@ import ParetoScatterplot from "../charts/ParetoScatterplot.js";
 import NumericalHistogram from "../charts/NumericalHistogram.js";
 import CategoricalHistogram from "../charts/CategoricalHistogram.js";
 import ParallelCoordinates from "../charts/ParallelCoordinates.js"
-import Dataset from "../Dataset.js";
+import Dataset from "../data/DRMetaDataset.js";
 
 /**
  * Panel holding scatterplots and histograms in operator FilterReduce.

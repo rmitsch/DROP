@@ -1,4 +1,4 @@
-import Utils from "./Utils.js";
+import Utils from "../Utils.js";
 
 /**
  * Wrapper class providing the specified dataset itself plus the corresponding crossfilter context and various utility
@@ -6,9 +6,9 @@ import Utils from "./Utils.js";
  * Note that this class includes a few custom tweaks regarding which dimensions and groups to generate.
  * This class might be split and only used as abstract base class, once the prototype is extended to other operators -
  * typically, operators have different requirements regarding their datasets and their capabilities. This could be
- * reflected by a diverging Dataset class hierarchy.
+ * reflected by a diverging DRMetaDataset class hierarchy.
  */
-export default class Dataset
+export default class DRMetaDataset
 {
     /**
      *

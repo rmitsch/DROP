@@ -1,6 +1,6 @@
 import Panel from "./Panel.js";
 import Utils from "../Utils.js";
-import Dataset from "../Dataset.js";
+import Dataset from "../data/DRMetaDataset.js";
 import SurrogateModelChart from "../charts/SurrogateModelChart.js"
 
 

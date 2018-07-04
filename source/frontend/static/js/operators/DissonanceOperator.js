@@ -5,7 +5,7 @@ import DissonancePanel from "../panels/DissonancePanel.js";
 /**
  * Class for dissonance operators (i. e. for showing disagreement between generated
  * models on particular instances/local scale).
- * One operator operates on exactly one dataset (-> one instance of class Dataset).
+ * One operator operates on exactly one dataset (-> one instance of class DRMetaDataset).
  */
 export default class DissonanceOperator extends Operator
 {
@@ -13,7 +13,7 @@ export default class DissonanceOperator extends Operator
      * Constructs new DissonanceOperator.
      * @param name
      * @param stage
-     * @param dataset Instance of Dataset class.
+     * @param dataset Instance of DRMetaDataset class.
      * @param parentDivID
      */
     constructor(name, stage, dataset, parentDivID)

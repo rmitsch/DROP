@@ -79,7 +79,7 @@ export default class ParetoScatterplot extends Scatterplot
                 return d.value.items.length > 0;
             })
             .excludedSize(instance._style.excludedSymbolSize)
-            .excludedOpacity(instance._style.excludedOpacity)
+            .excludedOpacity(0) // instance._style.excludedOpacity)
             .excludedColor(instance._style.excludedColor)
             .symbolSize(instance._style.symbolSize)
     //        .colorAccessor(function(d) {
@@ -91,7 +91,6 @@ export default class ParetoScatterplot extends Scatterplot
              })
             // Filter on end of brushing action, not meanwhile (performance suffers otherwise).
             .filterOnBrushEnd(true)
-            .excludedOpacity(instance._style.excludedOpacity)
             .mouseZoomable(true)
             .margins({top: 0, right: 0, bottom: 25, left: 25});
 

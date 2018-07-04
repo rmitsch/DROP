@@ -5,7 +5,7 @@ import SurrogateModelChart from "../charts/SurrogateModelChart.js";
 
 /**
  * Class for SurrogateModel operators.
- * One operator operates on exactly one dataset (-> one instance of class Dataset).
+ * One operator operates on exactly one dataset (-> one instance of class DRMetaDataset).
  * See https://bl.ocks.org/ajschumacher/65eda1df2b0dd2cf616f.
  */
 export default class SurrogateModelOperator extends Operator
@@ -17,7 +17,7 @@ export default class SurrogateModelOperator extends Operator
      * is stored in a class attribute only (as opposed to branching the Operator class tree further).
      * @param name
      * @param stage
-     * @param dataset Instance of Dataset class.
+     * @param dataset Instance of DRMetaDataset class.
      * @param modelType Type of model to be used as surrogate. Currently available: Decision tree.
      * @param parentDivID
      */
