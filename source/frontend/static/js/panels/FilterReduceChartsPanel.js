@@ -61,7 +61,10 @@ export default class FilterReduceChartsPanel extends Panel
 
         // Define style options for charts.
         let scatterplotStyle = {
-            showAxisLabels: false,
+            showAxisLabels: {
+                x: false,
+                y: false
+            },
             // Use current container dimensions as size for chart.
             height: 65,
             width: $("#" + this._containerDivIDs["n_components"]).width(),
@@ -237,9 +240,10 @@ export default class FilterReduceChartsPanel extends Panel
                 // Adapt style settings, based on whether this is the first scatterplot or not.
                 let updatedStyle                = $.extend(true, {}, style);
                 updatedStyle.numberOfTicks.y    = 0;
-                updatedStyle.numberOfTicks.x    = j === dataset.metadata.objectives.length - 1 ? updatedStyle.numberOfXTicksInLastRow : updatedStyle.numberOfTicks.x;
+                updatedStyle.numberOfTicks.x    = updatedStyle.numberOfXTicksInLastRow // j === dataset.metadata.objectives.length - 1 ? updatedStyle.numberOfXTicksInLastRow : updatedStyle.numberOfTicks.x;
                 // Note: Categorical barchart apparently does not allow unlabeld x-axis.
-                updatedStyle.showAxisLabels     = false;
+                updatedStyle.showAxisLabels.x   = false;
+                updatedStyle.showAxisLabels.y   = false;
 
 
                 // Instantiate new scatterplot.

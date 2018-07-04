@@ -26,7 +26,7 @@ export default class DissonanceChart extends Chart
         this._divStructure = this._createDivStructure();
 
         // Construct graph.
-        // this.constructCFChart();
+        this.constructCFChart();
     }
 
     constructCFChart()
@@ -57,44 +57,44 @@ export default class DissonanceChart extends Chart
 
     render()
     {
-        // let newHeight   = null;
-        // let newWidth    = null;
-        //
-        // // -------------------------------
-        // // Render horizontal histogram.
-        // // -------------------------------
-        //
-        // this._sampleVarianceBySampleHistogram.render();
-        //
-        // // -------------------------------
-        // // Render vertical histogram.
-        // // -------------------------------
-        //
-        // // Has to be drawn with updated height value.
-        // newHeight = $("#" + this._panel._target).height() - 55;
-        // this._sampleVarianceByKHistogram.width(newHeight);
-        // $("#" + this._divStructure.kHistogramDivID).css({
-        //     "top": (
-        //         this._sampleVarianceByKHistogram.width() / 2 +
-        //         // Additional margin to align with heatmap.
-        //         9
-        //     ) + "px",
-        //     "left": -(
-        //         this._sampleVarianceByKHistogram.width() / 2 -
-        //         this._sampleVarianceByKHistogram.margins().top -
-        //         this._sampleVarianceByKHistogram.margins().bottom -
-        //         8
-        //     ) + "px"
-        // });
-        // this._sampleVarianceByKHistogram.render();
-        //
-        // // -------------------------------
-        // // Render heatmap.
-        // // -------------------------------
-        //
-        // this._dissonanceHeatmap.width(this._sampleVarianceBySampleHistogram.width() - this._dissonanceHeatmap.margins().right);
-        // this._dissonanceHeatmap.height(this._sampleVarianceByKHistogram.width() - this._sampleVarianceByKHistogram.margins().left);
-        // this._dissonanceHeatmap.render();
+        let newHeight   = null;
+        let newWidth    = null;
+
+        // -------------------------------
+        // Render horizontal histogram.
+        // -------------------------------
+
+        this._sampleVarianceBySampleHistogram.render();
+
+        // -------------------------------
+        // Render vertical histogram.
+        // -------------------------------
+
+        // Has to be drawn with updated height value.
+        newHeight = $("#" + this._panel._target).height() - 55;
+        this._sampleVarianceByKHistogram.width(newHeight);
+        $("#" + this._divStructure.kHistogramDivID).css({
+            "top": (
+                this._sampleVarianceByKHistogram.width() / 2 +
+                // Additional margin to align with heatmap.
+                9
+            ) + "px",
+            "left": -(
+                this._sampleVarianceByKHistogram.width() / 2 -
+                this._sampleVarianceByKHistogram.margins().top -
+                this._sampleVarianceByKHistogram.margins().bottom -
+                8
+            ) + "px"
+        });
+        this._sampleVarianceByKHistogram.render();
+
+        // -------------------------------
+        // Render heatmap.
+        // -------------------------------
+
+        this._dissonanceHeatmap.width(this._sampleVarianceBySampleHistogram.width() - this._dissonanceHeatmap.margins().right);
+        this._dissonanceHeatmap.height(this._sampleVarianceByKHistogram.width() - this._sampleVarianceByKHistogram.margins().left);
+        this._dissonanceHeatmap.render();
     }
 
     /**
@@ -166,9 +166,6 @@ export default class DissonanceChart extends Chart
     //        .colors(scatterplotColors)
             .keyAccessor(function(d) {
                 return d.key[0];
-             })
-            .valueAccessor(function(d) {
-                return d.key[1];
              })
             .useRightYAxis(true)
             // Filter on end of brushing action, not meanwhile (performance suffers otherwise).

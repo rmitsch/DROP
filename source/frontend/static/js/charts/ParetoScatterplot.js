@@ -69,9 +69,8 @@ export default class ParetoScatterplot extends Scatterplot
             .y(d3.scale.linear().domain(
                 [extrema[instance._axes_attributes.y].min, extrema[instance._axes_attributes.y].max]
             ))
-
-            .xAxisLabel(instance._style.showAxisLabels ? instance._axes_attributes.x : null)
-            .yAxisLabel(instance._style.showAxisLabels ? instance._axes_attributes.y : null)
+            .xAxisLabel(instance._style.showAxisLabels.x ? instance._axes_attributes.x : null)
+            .yAxisLabel(instance._style.showAxisLabels.y ? instance._axes_attributes.y : null)
             .renderHorizontalGridLines(true)
             .dimension(dimensions[key])
             .group(this._dataset.cf_groups[key])
@@ -79,7 +78,7 @@ export default class ParetoScatterplot extends Scatterplot
                 return d.value.items.length > 0;
             })
             .excludedSize(instance._style.excludedSymbolSize)
-            .excludedOpacity(0) // instance._style.excludedOpacity)
+            .excludedOpacity(instance._style.excludedOpacity)
             .excludedColor(instance._style.excludedColor)
             .symbolSize(instance._style.symbolSize)
     //        .colorAccessor(function(d) {
@@ -99,7 +98,7 @@ export default class ParetoScatterplot extends Scatterplot
         this._cf_chart.xAxis().ticks(instance._style.numberOfTicks.x);
 
         // If this x-axis hosts categorical argument: Print categorical representations of numerical values.
-        if (this._axes_attributes.x.indexOf("*") !== -1) {
+        if (this._axes_attributes.x.indexOf("*") !== -1 && instance._style.numberOfTicks.x) {
             // Get original name by removing suffix "*" from attribute name.
             let originalAttributeName = instance._axes_attributes.x.slice(0, -1);
 
