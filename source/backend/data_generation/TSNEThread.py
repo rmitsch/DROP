@@ -120,7 +120,7 @@ class TSNEThread(threading.Thread):
                 - frontend:
                     * create crossfilter dataset.
                     * update charts with data (pay attention to scatterplot/barchart correlation bug!).
-            
+
             q_nx_i = PointwiseCorankingMatrixQualityCriterion(
                 high_dimensional_data=self._distance_matrices[metric],
                 low_dimensional_data=low_dimensional_projection,
