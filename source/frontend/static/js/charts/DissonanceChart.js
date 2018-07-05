@@ -92,8 +92,18 @@ export default class DissonanceChart extends Chart
         // Render heatmap.
         // -------------------------------
 
-        this._dissonanceHeatmap.width(this._sampleVarianceBySampleHistogram.width() - this._dissonanceHeatmap.margins().right);
-        this._dissonanceHeatmap.height(this._sampleVarianceByKHistogram.width() - this._sampleVarianceByKHistogram.margins().left);
+        this._dissonanceHeatmap.width(
+            this._sampleVarianceBySampleHistogram.width() -
+            this._dissonanceHeatmap.margins().right -
+            this._sampleVarianceBySampleHistogram.margins().right -
+            8
+        );
+        this._dissonanceHeatmap.height(
+            this._sampleVarianceByKHistogram.width() -
+            this._sampleVarianceByKHistogram.margins().left -
+            8
+        );
+
         this._dissonanceHeatmap.render();
     }
 
@@ -106,8 +116,6 @@ export default class DissonanceChart extends Chart
     {
         // Next steps:
         //     x Draw common scatterplot (with useCanvas = true and filterOnBrushEnd: true).
-        //     - Follow stackoverflow.com/questions/51122700/dc-js-rectangular-brush-for-heat-_generateDissonanceHeatmap on
-        //       turning scatterplot into heatmap (separate class justified?).
         //     - Continue with other issues -
         //         * Sample interpolation,
         //         * design of other panels,
@@ -118,12 +126,9 @@ export default class DissonanceChart extends Chart
         //         * implementing hexagon-heatmaps (with area brush! -> how?) for omega-omega plots - no detail view.
 
         // Use operator's target ID as group name.
-        this._dissonanceHeatmap = dc.scatterPlot(
+        this._dissonanceHeatmap = dc.heatMap(
             "#" + this._divStructure.heatmapDivID,
-            dcGroupName,
-            this._dataset,
-            // Don't make use of SSP line functionality.
-            null
+            dcGroupName
         );
 
         // Create shorthand references.
@@ -134,49 +139,34 @@ export default class DissonanceChart extends Chart
             x: "r_nx",
             y: "b_nx"
         };
-        let key = axesAttributes.x + ":" + axesAttributes.y;
+        let key         = axesAttributes.x + ":" + axesAttributes.y;
+
+        var heatColorMapping = d3.scale.linear()
+            .domain([0, 1])
+            .range(["red", "#fff"]);
 
         // Configure chart.
         this._dissonanceHeatmap
             .height(300)
             .width(300)
-            .useCanvas(true)
-            .x(d3.scale.linear().domain(
-                [extrema[axesAttributes.x].min, extrema[axesAttributes.x].max]
-            ))
-            .y(d3.scale.linear().domain(
-                [extrema[axesAttributes.y].min, extrema[axesAttributes.y].max]
-            ))
-            .xAxisLabel(axesAttributes.x)
-            .yAxisLabel(axesAttributes.y)
-            .renderHorizontalGridLines(true)
             .dimension(dimensions[key])
             .group(dataset.cf_groups[key])
-            .existenceAccessor(function(d) {
-                console.log(d.value.items.length);
-                return d.value.items.length > 0;
-            })
-            .excludedSize(0)
-            .excludedColor("#fff")
-            .excludedOpacity(0)
-            .symbolSize(3)
-    //        .colorAccessor(function(d) {
-    //            return d.key[2];
-    //        })
-    //        .colors(scatterplotColors)
+           .colorAccessor(function(d) {
+               return Math.random();
+           })
+            .colors(heatColorMapping)
             .keyAccessor(function(d) {
                 return d.key[0];
              })
-            .useRightYAxis(true)
-            // Filter on end of brushing action, not meanwhile (performance suffers otherwise).
-            .filterOnBrushEnd(true)
-            .mouseZoomable(false)
-            .margins({top: 0, right: 35, bottom: 5, left: 0});
+            .valueAccessor(function(d) {
+                return d.key[1];
+             })
+            .colsLabel(function(d) { return ""; })
+            .rowsLabel(function(d) { return ""; })
+            .margins({top: 0, right: 20, bottom: 0, left: 0});
 
-
-        // Set number of ticks for y-axis.
-        this._dissonanceHeatmap.yAxis().ticks(5);
-        this._dissonanceHeatmap.xAxis().ticks(3);
+        this._dissonanceHeatmap.xBorderRadius(0);
+        this._dissonanceHeatmap.yBorderRadius(0);
     }
 
     /**
@@ -273,11 +263,11 @@ export default class DissonanceChart extends Chart
             .renderHorizontalGridLines(true)
             .useRightYAxis(false)
             .yAxisLabel("")
-            .margins({top: 5, right: 5, bottom: 35, left: 15});
+            .margins({top: 5, right: 5, bottom: 5, left: 15});
 
         // Set number of ticks.
         this._sampleVarianceByKHistogram.yAxis().ticks(1);
-        this._sampleVarianceByKHistogram.xAxis().ticks(5);
+        this._sampleVarianceByKHistogram.xAxis().ticks(0);
 
 
         // Update bin width.

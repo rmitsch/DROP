@@ -202,13 +202,10 @@ export default class DRMetaDataset
         for (let i = 0; i < attributes.length; i++) {
             let attribute       = attributes[i];
             histogramAttribute  = attribute + "#histogram";
-
-
             let binWidth        = instance._cf_intervals[attribute] / this._binCount;
 
             if (attribute === "r_nx")
                 binWidth = (Math.round(instance._cf_intervals[attribute] / this._binCount * 100 ) / 100).toFixed(2);
-
 
             for (let j = 0; j < this._data.length; j++) {
                 let value   = this._data[j][attribute];
@@ -222,20 +219,6 @@ export default class DRMetaDataset
                 if (attribute === "r_nx")
                     console.log(this._data[j][histogramAttribute]);
             }
-
-
-            // for (let j = 0; j < this._data.length; j++) {
-            //     let value   = this._data[j][attribute];
-            //     let extrema = this._cf_extrema[attribute];
-            //     if (value <= extrema[0])
-            //         value = extrema[0];
-            //     else if (value >= extrema[1])
-            //         value = extrema[1] - binWidth;
-            //
-            //     this._data[j][attribute + "#histogram"] = (Math.round(value / binWidth) * binWidth);
-            //     if (attribute === "r_nx")
-            //         console.log(this._data[j][attribute + "#histogram"]);
-            // }
 
             // If this is a numerical hyperparameter or an objective: Returned binned width.
             if (i < hyperparameters.length &&
@@ -349,29 +332,27 @@ export default class DRMetaDataset
                return elements;
             },
             function(elements, item) {
+                // console.log("item.id = " + item.id);
+                let match = false;
+                let values = [];
+                for (let i = 0; i < elements.items.length; i++) {
+                    //console.log(elements.items[i].id);
+                    // console.log("bleb");
+                    values.push(elements.items[i]["r_nx"]);
 
-                if (true || primitiveAttributes.length === 1 && primitiveAttributes[0] === "r_nx") {
-                    // console.log("item.id = " + item.id);
-                    let match = false;
-                    let values = [];
-                    for (let i = 0; i < elements.items.length; i++) {
-                        //console.log(elements.items[i].id);
-                        // console.log("bleb");
-                        values.push(elements.items[i]["r_nx"]);
-
-                        // Compare hyperparameter signature.
-                        if (item.id === elements.items[i].id) {
-                            match = true;
-                            elements.items.splice(i, 1);
-                            //elements.items.splice(elements.items.indexOf(item), 1);
-                            elements.count--;
-                            if (primitiveAttributes.length === 1 && primitiveAttributes[0] === "r_nx#histogram")
-                                console.log("match = " + match);
-                        }
+                    // Compare hyperparameter signature.
+                    if (item.id === elements.items[i].id) {
+                        match = true;
+                        elements.items.splice(i, 1);
+                        //elements.items.splice(elements.items.indexOf(item), 1);
+                        elements.count--;
+                        if (primitiveAttributes.length === 1 && primitiveAttributes[0] === "r_nx#histogram")
+                            console.log("match = " + match);
                     }
-
-                    //console.log(values.sort((a, b) => a - b));
                 }
+
+                //console.log(values.sort((a, b) => a - b));
+
                 return elements;
             },
             function() {

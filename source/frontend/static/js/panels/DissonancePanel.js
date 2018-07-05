@@ -36,14 +36,14 @@ export default class DissonancePanel extends Panel
         console.log("Generating DissonancePanel...");
 
         // Initialize chart.
-        // this._chart = new DissonanceChart(
-        //     "Sample Dissonance Chart",
-        //     this,
-        //     null,
-        //     this._operator._dataset,
-        //     null,
-        //     this._divStructure.chartsContainerDivID
-        // );
+        this._chart = new DissonanceChart(
+            "Sample Dissonance Chart",
+            this,
+            null,
+            this._operator._dataset,
+            null,
+            this._divStructure.chartsContainerDivID
+        );
     }
 
     /**
@@ -84,6 +84,6 @@ export default class DissonancePanel extends Panel
 
     render()
     {
-        // this._chart.render();
+        this._chart.render();
     }
 }
