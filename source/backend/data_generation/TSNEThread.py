@@ -1,5 +1,7 @@
 import threading
 import time
+
+import numpy
 from MulticoreTSNE import MulticoreTSNE
 from sklearn.preprocessing import StandardScaler
 
@@ -88,8 +90,8 @@ class TSNEThread(threading.Thread):
 
             # Create coranking matrix for topology-based objectives.
             coranking_matrix = CorankingMatrix(
-                low_dimensional_data=low_dimensional_projection,
                 high_dimensional_data=self._distance_matrices[metric],
+                low_dimensional_data=low_dimensional_projection,
                 distance_metric=metric,
                 high_dimensional_neighbourhood_ranking=self._high_dimensional_neighbourhood_rankings[metric]
             )
@@ -104,6 +106,22 @@ class TSNEThread(threading.Thread):
 
             # B_nx.
             b_nx = CorankingMatrixBehaviourCriterion(
+                high_dimensional_data=self._distance_matrices[metric],
+                low_dimensional_data=low_dimensional_projection,
+                distance_metric=metric,
+                coranking_matrix=coranking_matrix
+            ).compute()
+
+            # Pointwise q_nx(k) = q_nx_i(k).
+            CONTINUE HERE:
+                - store vector q_nx_i in file.
+                - assemble vectors in /get_sample_dissonance to model x sample quality matrix.
+                - consider changing panel title.
+                - frontend:
+                    * create crossfilter dataset.
+                    * update charts with data (pay attention to scatterplot/barchart correlation bug!).
+            
+            q_nx_i = PointwiseCorankingMatrixQualityCriterion(
                 high_dimensional_data=self._distance_matrices[metric],
                 low_dimensional_data=low_dimensional_projection,
                 distance_metric=metric,

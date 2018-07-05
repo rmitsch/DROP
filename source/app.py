@@ -3,13 +3,16 @@ from flask import render_template
 from flask import request
 from flask import jsonify
 from flask import json
-from backend.utils import Utils
 import os
 import tables
 import pandas
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.preprocessing import LabelEncoder
-from sklearn.datasets import load_iris
+from tables import *
+
+from backend.data_generation.datasets.WineDataset import WineDataset
+from backend.utils import Utils
+import backend.objectives.topology_preservation_objectives.CorankingMatrix as CorankingMatrix
 
 
 def init_flask_app():
@@ -94,20 +97,19 @@ def get_metadata_template():
     Assembles metadata template (i. e. which hyperparameters and objectives are available).
     :return: Dictionary: {"hyperparameters": [...], "objectives": [...]}
     """
-
     return jsonify(app.config["METADATA_TEMPLATE"])
 
 
 @app.route('/get_surrogate_model_data', methods=["GET"])
 def get_surrogate_model_data():
     """
-    Yields structural data for surrogate model. Parameters:
+    Yields structural data for surrogate model.
+    GET parameters:
         - Model type can be specified with GET param. "modeltype" (currently only decision tree with "tree").
         - Objectives with objs=alpha,beta,...
         - Max. depth of decision tree with depth=x.
-    :return:
+    :return: Jsonified structure of surrogate model for DR metadata.
     """
-
     # todo Add file name as parameter.
 
     metadata_template = app.config["METADATA_TEMPLATE"]
@@ -126,12 +128,13 @@ def get_surrogate_model_data():
         if obj_name not in metadata_template["objectives"]:
             return "Objective " + obj_name + " is not supported.", 400
 
+    # ------------------------------------------------------
+    # 2. Fetch data.
+    # ------------------------------------------------------
+
     # Open .h5 file.
     file_name = os.getcwd() + "/../data/drop_wine.h5"
     if os.path.isfile(file_name):
-        # ------------------------------------------------------
-        # 2. Fetch data.
-        # ------------------------------------------------------
 
         h5file = tables.open_file(filename=file_name, mode="r")
         # Cast to dataframe, then return as JSON.
@@ -163,43 +166,49 @@ def get_surrogate_model_data():
         # ------------------------------------------------------
 
         # Extract tree structure and return as JSON.
-        tree_structure = extract_decision_tree_structure(tree, features_names, [objective_names])
-        # todo Fetch/generate correct decision tree for this dataset and model type.
+        tree_structure = Utils.extract_decision_tree_structure(tree, features_names, [objective_names])
+        # todo Fetch/generate correct decision tree for this dataset.
         return jsonify(tree_structure)
 
     else:
         return "File does not exist.", 400
 
 
-def extract_decision_tree_structure(clf: DecisionTreeRegressor, features: list, labels: list, node_index: int = 0):
+@app.route('/get_sample_dissonance', methods=["GET"])
+def get_sample_dissonance():
     """
-    Return textual structure for generated decision tree.
-    Source: https://planspace.org/20151129-see_sklearn_trees_with_d3/.
-    :return: Textual representation of regression tree.
+    Calculates and fetches variance/divergence of individual samples over all DR model parametrizations.
+    GET parameters:
+        - File name (not supported yet).
+        - Distance function to use for determining neighbourhoods (not supported yet).
+    :return:
     """
+    # todo Add filename as GET parameter/make dataset-variant.
+    # todo Store distance matrices in file.
 
-    node = {}
+    # ------------------------------------------------------
+    # 2. Iterate over models.
+    # ------------------------------------------------------
 
-    if clf.tree_.children_left[node_index] == -1:  # indicates leaf
-        node['name'] = " | ".join([
-            label + ": " +
-            str(round(clf.tree_.value[node_index][i][0], 3))
-            for i, label in enumerate(labels[0])
-        ])
+    # todo Load file according to GET parameter.
+    file_name = os.getcwd() + "/../data/drop_wine.h5"
+
+    if os.path.isfile(file_name):
+        h5file = open_file(filename=file_name, mode="r+")
+
+        for low_dim_leaf in h5file.walk_nodes("/projection_coordinates/", classname="CArray"):
+            model_id = int(low_dim_leaf._v_name[5:])
+            coordinates = low_dim_leaf.read()
+
+
+            # Calculate
+
+        h5file.close()
+
+        return "bla"
 
     else:
-        feature = features[clf.tree_.feature[node_index]]
-        threshold = clf.tree_.threshold[node_index]
-        node['name'] = '{} > {}'.format(feature, round(threshold, 3))
-        left_index = clf.tree_.children_left[node_index]
-        right_index = clf.tree_.children_right[node_index]
-
-        node['children'] = [
-            extract_decision_tree_structure(clf, features, labels, right_index),
-            extract_decision_tree_structure(clf, features, labels, left_index)
-        ]
-
-    return node
+        return "File does not exist.", 400
 
 # Launch on :2483.
 if __name__ == "__main__":

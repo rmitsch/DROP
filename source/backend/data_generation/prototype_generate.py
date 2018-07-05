@@ -7,10 +7,7 @@ from tables import *
 import backend.objectives.topology_preservation_objectives.CorankingMatrix as CorankingMatrix
 from backend.data_generation.PersistenceThread import PersistenceThread
 from backend.data_generation.TSNEThread import TSNEThread
-from backend.data_generation.datasets.VISPaperDataset import VISPaperDataset
 from backend.data_generation.datasets.WineDataset import WineDataset
-from backend.data_generation.datasets.MNISTDataset import MNISTDataset
-from backend.data_generation.datasets.SwissRollDataset import SwissRollDataset
 from backend.utils import Utils
 
 # Create logger.

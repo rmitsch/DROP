@@ -1,3 +1,5 @@
+import copy
+
 import numpy
 from backend.objectives.DimensionalityReductionObjective import DimensionalityReductionObjective
 from coranking.metrics import trustworthiness, continuity
@@ -240,15 +242,19 @@ class CorankingMatrix:
         # We compute the values
         vals = Q
 
+        # We compute the mask
+        mask = numpy.zeros([n, n])
+
         measures = []
         for k in k_values:
-            # We compute the mask
-            mask = numpy.zeros([n, n])
             mask[:k, :k] = numpy.tril(numpy.ones([k, k]))
-            # We compute the normalization constant
+            # We compute the normalization constant.
             norm = k * (n + 1.)
-            # We finally compute the measures
+            # We finally compute the measures.
             measures.append((vals * mask).sum() / float(norm))
+
+            # Reset mask.
+            mask[:k, :k] = 0.
 
         return measures
 
@@ -267,3 +273,35 @@ class CorankingMatrix:
         """
 
         return self._low_dim_ranking
+
+    def create_pointwise_coranking_matrix_generator(self, indices: list = None):
+        """
+        Creates a generator yielding one pointwise
+        (see section 4 in http://www.cs.rug.nl/biehl/Preprints/2012-esann-quality.pdf) coranking matrix Q per record.
+        Applied to all records with index i in indices.
+        :param indices:
+        :return:
+        """
+
+        n, m = self._matrix.shape
+        indices = indices if indices is not None else [i for i in range(0, n)]
+
+        # Create pointwise coranking matrix for each index.
+        for i in indices:
+            # Initialize ranking matrices.
+            low_dim_nh_ranking_i = numpy.zeros(self._low_dim_ranking.shape)
+            high_dim_nh_ranking_i = numpy.zeros(self._high_dim_ranking.shape)
+
+            # Copy row i.
+            low_dim_nh_ranking_i[i] = self._low_dim_ranking[i]
+            high_dim_nh_ranking_i[i] = self._high_dim_ranking[i]
+
+            # Calculate coranking matrix.
+            Q, xedges, yedges = numpy.histogram2d(
+                high_dim_nh_ranking_i.flatten(),
+                low_dim_nh_ranking_i.flatten(),
+                bins=n
+            )
+
+            # Remove rankings which correspond to themselves, return coranking matrix.
+            yield Q[1:, 1:]

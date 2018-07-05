@@ -25,7 +25,7 @@ class MNISTDataset(InputDataset):
         # Hence: We pick a subset of 10k as stratified sample.
         for train_indices, test_indices in StratifiedShuffleSplit(
                 n_splits=1,
-                test_size=1 / 50
+                test_size=1 / 10
         ).split(mnist_data.data, mnist_data.target):
             reduced_mnist_data["features"] = mnist_data.data[test_indices].astype(int)
             reduced_mnist_data["labels"] = mnist_data.target[test_indices].astype(int)

@@ -62,11 +62,12 @@ class CorankingMatrixQualityCriterion(TopologyPreservationObjective):
         ########################################
 
         auc_r_nx = 0
+        # We compute the mask.
+        mask = numpy.zeros([n, n])
+
         # Range for k is (1, n - 2) - see https://www-sciencedirect-com/science/article/pii/S0925231215003641 for
         # derivation.
         for k in k_samples:
-            # We compute the mask.
-            mask = numpy.zeros([n, n])
             mask[:k, :k] = 1.
             # We compute the normalization constant.
             norm = k * (n + 1.)
@@ -75,7 +76,7 @@ class CorankingMatrixQualityCriterion(TopologyPreservationObjective):
             # Note: This calculates q_nx.
             q_nx = (vals * mask).sum() / float(norm)
 
-            # r_nx = ( (N - 1) * q_nx(K) - K ) / (N - 1 - K)
+            # Calculate r_nx.
             r_nx = ((n - 1) * q_nx - k) / (n - 1 - k)
 
             # See p. 253, bottom right, on
@@ -83,5 +84,8 @@ class CorankingMatrixQualityCriterion(TopologyPreservationObjective):
             # Note that AUC here is just a weighted average! Has to be divided by the number of k-ary neighbourhoods
             # considered.
             auc_r_nx += r_nx / k
+
+            # Reset mask.
+            mask[:k, :k] = 0.
 
         return auc_r_nx / sum([1 / k for k in k_samples])

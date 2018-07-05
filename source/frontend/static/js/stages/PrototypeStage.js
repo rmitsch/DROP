@@ -34,35 +34,44 @@ export default class PrototypeStage extends Stage
      */
     constructOperators()
     {
+        let scope = this;
+
         // Fetch (test) dataset for surrogate model first, then initialize panels.
-        let surrModelDataRequest = fetch(
+        let surrModelJSON = fetch(
             "/get_surrogate_model_data?modeltype=tree&objs=r_nx,b_nx&depth=10",
             {
                 headers: { "Content-Type": "application/json; charset=utf-8"},
                 method: "GET"
             }
-        );
+        ).then(res => res.json());
 
-        let scope = this;
-        // Initialize operators after data has arrived.
-        surrModelDataRequest
-            .then(res => res.json())
-            .then(response => {
-                this._datasets["surrogateModel"] = response;
+        let dissonanceDataJSON = fetch(
+            "/get_surrogate_model_data?modeltype=tree&objs=r_nx,b_nx&depth=10",
+            {
+                headers: { "Content-Type": "application/json; charset=utf-8"},
+                method: "GET"
+            }
+        ).then(res => res.json());
+
+        // Fetch data.
+        Promise.all([surrModelJSON, dissonanceDataJSON])
+            .then(function(values) {
+                scope._datasets["surrogateModel"] = values[0];
+                scope._datasets["dissonance"] = values[1];
 
                 // For panels at bottom: Spawn container.
-                let splitTopDiv = Utils.spawnChildDiv(this._target, null, "split-top-container");
+                let splitTopDiv = Utils.spawnChildDiv(scope._target, null, "split-top-container");
                 // For panels at bottom: Spawn container. Used for surrogate and dissonance panel.
-                let splitBottomDiv = Utils.spawnChildDiv(this._target, null, "split-bottom-container");
+                let splitBottomDiv = Utils.spawnChildDiv(scope._target, null, "split-bottom-container");
 
                 //---------------------------------------------------------
                 // 1. Operator for hyperparameter and objective selection.
                 // ---------------------------------------------------------
 
-                this._operators["FilterReduce"] = new FilterReduceOperator(
+                scope._operators["FilterReduce"] = new FilterReduceOperator(
                     "FilterReduce:TSNE",
-                    this,
-                    this._datasets["modelMetadata"],
+                    scope,
+                    scope._datasets["modelMetadata"],
                     splitTopDiv.id
                 );
 
@@ -70,10 +79,10 @@ export default class PrototypeStage extends Stage
                 // 2. Operator for exploration of surrogate model (read-only).
                 // ---------------------------------------------------------
 
-                this._operators["SurrogateModel"] = new SurrogateModelOperator(
+                scope._operators["SurrogateModel"] = new SurrogateModelOperator(
                     "GlobalSurrogateModel:DecisionTree",
-                    this,
-                    this._datasets["surrogateModel"],
+                    scope,
+                    scope._datasets["surrogateModel"],
                     "Tree",
                     splitBottomDiv.id
                 );
@@ -86,12 +95,12 @@ export default class PrototypeStage extends Stage
                 //      model.id -> sample.id, sample.value -> variance (or any other
                 //      measure of disagreement to be used).
                 // For testing: Use metadata dataset.
-                this._datasets["dissonance"] = this._datasets["modelMetadata"];
+                scope._datasets["dissonance"] = scope._datasets["modelMetadata"];
 
-                this._operators["Dissonance"] = new DissonanceOperator(
+                scope._operators["Dissonance"] = new DissonanceOperator(
                     "GlobalSurrogateModel:DecisionTree",
-                    this,
-                    this._datasets["dissonance"],
+                    scope,
+                    scope._datasets["dissonance"],
                     splitBottomDiv.id
                 );
 
@@ -100,8 +109,8 @@ export default class PrototypeStage extends Stage
                 // ---------------------------------------------------------
 
                 // Horizontal split.
-                let surrTarget = this._operators["SurrogateModel"]._target;
-                let dissTarget = this._operators["Dissonance"]._target
+                let surrTarget = scope._operators["SurrogateModel"]._target;
+                let dissTarget = scope._operators["Dissonance"]._target;
                 $("#" + surrTarget).addClass("split split-horizontal");
                 $("#" + dissTarget).addClass("split split-horizontal");
                 Split(["#" + surrTarget, "#" + dissTarget], {
@@ -123,13 +132,8 @@ export default class PrototypeStage extends Stage
                 });
 
                 // After split: Render (resize-sensitive) charts.
-                this._operators["SurrogateModel"].render();
-                this._operators["Dissonance"].render();
+                scope._operators["SurrogateModel"].render();
+                scope._operators["Dissonance"].render();
             });
-                    // $.ajax({
-        //     url: '/get_surrogate_model_data?modeltype=tree',
-        //     type: 'GET',
-        //     success: function (surrogateModelDataset) {
-        //
     }
 }
