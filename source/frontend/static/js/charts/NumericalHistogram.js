@@ -35,7 +35,6 @@ export default class NumericalHistogram extends Histogram
         let dimensions  = this._dataset._cf_dimensions;
         let key         = this._axes_attributes.x + "#histogram";
 
-        // console.log(this._dataset._cf_groups[instance._axes_attributes.x + "#histogram"].top(1)[0]);
         // Configure chart.
         this._cf_chart
             .height(instance._style.height)
@@ -45,7 +44,8 @@ export default class NumericalHistogram extends Histogram
             .x(d3.scale.linear().domain(
                 [extrema[instance._axes_attributes.x].min, extrema[instance._axes_attributes.x].max])
             )
-            .y(d3.scale.linear().domain([0, extrema[key].max]))
+            // .y(d3.scale.linear().domain([0, extrema[key].max]))
+            .elasticY(true)
             .brushOn(true)
             // Filter on end of brushing action, not meanwhile (performance suffers otherwise).
             .filterOnBrushEnd(true)
@@ -57,9 +57,6 @@ export default class NumericalHistogram extends Histogram
         // Set number of ticks.
         this._cf_chart.yAxis().ticks(instance._style.numberOfTicks.y);
         this._cf_chart.xAxis().ticks(instance._style.numberOfTicks.x);
-
-        // Set tick format.
-        this._cf_chart.xAxis().tickFormat(d3.format(".1s"));
 
         // Update bin width.
         let binWidth = this._dataset._cf_intervals[this._axes_attributes.x] / this._dataset._binCount;

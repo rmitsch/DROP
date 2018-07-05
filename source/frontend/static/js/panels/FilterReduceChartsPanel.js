@@ -54,7 +54,7 @@ export default class FilterReduceChartsPanel extends Panel
             excludedColor: "#ccc",
             numberOfTicks: {
                 x: 2,
-                y: 0
+                y: 2
             },
             showTickMarks: true
         };
@@ -108,7 +108,7 @@ export default class FilterReduceChartsPanel extends Panel
      */
     _createHistograms(dataset, style)
     {
-       // Iterate over all attributes.
+        // Iterate over all attributes.
         // Unfold names of hyperparamater objects in list.
         let hyperparameters = Utils.unfoldHyperparameterObjectList(dataset.metadata.hyperparameters);
         let attributes = hyperparameters.concat(dataset.metadata.objectives);
@@ -120,7 +120,8 @@ export default class FilterReduceChartsPanel extends Panel
             // This is hacky and I should be ashamed of myself.
             if (i < hyperparameters.length &&
                 dataset.metadata.hyperparameters[i].type === "numeric" ||
-                i >= hyperparameters.length) {
+                i >= hyperparameters.length
+            ) {
                 // Generate numerical histogram.
                 histogram = new NumericalHistogram(
                     attribute + ".histogram",
@@ -240,7 +241,7 @@ export default class FilterReduceChartsPanel extends Panel
                 // Adapt style settings, based on whether this is the first scatterplot or not.
                 let updatedStyle                = $.extend(true, {}, style);
                 updatedStyle.numberOfTicks.y    = 0;
-                updatedStyle.numberOfTicks.x    = updatedStyle.numberOfXTicksInLastRow // j === dataset.metadata.objectives.length - 1 ? updatedStyle.numberOfXTicksInLastRow : updatedStyle.numberOfTicks.x;
+                updatedStyle.numberOfTicks.x    = updatedStyle.numberOfXTicksInLastRow + 3// j === dataset.metadata.objectives.length - 1 ? updatedStyle.numberOfXTicksInLastRow : updatedStyle.numberOfTicks.x;
                 // Note: Categorical barchart apparently does not allow unlabeld x-axis.
                 updatedStyle.showAxisLabels.x   = false;
                 updatedStyle.showAxisLabels.y   = false;

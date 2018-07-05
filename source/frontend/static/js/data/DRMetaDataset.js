@@ -36,6 +36,19 @@ export default class DRMetaDataset
             this._dataIndicesByID[this._data[i].id] = i;
         }
 
+        let minRnx = 1000;
+        for (let i = 0; i < this._data.length; i++) {
+            minRnx = this._data[i]["r_nx"] < minRnx ? this._data[i]["r_nx"] : minRnx;
+        }
+        let rnxvals = [];
+        for (let i = 0; i < this._data.length; i++) {
+            this._data[i]["r_nx"] = this._data[i]["n_iter"] / 2.5 + Math.random() * 100;
+            rnxvals.push(this._data[i]["r_nx"]);
+        }
+
+        console.log(rnxvals);
+
+
         // Translate categorical variables into numerical ones; store maps for translation.
         this._categoricalToNumericalValues = {};
         this._numericalToCategoricalValues = {};
@@ -47,6 +60,8 @@ export default class DRMetaDataset
         this._cf_extrema    = {};
         this._cf_groups     = {};
         this._cf_intervals  = {};
+
+
 
         // Set up singular dimensions (one dimension per attribute).
         this._initSingularDimensionsAndGroups();
@@ -179,28 +194,62 @@ export default class DRMetaDataset
      */
     _initHistogramDimensionsAndGroups()
     {
-        let hyperparameters = Utils.unfoldHyperparameterObjectList(this._metadata.hyperparameters);
-        let attributes      = hyperparameters.concat(this.metadata.objectives);
-        let instance        = this;
+        let hyperparameters     = Utils.unfoldHyperparameterObjectList(this._metadata.hyperparameters);
+        let attributes          = hyperparameters.concat(this.metadata.objectives);
+        let instance            = this;
+        let histogramAttribute  = null;
 
         for (let i = 0; i < attributes.length; i++) {
-            let attribute   = attributes[i];
+            let attribute       = attributes[i];
+            histogramAttribute  = attribute + "#histogram";
+
+
+            let binWidth        = instance._cf_intervals[attribute] / this._binCount;
+
+            if (attribute === "r_nx")
+                binWidth = (Math.round(instance._cf_intervals[attribute] / this._binCount * 100 ) / 100).toFixed(2);
+
+
+            for (let j = 0; j < this._data.length; j++) {
+                let value   = this._data[j][attribute];
+                let extrema = this._cf_extrema[attribute];
+                if (value <= extrema[0])
+                    value = extrema[0];
+                else if (value >= extrema[1])
+                    value = extrema[1] - binWidth;
+
+                this._data[j][histogramAttribute] = (Math.round(value / binWidth) * binWidth);
+                if (attribute === "r_nx")
+                    console.log(this._data[j][histogramAttribute]);
+            }
+
+
+            // for (let j = 0; j < this._data.length; j++) {
+            //     let value   = this._data[j][attribute];
+            //     let extrema = this._cf_extrema[attribute];
+            //     if (value <= extrema[0])
+            //         value = extrema[0];
+            //     else if (value >= extrema[1])
+            //         value = extrema[1] - binWidth;
+            //
+            //     this._data[j][attribute + "#histogram"] = (Math.round(value / binWidth) * binWidth);
+            //     if (attribute === "r_nx")
+            //         console.log(this._data[j][attribute + "#histogram"]);
+            // }
 
             // If this is a numerical hyperparameter or an objective: Returned binned width.
             if (i < hyperparameters.length &&
                 this._metadata.hyperparameters[i].type === "numeric" ||
-                i >= hyperparameters.length) {
+                i >= hyperparameters.length
+            ) {
                 // Dimension with rounded values (for histograms).
-                this._cf_dimensions[attribute + "#histogram"] = this._crossfilter.dimension(
-                    function (d) {
-                        let binWidth = instance._cf_intervals[attribute] / instance._binCount;
-                        return (Math.round(d[attribute] / binWidth) * binWidth);
-                    }
+                this._cf_dimensions[histogramAttribute] = this._crossfilter.dimension(
+                    function (d) { return d[histogramAttribute]; }
                 );
 
                 // Create group for histogram.
-                this._cf_groups[attribute + "#histogram"] = this._generateGroupWithCounts(
-                    attribute + "#histogram", [attribute]
+                this._cf_groups[histogramAttribute] = this._generateGroupWithCounts(
+                    histogramAttribute, [histogramAttribute]
                 );
 
                 // Calculate extrema.
@@ -209,7 +258,7 @@ export default class DRMetaDataset
 
             // Else if this is a categorical hyperparameter: Return value itself.
             else {
-                this._cf_dimensions[attribute + "#histogram"] = this._crossfilter.dimension(
+                this._cf_dimensions[histogramAttribute] = this._crossfilter.dimension(
                     function (d) { return d[attribute]; }
                 );
 
@@ -219,6 +268,7 @@ export default class DRMetaDataset
                 // Calculate extrema.
                 this._calculateHistogramExtremaForAttribute(attribute, "categorical");
             }
+
         }
     }
 
@@ -289,6 +339,7 @@ export default class DRMetaDataset
             function(elements, item) {
                elements.items.push(item);
                elements.count++;
+
                // Update extrema.
                for (let attr in elements.extrema) {
                    elements.extrema[attr].min = item[attr] < elements.extrema[attr].min ? item[attr] : elements.extrema[attr].min;
@@ -298,8 +349,29 @@ export default class DRMetaDataset
                return elements;
             },
             function(elements, item) {
-                elements.items.splice(elements.items.indexOf(item), 1);
-                elements.count--;
+
+                if (true || primitiveAttributes.length === 1 && primitiveAttributes[0] === "r_nx") {
+                    // console.log("item.id = " + item.id);
+                    let match = false;
+                    let values = [];
+                    for (let i = 0; i < elements.items.length; i++) {
+                        //console.log(elements.items[i].id);
+                        // console.log("bleb");
+                        values.push(elements.items[i]["r_nx"]);
+
+                        // Compare hyperparameter signature.
+                        if (item.id === elements.items[i].id) {
+                            match = true;
+                            elements.items.splice(i, 1);
+                            //elements.items.splice(elements.items.indexOf(item), 1);
+                            elements.count--;
+                            if (primitiveAttributes.length === 1 && primitiveAttributes[0] === "r_nx#histogram")
+                                console.log("match = " + match);
+                        }
+                    }
+
+                    //console.log(values.sort((a, b) => a - b));
+                }
                 return elements;
             },
             function() {

@@ -45,6 +45,7 @@ export default class CategoricalHistogram extends Histogram
             .xUnits(dc.units.ordinal)
             .brushOn(true)
             .barPadding(0.1)
+            .filterOnBrushEnd(true)
             .dimension(dimensions[key])
             .group(this._dataset.cf_groups[key])
             .renderHorizontalGridLines(true)

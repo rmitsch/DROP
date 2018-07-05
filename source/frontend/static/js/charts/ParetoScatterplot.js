@@ -90,8 +90,32 @@ export default class ParetoScatterplot extends Scatterplot
              })
             // Filter on end of brushing action, not meanwhile (performance suffers otherwise).
             .filterOnBrushEnd(true)
-            .mouseZoomable(true)
+            .mouseZoomable(false)
             .margins({top: 0, right: 0, bottom: 25, left: 25});
+
+
+        // :::
+        // this._cf_chart.on('filtered', function(chart) {
+        //     let filters = chart.filters();
+        //     if(filters.length) {
+        //         console.log("***************");
+        //         console.log("for " + instance._axes_attributes.x + "; " + instance._axes_attributes.y);
+        //         let range = filters[0];
+        //         // console.log(instance.dataset._cf_groups["r_nx" + "#histogram"].top(Infinity));
+        //         // console.log(range);
+        //         // console.log("Filtered: ");
+        //         //console.log(instance.dataset._cf_dimensions["r_nx" + "#histogram"].top(Infinity));
+        //
+        //         let bla = instance.dataset._cf_dimensions["r_nx" + "#histogram"].top(Infinity);
+        //         let values = [];
+        //         for (let j = 0; j < bla.length; j++)
+        //             values.push(bla[j]["r_nx"]);
+        //         console.log(values.sort((a, b) => a - b));
+        //
+        //         console.log("--------------");
+        //
+        //     }
+        // });
 
         // Set number of ticks for y-axis.
         this._cf_chart.yAxis().ticks(instance._style.numberOfTicks.y);
