@@ -32,6 +32,10 @@ export default class SurrogateModelChart extends Chart
      */
     constructCFChart()
     {
+        this._extrema = {
+            x: [0, 0],
+            y: [0, 0]
+        }
     }
 
     /**
@@ -43,14 +47,15 @@ export default class SurrogateModelChart extends Chart
         let baseWidth   = $("#" + this._panel._operator._target).width() - 0;
         let baseHeight  = $("#" + this._panel._operator._target).height() - 5;
         let treeData    = this._dataset;
+        let scope       = this;
 
         // Generate chart.
-        var margin = {top: 0, right: 120, bottom: 20, left: 180},
+        var margin = {top: 0, right: 120, bottom: 20, left: 120},
             width = baseWidth - margin.right - margin.left,
             height = baseHeight - margin.top - margin.bottom;
 
         var i = 0,
-            duration = 750,
+            duration = 500,
             root;
 
         var tree = d3.layout.tree()
@@ -61,8 +66,13 @@ export default class SurrogateModelChart extends Chart
                 return [d.y, d.x];
             });
 
-        var svg = d3.select("#" + this._target).append("svg")
-            .attr("width", width + margin.right + margin.left)
+        // Remove old chart, if it exists.
+        //d3.select("#" + this._target).remove();
+        let svgContainer = d3.select("#" + this._target);
+        // Create new chart.
+        var svg = svgContainer.append("svg")
+            .attr("id", "surrogate-model-chart-svg")
+            .attr("width", "100%") //width + margin.right + margin.left)
             .attr("height", height + margin.top + margin.bottom)
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -85,14 +95,13 @@ export default class SurrogateModelChart extends Chart
         d3.select(self.frameElement).style("height", "480px");
 
         function update(source) {
-
             // Compute the new tree layout.
             var nodes = tree.nodes(root).reverse(),
                 links = tree.links(nodes);
 
             // Normalize for fixed-depth.
             nodes.forEach(function (d) {
-                d.y = d.depth * 180;
+                d.y = d.depth * 110;
             });
 
             // Update the nodes…
@@ -203,6 +212,60 @@ export default class SurrogateModelChart extends Chart
                 d._children = null;
             }
             update(d);
+
+            // Widen panel, if necessary.
+            if (d.children) {
+                // Keep track of coordinate extrema.
+                setTimeout(function() {
+                    for (let i = 0; i < d.children.length; i++) {
+                        let value = d.children[i].x + d.x + margin.right;
+                        scope._extrema.x[1] = value > scope._extrema.x[1] ? value : scope._extrema.x[1];
+
+                        let currPanelWidth = $("#" + scope._panel._target).width();
+                        if (currPanelWidth < scope._extrema.x[1]) {
+                            $("#" + scope._panel._target).width(scope._extrema.x[1] + 100);
+                        }
+                    }
+                }, duration);
+            }
+
+            // Shrink panel, if necessary.
+            else if (d._children) {
+                //scope._extrema.x[1] = d.x + margin.left;
+
+                // todo: Shrink panel, if necessary. Requires checking x-values of other nodes.
+                // let currPanelWidth = $("#" + scope._panel._target).width();
+                // if (currPanelWidth > maxX) {
+                //     console.log("shrinking from " + currPanelWidth + " to " + maxX);
+                //     $("#" + scope._panel._target).width(maxX);
+                // }
+            }
         }
+    }
+
+    resize()
+    {
+        // Check if panel has to be widened.
+        let currPanelWidth = $("#" + this._panel._target).width();
+        if (currPanelWidth < this._extrema.x[1]) {
+            $("#" + this._panel._target).width(this._extrema.x[1]);
+        }
+    }
+
+     /**
+     * Create (hardcoded) div structure for child nodes.
+     * @returns {Object}
+     */
+    _createDivStructure()
+    {
+        // -----------------------------------
+        // Create charts container.
+        // -----------------------------------
+
+        let treeDiv = Utils.spawnChildDiv(this._target, null, "surrogate-model-chart");
+
+        return {
+            treeDivID: treeDiv.id
+        };
     }
 }

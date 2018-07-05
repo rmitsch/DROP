@@ -55,6 +55,14 @@ export default class Panel
     }
 
     /**
+     * Resizes all charts in this panel.
+     */
+    render()
+    {
+        throw new TypeError("Panel.resize(): Abstract method must not be called.");
+    }
+
+    /**
      * Highlights data point in all charts in this panel.
      * @param id
      * @param source

@@ -56,6 +56,14 @@ export default class Operator
     }
 
     /**
+     * Resizes all panels.
+     */
+    render()
+    {
+        throw new TypeError("Operator.resize(): Abstract method must not be called.");
+    }
+
+    /**
      * Highlights data point in all charts in all panels in this operator.
      * @param id
      * @param source

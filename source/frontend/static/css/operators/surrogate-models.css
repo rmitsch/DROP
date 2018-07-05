@@ -1,6 +1,8 @@
 .surrogate-model-operator {
     position: relative;
     display: block;
+    overflow-y: hidden;
+    overflow-x: auto;
 }
 
 .surrogate-info {
@@ -24,6 +26,7 @@
 
 .surrogate-model-panel {
     padding-left: 0px;
+    overflow: hidden;
 }
 
 /* Start: Decision tree CSS. Source: https://bl.ocks.org/ajschumacher/65eda1df2b0dd2cf616f. */

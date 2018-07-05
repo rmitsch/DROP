@@ -36,18 +36,18 @@ export default class PrototypeStage extends Stage
     {
         // Fetch (test) dataset for surrogate model first, then initialize panels.
         let surrModelDataRequest = fetch(
-            "/get_surrogate_model_data?modeltype=tree",
+            "/get_surrogate_model_data?modeltype=tree&objs=r_nx,b_nx&depth=10",
             {
                 headers: { "Content-Type": "application/json; charset=utf-8"},
                 method: "GET"
             }
         );
 
+        let scope = this;
         // Initialize operators after data has arrived.
         surrModelDataRequest
             .then(res => res.json())
             .then(response => {
-                // Q: How to get decision tree data?
                 this._datasets["surrogateModel"] = response;
 
                 // For panels at bottom: Spawn container.
@@ -106,7 +106,10 @@ export default class PrototypeStage extends Stage
                 $("#" + dissTarget).addClass("split split-horizontal");
                 Split(["#" + surrTarget, "#" + dissTarget], {
                     direction: "horizontal",
-                    sizes: [50, 50]
+                    sizes: [50, 50],
+                    onDragEnd: function() {
+
+                    }
                 });
 
                 // Vertical split.
@@ -114,7 +117,9 @@ export default class PrototypeStage extends Stage
                 $("#" + splitBottomDiv.id).addClass("split split-vertical");
                 Split(["#" + splitTopDiv.id, "#" + splitBottomDiv.id], {
                     direction: "vertical",
-                    sizes: [53, 47]
+                    sizes: [53, 47],
+                    onDragEnd: function() {
+                    }
                 });
 
                 // After split: Render (resize-sensitive) charts.

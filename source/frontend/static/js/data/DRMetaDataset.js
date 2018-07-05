@@ -207,6 +207,7 @@ export default class DRMetaDataset
             if (attribute === "r_nx")
                 binWidth = (Math.round(instance._cf_intervals[attribute] / this._binCount * 100 ) / 100).toFixed(2);
 
+            // HERE BE DRAGONS
             for (let j = 0; j < this._data.length; j++) {
                 let value   = this._data[j][attribute];
                 let extrema = this._cf_extrema[attribute];
@@ -216,8 +217,8 @@ export default class DRMetaDataset
                     value = extrema[1] - binWidth;
 
                 this._data[j][histogramAttribute] = (Math.round(value / binWidth) * binWidth);
-                if (attribute === "r_nx")
-                    console.log(this._data[j][histogramAttribute]);
+                // if (attribute === "r_nx")
+                //     console.log(this._data[j][histogramAttribute]);
             }
 
             // If this is a numerical hyperparameter or an objective: Returned binned width.

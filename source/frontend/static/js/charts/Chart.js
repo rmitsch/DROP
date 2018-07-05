@@ -47,6 +47,15 @@ export default class Chart
         throw new TypeError("Chart.render(): Abstract method must not be called.");
     }
 
+    /**
+     * Resize chart.
+     * Note: Usually not necessary due to usage of dc.renderAll() and automatic crossfilter updates.
+     */
+    render()
+    {
+        throw new TypeError("Chart.resize(): Abstract method must not be called.");
+    }
+
 
     /**
      * Constructs and defines styling and behaviour of crossfilter's chart object.

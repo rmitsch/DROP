@@ -88,4 +88,9 @@ export default class SurrogateModelPanel extends Panel
     {
         this._chart.render();
     }
+
+    resize()
+    {
+        this._chart.resize();
+    }
 }
