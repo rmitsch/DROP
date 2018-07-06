@@ -1,4 +1,4 @@
-// // Import d3.js, crossfilter.js and dc.js.
+// Import d3.js, crossfilter.js and dc.js.
 // import * as d3 from "./static/lib/d3.v3";
 // import * as crossfilter from "./static/lib/crossfilter.js";
 // import * as dc from "./static/lib/dc.js";
@@ -9,6 +9,7 @@ import FilterReduceOperator from "../operators/FilterReduceOperator.js";
 import SurrogateModelOperator from "../operators/SurrogateModelOperator.js";
 import DissonanceOperator from "../operators/DissonanceOperator.js";
 import Utils from "../Utils.js";
+import DissonanceDataset from "../data/DissonanceDataset.js";
 
 /**
  * Stage for prototype (2018-02).
@@ -57,7 +58,7 @@ export default class PrototypeStage extends Stage
         Promise.all([surrModelJSON, dissonanceDataJSON])
             .then(function(values) {
                 scope._datasets["surrogateModel"]   = values[0];
-                scope._datasets["dissonance"]       = values[1];
+                scope._datasets["dissonance"]       = new DissonanceDataset("Dissonance Dataset", values[1]);
 
                 // For panels at bottom: Spawn container.
                 let splitTopDiv = Utils.spawnChildDiv(scope._target, null, "split-top-container");

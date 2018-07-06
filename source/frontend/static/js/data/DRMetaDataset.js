@@ -1,4 +1,6 @@
 import Utils from "../Utils.js";
+import Dataset from "./Dataset.js";
+
 
 /**
  * Wrapper class providing the specified dataset itself plus the corresponding crossfilter context and various utility
@@ -8,7 +10,7 @@ import Utils from "../Utils.js";
  * typically, operators have different requirements regarding their datasets and their capabilities. This could be
  * reflected by a diverging DRMetaDataset class hierarchy.
  */
-export default class DRMetaDataset
+export default class DRMetaDataset extends Dataset
 {
     /**
      *
@@ -19,9 +21,10 @@ export default class DRMetaDataset
      * data.
      * @param binCount Number of bins in histograms.
      */
-    constructor(name, data, metadata, binCount) {
-        this._name              = name;
-        this._data              = data;
+    constructor(name, data, metadata, binCount)
+    {
+        super(name, data);
+
         this._dataIndicesByID   = {};
         this._metadata          = metadata;
         this._binCount          = binCount;
@@ -40,13 +43,13 @@ export default class DRMetaDataset
         for (let i = 0; i < this._data.length; i++) {
             minRnx = this._data[i]["r_nx"] < minRnx ? this._data[i]["r_nx"] : minRnx;
         }
+        // DRAGONS ARE NEAR
         let rnxvals = [];
         for (let i = 0; i < this._data.length; i++) {
             this._data[i]["r_nx"] = this._data[i]["n_iter"] / 2.5 + Math.random() * 100;
             rnxvals.push(this._data[i]["r_nx"]);
         }
-
-        console.log(rnxvals);
+        //console.log(rnxvals);
 
 
         // Translate categorical variables into numerical ones; store maps for translation.
@@ -67,7 +70,7 @@ export default class DRMetaDataset
         this._initSingularDimensionsAndGroups();
 
         // Set up binary dimensions (for scatterplots).
-        this.initBinaryDimensionsAndGroups(true);
+        this._initBinaryDimensionsAndGroups(true);
 
         // Set up histogram dimensions.
         this._initHistogramDimensionsAndGroups();
@@ -150,10 +153,6 @@ export default class DRMetaDataset
         this._cf_extrema[histogramAttribute].max += this._cf_intervals[histogramAttribute] / this._axisPaddingRatio;
     }
 
-    /**
-     * Initializes singular dimensions.
-     * Note: Creates dimensions for all attribute by default. If not desired, columns have to be dropped beforehand.
-     */
     _initSingularDimensionsAndGroups()
     {
         let hyperparameterList = Utils.unfoldHyperparameterObjectList(this._metadata.hyperparameters);
@@ -173,11 +172,6 @@ export default class DRMetaDataset
         }
     }
 
-    /**
-     * Initializes singular dimensions and calculates extrema for specified attribute.
-     * @param attribute
-     * @private
-     */
     _initSingularDimension(attribute)
     {
         // Dimension with exact values.
@@ -261,7 +255,7 @@ export default class DRMetaDataset
      * hyperparameter-objective and objective-objective pairings.
      * @param includeGroups Determines whether groups for binary dimensions should be generated as well.
      */
-    initBinaryDimensionsAndGroups(includeGroups = true)
+    _initBinaryDimensionsAndGroups(includeGroups = true)
     {
         // Transform list of hyperparameter objects into list of hyperparameter names.
         let hyperparameters             = Utils.unfoldHyperparameterObjectList(this._metadata.hyperparameters);
@@ -514,16 +508,6 @@ export default class DRMetaDataset
         }
 
         return categoricalHyperparameters;
-    }
-
-    get name()
-    {
-        return this._name;
-    }
-
-    get data()
-    {
-        return this._data;
     }
 
     get metadata()
