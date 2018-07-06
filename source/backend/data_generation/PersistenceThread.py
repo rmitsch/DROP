@@ -96,6 +96,18 @@ class PersistenceThread(threading.Thread):
                         filters=Filters(complevel=3, complib='zlib')
                     )
 
+                    ######################################################
+                    # 3. Add pointwise quality critera values.
+                    ######################################################
+
+                    self._h5file.create_carray(
+                        self._h5file.root.pointwise_quality,
+                        name="model" + str(valid_model_id),
+                        obj=result["pointwise_quality_values"],
+                        title="Pointwise quality values for model #" + str(valid_model_id),
+                        filters=Filters(complevel=3, complib='zlib')
+                    )
+
                 # Flush buffer, make sure data is stored in file.
                 metadata_table.flush()
 
@@ -135,8 +147,9 @@ class PersistenceThread(threading.Thread):
         # If file doesn't exist yet: Initialize new file.
         h5file = open_file(filename=file_name, mode="w")
 
-        # Create groups in new file.
+        # Create groups in new file (embedding coordinates and embedding qualities of each point).
         h5file.create_group(h5file.root, "projection_coordinates", title="Low-dimensional coordinates")
+        h5file.create_group(h5file.root, "pointwise_quality", title="Pointwise embedding quality")
 
         # Create table.
         metadata_table = h5file.create_table(

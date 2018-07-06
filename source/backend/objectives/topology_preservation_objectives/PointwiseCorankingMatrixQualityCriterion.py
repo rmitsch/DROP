@@ -73,4 +73,4 @@ class PointwiseCorankingMatrixQualityCriterion(TopologyPreservationObjective):
                 mask[:k, :k] = 0
             i += 1
 
-        return q_nx_i
+        return q_nx_i / len(k_samples)

@@ -113,13 +113,13 @@ class TSNEThread(threading.Thread):
             ).compute()
 
             # Pointwise q_nx(k) = q_nx_i(k).
-            CONTINUE HERE:
-                - store vector q_nx_i in file.
-                - assemble vectors in /get_sample_dissonance to model x sample quality matrix.
-                - consider changing panel title.
-                - frontend:
-                    * create crossfilter dataset.
-                    * update charts with data (pay attention to scatterplot/barchart correlation bug!).
+            # CONTINUE HERE: xxx
+            #     - store vector q_nx_i in file.
+            #     - assemble vectors in /get_sample_dissonance to model x sample quality matrix.
+            #     - consider changing panel title.
+            #     - frontend:
+            #         * create crossfilter dataset.
+            #         * update charts with data (pay attention to scatterplot/barchart correlation bug!).
 
             q_nx_i = PointwiseCorankingMatrixQualityCriterion(
                 high_dimensional_data=self._distance_matrices[metric],
@@ -154,7 +154,7 @@ class TSNEThread(threading.Thread):
             separability_metric = self._input_dataset.compute_separability_metric(
                 features=scaled_low_dim_projection
             )
-
+            
             ###################################################
             # 3. Collect data, terminate.
             ###################################################
@@ -169,9 +169,11 @@ class TSNEThread(threading.Thread):
                 "separability_metric": separability_metric
             }
 
-            # Store parameter set, objective set and low dimensional projection in globally shared object.
+            # Store parameter set, objective set, low dimensional projection and pointwise quality criterion values in
+            # globally shared object.
             self._results.append({
                 "parameter_set": parameter_set,
                 "objectives": objectives,
-                "low_dimensional_projection": low_dimensional_projection
+                "low_dimensional_projection": low_dimensional_projection,
+                "pointwise_quality_values": q_nx_i
             })
