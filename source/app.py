@@ -9,10 +9,10 @@ import pandas
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.preprocessing import LabelEncoder
 from tables import *
+import numpy
 
 from backend.data_generation.datasets.WineDataset import WineDataset
 from backend.utils import Utils
-import backend.objectives.topology_preservation_objectives.CorankingMatrix as CorankingMatrix
 
 
 def init_flask_app():
@@ -167,7 +167,6 @@ def get_surrogate_model_data():
 
         # Extract tree structure and return as JSON.
         tree_structure = Utils.extract_decision_tree_structure(tree, features_names, [objective_names])
-        # todo Fetch/generate correct decision tree for this dataset.
         return jsonify(tree_structure)
 
     else:
@@ -183,29 +182,36 @@ def get_sample_dissonance():
         - Distance function to use for determining neighbourhoods (not supported yet).
     :return:
     """
-    # todo Add filename as GET parameter/make dataset-variant.
+    # todo Add filename as GET parameter/make dataset-variant, load file according to param.
     # todo Store distance matrices in file.
-
-    # ------------------------------------------------------
-    # 2. Iterate over models.
-    # ------------------------------------------------------
-
-    # todo Load file according to GET parameter.
     file_name = os.getcwd() + "/../data/drop_wine.h5"
 
     if os.path.isfile(file_name):
         h5file = open_file(filename=file_name, mode="r+")
 
-        for low_dim_leaf in h5file.walk_nodes("/projection_coordinates/", classname="CArray"):
-            model_id = int(low_dim_leaf._v_name[5:])
-            coordinates = low_dim_leaf.read()
+        # ------------------------------------------------------
+        # 1. Get metadata on numbers of models and samples.
+        # ------------------------------------------------------
 
+        # Use arbitrary model to fetch number of records/points in model.
+        num_records = h5file.root.metadata[0][1]
+        # Initialize numpy matrix for pointwise qualities.
+        pointwise_qualities = numpy.zeros([h5file.root.metadata.nrows, num_records])
 
-            # Calculate
+        # ------------------------------------------------------
+        # 2. Iterate over models.
+        # ------------------------------------------------------
 
+        for model_pointwise_quality_leaf in h5file.walk_nodes("/pointwise_quality/", classname="CArray"):
+            model_id = int(model_pointwise_quality_leaf._v_name[5:])
+
+            pointwise_qualities[model_id] = model_pointwise_quality_leaf.read().flatten()
+
+        # Close file.
         h5file.close()
 
-        return "bla"
+        # Return jsonified version of model x sample quality matrix.
+        return jsonify(pandas.DataFrame(pointwise_qualities).to_json(orient='index'))
 
     else:
         return "File does not exist.", 400

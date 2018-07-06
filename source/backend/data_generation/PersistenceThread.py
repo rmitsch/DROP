@@ -63,6 +63,7 @@ class PersistenceThread(threading.Thread):
                     # Hyperparameter.
                     result_hyperparam = result["parameter_set"]
                     metadata_row["id"] = valid_model_id
+                    metadata_row["num_records"] = result["low_dimensional_projection"].shape[0]
                     metadata_row["n_components"] = result_hyperparam["n_components"]
                     metadata_row["perplexity"] = result_hyperparam["perplexity"]
                     metadata_row["early_exaggeration"] = result_hyperparam["early_exaggeration"]
@@ -103,7 +104,7 @@ class PersistenceThread(threading.Thread):
                     self._h5file.create_carray(
                         self._h5file.root.pointwise_quality,
                         name="model" + str(valid_model_id),
-                        obj=result["pointwise_quality_values"],
+                        obj=result_objectives["pointwise_quality_values"],
                         title="Pointwise quality values for model #" + str(valid_model_id),
                         filters=Filters(complevel=3, complib='zlib')
                     )

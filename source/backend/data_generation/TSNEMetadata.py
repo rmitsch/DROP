@@ -7,13 +7,14 @@ class TSNEMetadata(IsDescription):
     """
 
     id = Int16Col(pos=1)
+    num_records = Int16Col(pos=2)
 
     # Hyperparameter.
-    n_components = Int32Col(pos=2)
-    perplexity = Int32Col(pos=3)
-    early_exaggeration = Float64Col(pos=4)
-    learning_rate = Float64Col(pos=5)
-    n_iter = UInt16Col(pos=6)
+    n_components = Int32Col(pos=3)
+    perplexity = Int32Col(pos=4)
+    early_exaggeration = Float64Col(pos=5)
+    learning_rate = Float64Col(pos=6)
+    n_iter = UInt16Col(pos=7)
     # min_grad_norm = Float16Col(pos=7)
     angle = Float64Col(pos=8)
     metric = StringCol(20, pos=9)

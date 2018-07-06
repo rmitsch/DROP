@@ -154,7 +154,7 @@ class TSNEThread(threading.Thread):
             separability_metric = self._input_dataset.compute_separability_metric(
                 features=scaled_low_dim_projection
             )
-            
+
             ###################################################
             # 3. Collect data, terminate.
             ###################################################
@@ -166,7 +166,8 @@ class TSNEThread(threading.Thread):
                 "b_nx": b_nx,
                 "stress": stress,
                 "classification_accuracy": classification_accuracy,
-                "separability_metric": separability_metric
+                "separability_metric": separability_metric,
+                "pointwise_quality_values": q_nx_i
             }
 
             # Store parameter set, objective set, low dimensional projection and pointwise quality criterion values in
@@ -174,6 +175,5 @@ class TSNEThread(threading.Thread):
             self._results.append({
                 "parameter_set": parameter_set,
                 "objectives": objectives,
-                "low_dimensional_projection": low_dimensional_projection,
-                "pointwise_quality_values": q_nx_i
+                "low_dimensional_projection": low_dimensional_projection
             })
