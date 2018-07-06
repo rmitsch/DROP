@@ -211,7 +211,7 @@ def get_sample_dissonance():
         h5file.close()
 
         # Return jsonified version of model x sample quality matrix.
-        return jsonify(pandas.DataFrame(pointwise_qualities).to_json(orient='index'))
+        return pandas.DataFrame(pointwise_qualities).to_json(orient='index')
 
     else:
         return "File does not exist.", 400

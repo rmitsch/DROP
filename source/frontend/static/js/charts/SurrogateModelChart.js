@@ -32,10 +32,6 @@ export default class SurrogateModelChart extends Chart
      */
     constructCFChart()
     {
-        this._extrema = {
-            x: [0, 0],
-            y: [0, 0]
-        }
     }
 
     /**
@@ -50,7 +46,7 @@ export default class SurrogateModelChart extends Chart
         let scope       = this;
 
         // Generate chart.
-        var margin = {top: 0, right: 120, bottom: 20, left: 120},
+        var margin = {top: 10, right: 120, bottom: 20, left: 120},
             width = baseWidth - margin.right - margin.left,
             height = baseHeight - margin.top - margin.bottom;
 
@@ -72,7 +68,7 @@ export default class SurrogateModelChart extends Chart
         // Create new chart.
         var svg = svgContainer.append("svg")
             .attr("id", "surrogate-model-chart-svg")
-            .attr("width", "100%") //width + margin.right + margin.left)
+            .attr("width", "100%")
             .attr("height", height + margin.top + margin.bottom)
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -215,18 +211,12 @@ export default class SurrogateModelChart extends Chart
 
             // Widen panel, if necessary.
             if (d.children) {
-                // Keep track of coordinate extrema.
-                setTimeout(function() {
-                    for (let i = 0; i < d.children.length; i++) {
-                        let value = d.children[i].x + d.x + margin.right;
-                        scope._extrema.x[1] = value > scope._extrema.x[1] ? value : scope._extrema.x[1];
+                let value = (d.depth + 1) * 110 + margin.left;
+                let currPanelWidth = $("#" + scope._panel._target).width();
 
-                        let currPanelWidth = $("#" + scope._panel._target).width();
-                        if (currPanelWidth < scope._extrema.x[1]) {
-                            $("#" + scope._panel._target).width(scope._extrema.x[1] + 100);
-                        }
-                    }
-                }, duration);
+                if (currPanelWidth < value) {
+                    $("#" + scope._panel._target).width(value + 10);
+                }
             }
 
             // Shrink panel, if necessary.

@@ -46,7 +46,7 @@ export default class PrototypeStage extends Stage
         ).then(res => res.json());
 
         let dissonanceDataJSON = fetch(
-            "/get_surrogate_model_data?modeltype=tree&objs=r_nx,b_nx&depth=10",
+            "/get_sample_dissonance",
             {
                 headers: { "Content-Type": "application/json; charset=utf-8"},
                 method: "GET"
@@ -56,8 +56,8 @@ export default class PrototypeStage extends Stage
         // Fetch data.
         Promise.all([surrModelJSON, dissonanceDataJSON])
             .then(function(values) {
-                scope._datasets["surrogateModel"] = values[0];
-                scope._datasets["dissonance"] = values[1];
+                scope._datasets["surrogateModel"]   = values[0];
+                scope._datasets["dissonance"]       = values[1];
 
                 // For panels at bottom: Spawn container.
                 let splitTopDiv = Utils.spawnChildDiv(scope._target, null, "split-top-container");
@@ -91,10 +91,6 @@ export default class PrototypeStage extends Stage
                 // 3. Operator for exploration of inter-model disagreement.
                 // ---------------------------------------------------------
 
-                // Q: How to get dissonance data? Has to be of pattern
-                //      model.id -> sample.id, sample.value -> variance (or any other
-                //      measure of disagreement to be used).
-                // For testing: Use metadata dataset.
                 scope._datasets["dissonance"] = scope._datasets["modelMetadata"];
 
                 scope._operators["Dissonance"] = new DissonanceOperator(
