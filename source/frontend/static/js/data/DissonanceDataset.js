@@ -96,37 +96,59 @@ export default class DissonanceDataset extends Dataset
      */
     _initHistogramDimensionsAndGroups()
     {
-        let scope       = this;
-        let yAttribute  = "measure";
-        let xAttributes = ["sample_id", "model_id"];
-        let measureSums = {sample_id: {}, model_id: {}};
+        let scope               = this;
+        let yAttribute          = "measure";
+        let xAttributes         = ["sample_id", "model_id"];
+        let measureAvgs         = {sample_id: {}, model_id: {}};
+        let binnedMeasureAvgs   = {sample_id: {}, model_id: {}};
 
-        // 1. Calculate average measure value.
+
+        // todo
+        // Binning:
+        //  1. Add bin size argument in constructor.
+        //  2. Bin values (store either in measureAvgs or binnedMeasureAvgs).
+        //     Note that binning should happen in step 1 already (calc. avg.
+        //     measure values) - and that avg. shouldn't be calculated before,
+        //     but in custom reducer.
+        //  3. Write custom reducer (calculating avg.) or just use reduction.avg() (https://github.com/crossfilter/reductio).
+        //
+        // NOTE: Since heatmap is going to be binned anyway - quadratic heatmap/scatterplot would be possible as well.
+        //       Would avoid necessity of manually adding d3.brush().
+
+        // -----------------------------------------------------
+        // 1. Calculate sum of measure values per bin.
+        // -----------------------------------------------------
+
         for (let record of this._data) {
             for (let attribute of xAttributes) {
                 let value = record[attribute];
-                if (!(value in measureSums[attribute]))
-                    measureSums[attribute][value] = record[yAttribute];
+                if (!(value in measureAvgs[attribute]))
+                    measureAvgs[attribute][value] = record[yAttribute];
                 else
-                    measureSums[attribute][value] += record[yAttribute];
+                    measureAvgs[attribute][value] += record[yAttribute];
             }
         }
 
+        // -----------------------------------------------------
         // 2. Average measure sum over number of records.
-         for (let attribute in measureSums) {
-             for (let value in measureSums[attribute]) {
-                measureSums[attribute][value] /= this._recordCounts[attribute];
-             }
-         }
+        // -----------------------------------------------------
 
+        for (let attribute in measureAvgs) {
+            for (let value in measureAvgs[attribute]) {
+                measureAvgs[attribute][value] /= this._recordCounts[attribute];
+            }
+        }
+
+        // -----------------------------------------------------
         // 3. Create group for histogram with calculated values.
+        // -----------------------------------------------------
         for (let xAttribute of xAttributes) {
             let histogramAttribute = xAttribute + "#" + yAttribute;
 
             // Form group.
             this._cf_groups[histogramAttribute] = this._cf_dimensions[xAttribute].group().reduceSum(
                 function(d) {
-                    return measureSums[xAttribute][d[xAttribute]] / scope._recordCounts[xAttribute];
+                    return measureAvgs[xAttribute][d[xAttribute]] / scope._recordCounts[xAttribute];
                 }
             );
 

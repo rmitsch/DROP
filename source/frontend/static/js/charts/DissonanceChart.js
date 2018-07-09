@@ -96,14 +96,12 @@ export default class DissonanceChart extends Chart
             this._sampleVarianceBySampleHistogram.width() -
             8
         );
-        console.log(this._sampleVarianceByKHistogram.width());
+
         newHeight = this._sampleVarianceByKHistogram.width() * 1 -
             8 +
             (67.6);
         let bla = this._dataset._recordCounts["model_id"] / newHeight;
-        console.log(bla);
         console.log(1 / bla);
-        console.log("new: " + newHeight);
         this._dissonanceHeatmap.height(
             newHeight
         );
