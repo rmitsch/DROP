@@ -45,7 +45,7 @@ export default class DissonanceChart extends Chart
         // 2. Generate heatmap.
         // -----------------------------------
 
-        // this._generateDissonanceHeatmap(dcGroupName);
+        this._generateDissonanceHeatmap(dcGroupName);
 
         // -----------------------------------
         // 3. Generate vertical (k-neighbour-
@@ -92,19 +92,23 @@ export default class DissonanceChart extends Chart
         // Render heatmap.
         // -------------------------------
 
-        // this._dissonanceHeatmap.width(
-        //     this._sampleVarianceBySampleHistogram.width() -
-        //     this._dissonanceHeatmap.margins().right -
-        //     this._sampleVarianceBySampleHistogram.margins().right -
-        //     8
-        // );
-        // this._dissonanceHeatmap.height(
-        //     this._sampleVarianceByKHistogram.width() -
-        //     this._sampleVarianceByKHistogram.margins().left -
-        //     8
-        // );
-        //
-        // this._dissonanceHeatmap.render();
+        this._dissonanceHeatmap.width(
+            this._sampleVarianceBySampleHistogram.width() -
+            8
+        );
+        console.log(this._sampleVarianceByKHistogram.width());
+        newHeight = this._sampleVarianceByKHistogram.width() * 1 -
+            8 +
+            (67.6);
+        let bla = this._dataset._recordCounts["model_id"] / newHeight;
+        console.log(bla);
+        console.log(1 / bla);
+        console.log("new: " + newHeight);
+        this._dissonanceHeatmap.height(
+            newHeight
+        );
+
+        this._dissonanceHeatmap.render();
     }
 
     /**
@@ -135,36 +139,41 @@ export default class DissonanceChart extends Chart
         let dataset     = this._dataset;
         let extrema     = dataset._cf_extrema;
         let dimensions  = dataset._cf_dimensions;
-        let axesAttributes = {
-            x: "r_nx",
-            y: "b_nx"
-        };
-        let key         = axesAttributes.x + ":" + axesAttributes.y;
+        let dimName     = "sample_id:model_id";
+        let groupName   = dimName + "#measure";
 
-        var heatColorMapping = d3.scale.linear()
-            .domain([0, 1])
-            .range(["red", "#fff"]);
+        //console.log(dataset._cf_groups[groupName].top(Infinity))
 
         // Configure chart.
         this._dissonanceHeatmap
             .height(300)
             .width(300)
-            .dimension(dimensions[key])
-            .group(dataset.cf_groups[key])
-           .colorAccessor(function(d) {
-               return Math.random();
-           })
-            .colors(heatColorMapping)
+            .dimension(dimensions[dimName])
+            .group(dataset._cf_groups[groupName])
+            .colorAccessor(function(d) {
+                return d.value;
+            })
+            .colors(
+                d3.scale
+                    .linear()
+                    .domain([0, 1])
+                    .range(["white", "red"])
+            )
             .keyAccessor(function(d) {
                 return d.key[0];
              })
             .valueAccessor(function(d) {
                 return d.key[1];
              })
+            .title(function(d) {
+                return "";
+            })
+            // Surpress column/row label output.
             .colsLabel(function(d) { return ""; })
             .rowsLabel(function(d) { return ""; })
             .margins({top: 0, right: 20, bottom: 0, left: 0});
 
+        // No rounded corners.
         this._dissonanceHeatmap.xBorderRadius(0);
         this._dissonanceHeatmap.yBorderRadius(0);
     }
@@ -272,7 +281,7 @@ export default class DissonanceChart extends Chart
         // Create charts container.
         // -----------------------------------
 
-        let sampleHistogramDiv  = Utils.spawnChildDiv(this._target, null, "dissonance-variance horizontal");
+        let sampleHistogramDiv  = Utils.spawnChildDiv(this._target, null, "dissonance-variance-chart horizontal");
         let heatmapDiv          = Utils.spawnChildDiv(this._target, null, "dissonance-heatmap");
         let kHistogramDiv       = Utils.spawnChildDiv(this._target, null, "dissonance-variance-chart vertical");
 

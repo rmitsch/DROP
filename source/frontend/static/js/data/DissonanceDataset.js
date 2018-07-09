@@ -17,11 +17,6 @@ export default class DissonanceDataset extends Dataset
         super(name, data);
         this._axisPaddingRatio  = 0;
 
-        this._binCounts = {
-            "sample_id": data.length,
-            "model_id": 5
-        };
-
         // Count number of samples and models.
         this._recordCounts = this._countRecordIDs();
 
@@ -32,7 +27,7 @@ export default class DissonanceDataset extends Dataset
         // * Integrate DissonanceDataset in DissonanceChart.
 
         // Set up containers for crossfilter data.
-        this._crossfilter   = crossfilter(this._data);
+        this._crossfilter = crossfilter(this._data);
 
         // Initialize crossfilter data.
         this._initSingularDimensionsAndGroups();
@@ -78,9 +73,20 @@ export default class DissonanceDataset extends Dataset
 
     _initBinaryDimensionsAndGroups()
     {
-        this._cf_dimensions["sample_id:model_id"] = this._crossfilter.dimension(
+        let attribute = "sample_id:model_id";
+
+        // 1. Create dimension for samples vs. model.
+        this._cf_dimensions[attribute] = this._crossfilter.dimension(
             function(d) {
                 return [+d["sample_id"], +d["model_id"]];
+            }
+        );
+
+        // 2. Define group as sum of intersection sample_id/model_id - since only one element per
+        // group exists, sum works just fine.
+        this._cf_groups[attribute + "#measure"] = this._cf_dimensions[attribute].group().reduceSum(
+            function(d) {
+                return d.measure;
             }
         );
     }
@@ -105,14 +111,15 @@ export default class DissonanceDataset extends Dataset
                     measureSums[attribute][value] += record[yAttribute];
             }
         }
-        // Average over number of records.
+
+        // 2. Average measure sum over number of records.
          for (let attribute in measureSums) {
              for (let value in measureSums[attribute]) {
                 measureSums[attribute][value] /= this._recordCounts[attribute];
              }
          }
 
-        // 2. Create group for histogram with calculated values.
+        // 3. Create group for histogram with calculated values.
         for (let xAttribute of xAttributes) {
             let histogramAttribute = xAttribute + "#" + yAttribute;
 
