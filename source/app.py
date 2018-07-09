@@ -210,8 +210,13 @@ def get_sample_dissonance():
         # Close file.
         h5file.close()
 
+        # Reshape data to desired model_id:sample_id:value format.
+        df = pandas.DataFrame(pointwise_qualities)
+        df["model_id"] = df.index
+        df = df.melt("model_id", var_name='sample_id', value_name="measure")
+
         # Return jsonified version of model x sample quality matrix.
-        return pandas.DataFrame(pointwise_qualities).to_json(orient='index')
+        return df.to_json(orient='records')
 
     else:
         return "File does not exist.", 400

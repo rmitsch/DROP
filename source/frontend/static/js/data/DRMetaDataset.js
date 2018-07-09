@@ -39,11 +39,11 @@ export default class DRMetaDataset extends Dataset
             this._dataIndicesByID[this._data[i].id] = i;
         }
 
+        // DRAGONS ARE NEAR
         let minRnx = 1000;
         for (let i = 0; i < this._data.length; i++) {
             minRnx = this._data[i]["r_nx"] < minRnx ? this._data[i]["r_nx"] : minRnx;
         }
-        // DRAGONS ARE NEAR
         let rnxvals = [];
         for (let i = 0; i < this._data.length; i++) {
             this._data[i]["r_nx"] = this._data[i]["n_iter"] / 2.5 + Math.random() * 100;
@@ -63,8 +63,6 @@ export default class DRMetaDataset extends Dataset
         this._cf_extrema    = {};
         this._cf_groups     = {};
         this._cf_intervals  = {};
-
-
 
         // Set up singular dimensions (one dimension per attribute).
         this._initSingularDimensionsAndGroups();

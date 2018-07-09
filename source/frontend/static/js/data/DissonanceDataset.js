@@ -24,6 +24,10 @@ export default class DissonanceDataset extends Dataset
         this._cf_extrema    = {};
         this._cf_groups     = {};
         this._cf_intervals  = {};
+
+        // Initialize crossfilter data.
+        this._initSingularDimensionsAndGroups();
+        this._initBinaryDimensionsAndGroups();
     }
 
     _initSingularDimensionsAndGroups()
@@ -32,6 +36,11 @@ export default class DissonanceDataset extends Dataset
 
     _initBinaryDimensionsAndGroups()
     {
+        this._cf_dimensions["heatmap"] = this._crossfilter.dimension(
+            function(d) {
+                return [d["sample_id"], d["model_id"]];
+            }
+        );
     }
 
     _initSingularDimension(attribute)
