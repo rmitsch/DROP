@@ -52,7 +52,7 @@ export default class DissonanceChart extends Chart
         // hood) histogram.
         // -----------------------------------
 
-        // this._generate_sampleVarianceByK_histogram(dcGroupName);
+        this._generate_sampleVarianceByK_histogram(dcGroupName);
     }
 
     render()
@@ -71,22 +71,22 @@ export default class DissonanceChart extends Chart
         // -------------------------------
 
         // Has to be drawn with updated height value.
-        // newHeight = $("#" + this._panel._target).height() - 55;
-        // this._sampleVarianceByKHistogram.width(newHeight);
-        // $("#" + this._divStructure.kHistogramDivID).css({
-        //     "top": (
-        //         this._sampleVarianceByKHistogram.width() / 2 +
-        //         // Additional margin to align with heatmap.
-        //         9
-        //     ) + "px",
-        //     "left": -(
-        //         this._sampleVarianceByKHistogram.width() / 2 -
-        //         this._sampleVarianceByKHistogram.margins().top -
-        //         this._sampleVarianceByKHistogram.margins().bottom -
-        //         8
-        //     ) + "px"
-        // });
-        // this._sampleVarianceByKHistogram.render();
+        newHeight = $("#" + this._panel._target).height() - 55;
+        this._sampleVarianceByKHistogram.width(newHeight);
+        $("#" + this._divStructure.kHistogramDivID).css({
+            "top": (
+                this._sampleVarianceByKHistogram.width() / 2 +
+                // Additional margin to align with heatmap.
+                9
+            ) + "px",
+            "left": -(
+                this._sampleVarianceByKHistogram.width() / 2 -
+                this._sampleVarianceByKHistogram.margins().top -
+                this._sampleVarianceByKHistogram.margins().bottom -
+                8
+            ) + "px"
+        });
+        this._sampleVarianceByKHistogram.render();
 
         // -------------------------------
         // Render heatmap.
@@ -194,7 +194,7 @@ export default class DissonanceChart extends Chart
 
         // Configure chart.
         this._sampleVarianceBySampleHistogram
-            .height(200)
+            .height(40)
             // 0.8: Relative width of parent div.
             .width($("#" + this._target).width())
             .valueAccessor( function(d) { return d.value; } )
@@ -202,7 +202,6 @@ export default class DissonanceChart extends Chart
             .x(d3.scale.linear().domain([0, extrema[xAttribute].max]))
             .y(d3.scale.linear().domain([0, 1]))
             .brushOn(true)
-            // Filter on end of brushing action, not meanwhile (performance suffers otherwise).
             .filterOnBrushEnd(true)
             .dimension(dimensions[xAttribute])
             .group(dataset._cf_groups[yAttribute])
@@ -210,15 +209,12 @@ export default class DissonanceChart extends Chart
             // https://stackoverflow.com/questions/25204782/sorting-ordering-the-bars-in-a-bar-chart-by-the-bar-values-with-dc-js
             .ordering(function(d) { return d[xAttribute]; })
             .renderHorizontalGridLines(true)
-            .margins({top: 5, right: 5, bottom: 25, left: 30});
+            .margins({top: 5, right: 5, bottom: 5, left: 30})
+            .gap(0);
 
         // Set number of ticks.
         this._sampleVarianceBySampleHistogram.yAxis().ticks(1);
-        this._sampleVarianceBySampleHistogram.xAxis().ticks(5);
-
-        // Update bin width.
-        // let binWidth = dataset._cf_intervals[xAttribute] / dataset._binCounts[xAttribute];
-        // this._sampleVarianceBySampleHistogram.xUnits(dc.units.fp.precision(binWidth * 1));
+        this._sampleVarianceBySampleHistogram.xAxis().ticks(0);
     }
 
     /**
@@ -239,39 +235,31 @@ export default class DissonanceChart extends Chart
             dcGroupName
         );
 
-        // Use arbitrary axis attribute for prototype purposes.
-        let axesAttribute = "model_id";
-        // Create shorthand references.
-        let key = axesAttribute + "#histogram";
+        // Define which attributes to use.
+        let xAttribute = "model_id";
+        let yAttribute = "model_id#measure";
 
         // Configure chart.
         this._sampleVarianceByKHistogram
             .height(40)
             .width($("#" + this._panel._target).height())
-            .valueAccessor( function(d) { return d.value.count; } )
+            .valueAccessor( function(d) { return d.value; } )
             .elasticY(false)
-            .x(d3.scale.linear().domain(
-                [0, extrema[axesAttribute].max])
-            )
-            .y(d3.scale.linear().domain([0, extrema[key].max]))
+            .x(d3.scale.linear().domain([0, extrema[xAttribute].max]))
+            .y(d3.scale.linear().domain([0, 1]))
             .brushOn(true)
-            // Filter on end of brushing action, not meanwhile (performance suffers otherwise).
             .filterOnBrushEnd(true)
-            .dimension(dimensions[key])
-            .group(dataset._cf_groups[key])
+            .dimension(dimensions[xAttribute])
+            .group(dataset._cf_groups[yAttribute])
             .renderHorizontalGridLines(true)
             .useRightYAxis(false)
             .yAxisLabel("")
-            .margins({top: 5, right: 5, bottom: 25, left: 15});
+            .margins({top: 5, right: 5, bottom: 5, left: 15})
+            .gap(0);
 
         // Set number of ticks.
         this._sampleVarianceByKHistogram.yAxis().ticks(1);
-        this._sampleVarianceByKHistogram.xAxis().ticks(5);
-
-
-        // Update bin width.
-        let binWidth = dataset._cf_intervals[axesAttribute] / dataset._binCounts[axesAttribute];
-        this._sampleVarianceByKHistogram.xUnits(dc.units.fp.precision(binWidth * 1));
+        this._sampleVarianceByKHistogram.xAxis().ticks(0);
     }
 
      /**
