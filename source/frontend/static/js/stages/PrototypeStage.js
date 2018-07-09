@@ -92,8 +92,6 @@ export default class PrototypeStage extends Stage
                 // 3. Operator for exploration of inter-model disagreement.
                 // ---------------------------------------------------------
 
-                scope._datasets["dissonance"] = scope._datasets["modelMetadata"];
-
                 scope._operators["Dissonance"] = new DissonanceOperator(
                     "GlobalSurrogateModel:DecisionTree",
                     scope,

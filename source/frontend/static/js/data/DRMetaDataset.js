@@ -28,8 +28,6 @@ export default class DRMetaDataset extends Dataset
         this._dataIndicesByID   = {};
         this._metadata          = metadata;
         this._binCount          = binCount;
-        // Defines how much padding (relative to the shown interval) any axis should have.
-        this._axisPaddingRatio  = 6.0;
 
         // Extract categorical hyperparameter for later shorthand usage.
         this._categoricalHyperparameterSet = this._extractCategoricalHyperparameters();
@@ -59,10 +57,6 @@ export default class DRMetaDataset extends Dataset
 
         // Set up containers for crossfilter data.
         this._crossfilter   = crossfilter(this._data);
-        this._cf_dimensions = {};
-        this._cf_extrema    = {};
-        this._cf_groups     = {};
-        this._cf_intervals  = {};
 
         // Set up singular dimensions (one dimension per attribute).
         this._initSingularDimensionsAndGroups();
@@ -100,23 +94,6 @@ export default class DRMetaDataset extends Dataset
             "separability_metric": "Silhouette",
             "runtime": "Runtime"
         }
-    }
-
-    /**
-     * Calculates extrema for all singular dimensions.
-     * @param attribute
-     */
-    _calculateSingularExtremaByAttribute(attribute)
-    {
-        // Calculate extrema for singular dimensions.
-        this._cf_extrema[attribute] = {
-            min: this._cf_dimensions[attribute].bottom(1)[0][attribute],
-            max: this._cf_dimensions[attribute].top(1)[0][attribute]
-        };
-        // Update extrema by padding values (hardcoded to 10%) for x-axis.
-        this._cf_intervals[attribute]   = this._cf_extrema[attribute].max - this._cf_extrema[attribute].min;
-        this._cf_extrema[attribute].min -= this._cf_intervals[attribute] / this._axisPaddingRatio;
-        this._cf_extrema[attribute].max += this._cf_intervals[attribute] / this._axisPaddingRatio;
     }
 
     /**
@@ -200,9 +177,9 @@ export default class DRMetaDataset extends Dataset
                 binWidth = (Math.round(instance._cf_intervals[attribute] / this._binCount * 100 ) / 100).toFixed(2);
 
             // HERE BE DRAGONS
+            let extrema = this._cf_extrema[attribute];
             for (let j = 0; j < this._data.length; j++) {
                 let value   = this._data[j][attribute];
-                let extrema = this._cf_extrema[attribute];
                 if (value <= extrema[0])
                     value = extrema[0];
                 else if (value >= extrema[1])
@@ -343,8 +320,6 @@ export default class DRMetaDataset extends Dataset
                             console.log("match = " + match);
                     }
                 }
-
-                //console.log(values.sort((a, b) => a - b));
 
                 return elements;
             },
