@@ -180,6 +180,7 @@ export default class DRMetaDataset extends Dataset
             let extrema = this._cf_extrema[attribute];
             for (let j = 0; j < this._data.length; j++) {
                 let value   = this._data[j][attribute];
+                // todo POSSIBLE CAUSE FOR SSP bug: extrema[0] instead of extrema.min. Same applies for .max.
                 if (value <= extrema[0])
                     value = extrema[0];
                 else if (value >= extrema[1])
@@ -195,6 +196,7 @@ export default class DRMetaDataset extends Dataset
                 this._metadata.hyperparameters[i].type === "numeric" ||
                 i >= hyperparameters.length
             ) {
+                // todo POSSIBLE SSP bug cause to use histogramAttribute instead of attribute here?
                 // Dimension with rounded values (for histograms).
                 this._cf_dimensions[histogramAttribute] = this._crossfilter.dimension(
                     function (d) { return d[histogramAttribute]; }

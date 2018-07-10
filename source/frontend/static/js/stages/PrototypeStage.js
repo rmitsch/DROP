@@ -58,7 +58,11 @@ export default class PrototypeStage extends Stage
         Promise.all([surrModelJSON, dissonanceDataJSON])
             .then(function(values) {
                 scope._datasets["surrogateModel"]   = values[0];
-                scope._datasets["dissonance"]       = new DissonanceDataset("Dissonance Dataset", values[1]);
+                scope._datasets["dissonance"]       = new DissonanceDataset(
+                    "Dissonance Dataset",
+                    values[1],
+                    {x: 10, y: 10}
+                );
 
                 // For panels at bottom: Spawn container.
                 let splitTopDiv = Utils.spawnChildDiv(scope._target, null, "split-top-container");
