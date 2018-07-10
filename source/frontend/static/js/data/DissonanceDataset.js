@@ -19,9 +19,7 @@ export default class DissonanceDataset extends Dataset
         this._axisPaddingRatio  = 0;
         this._binCounts         = binCounts;
         this._binWidths         = {};
-
-        // Count number of samples and models.
-        this._recordCounts = this._countRecordIDs();
+        this._recordCounts      = this._countRecordIDs();
 
         // todo
         // * Sample ID to sample name mapping
@@ -102,8 +100,7 @@ export default class DissonanceDataset extends Dataset
         let scope                           = this;
         let yAttribute                      = "measure";
         let extrema                         = {min: 0, max: 1};
-        let histogramAttribute              = "sim#measure";
-        this._binWidths[histogramAttribute] = (extrema.max - extrema.min) / this._binCounts.x;
+        let histogramAttribute              = null;
 
         // todo
         // Binning:
@@ -162,10 +159,33 @@ export default class DissonanceDataset extends Dataset
         // }
 
         // -----------------------------------------------------
-        // 3. Create group for histogram on x-axis (SIMs).
+        // 1. Create group for histogram on x-axis (SIMs).
         // -----------------------------------------------------
-        // for (let xAttribute of xAttributes) {
-        let binWidth = this._binWidths[histogramAttribute];
+
+        histogramAttribute                  = "samplesInModels#measure";
+        this._binWidths[histogramAttribute] = (extrema.max - extrema.min) / this._binCounts.x;
+        let binWidth                        = this._binWidths[histogramAttribute];
+
+
+        // conclusion:
+        //  1. use average sample measure on x-axis and model-measure on y-axis.
+        //     idea: make it possible to find good/bad sample repr. in good/bad models.
+        //  2. fix values. argumentation: drill-down would lead to changing heatmap, which would
+        //     be exhausting to follow and understand (and might require re-adjusting selection and destroy current order).
+        //     instead, consider barcharts as constant reminders as to quality of selected and
+        //     not selected models and samples.
+        //     element of interactivity is given by different sorting options and selection of cells
+        //     -> detail view of selected samples-in-models.
+        //  3. to be realized w/ different crossfilters - linking has to be done manually (shouldn't
+        //     be too much of a hassle).
+        //  4. add histogram for filtering out individual sample-in-model cells? also: only histogram
+        //     -> heatmap and heatmap -> histogram and no histogram -> histogram, as with other charts.
+        //  addendum: to make clearer that histograms are not influenced by other histograms, title
+        //            accordingly (e. g. "all samples by pointwise quality" or similar) and place with a
+        //            a bit of space to heatmap.
+        open questions:
+            1. is fixing histogram <-> histogram relationships reasonable?
+            2. color coding of heatmap? number of elements or avg. measure?
 
         // Form group.
         this._cf_groups[histogramAttribute] = this._cf_dimensions[yAttribute]
@@ -185,6 +205,35 @@ export default class DissonanceDataset extends Dataset
 
         // Calculate extrema.
         this._calculateHistogramExtremaForAttribute(histogramAttribute);
+
+        // -----------------------------------------------------
+        // 2. Create group for histogram on y-axis (SIMs).
+        // -----------------------------------------------------
+
+        histogramAttribute                  = "model_id#sample_id";
+        extrema                             = this._cf_extrema["sample_id"];
+        this._binWidths[histogramAttribute] = (extrema.max - extrema.min) / this._binCounts.x;
+        binWidth                            = this._binWidths[histogramAttribute];
+
+        // Form group.
+        this._cf_groups[histogramAttribute] = this._cf_dimensions["sample_id"]
+            .group(function(value) {
+                if (value <= extrema.min)
+                    value = extrema.min;
+                else if (value >= extrema.max) {
+                    value = extrema.max - binWidth * 0.9;
+                }
+
+                return Math.floor(value / binWidth) * binWidth;
+            });
+
+        // todo *** HISTOGRAM BUG metadata: Because data is ordered alphabetically instead of numerically? -> should happen with values >= 10.
+        // https://stackoverflow.com/questions/25204782/sorting-ordering-the-bars-in-a-bar-chart-by-the-bar-values-with-dc-js
+        this._cf_groups[histogramAttribute].order(function(d) { return +d.key; });
+
+        // Calculate extrema.
+        this._calculateHistogramExtremaForAttribute(histogramAttribute);
+
     }
 
     /**
