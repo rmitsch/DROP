@@ -11,22 +11,124 @@ export default class DissonanceDataset extends Dataset
      * @param name
      * @param data
      * @param binCounts
+     * @param drModelMetadata Instance of DRMetaDataset containing metadata of DR models.
+     * @param supportedDRModelMeasure DR model measure(s) to consider in data.
      */
-    constructor(name, data, binCounts)
+    constructor(name, data, binCounts, drModelMetadata, supportedDRModelMeasure)
     {
         super(name, data);
 
-        this._axisPaddingRatio  = 0;
-        this._binCounts         = binCounts;
-        this._binWidths         = {};
-        this._recordCounts      = this._countRecordIDs();
+        this._axisPaddingRatio          = 0;
+        this._binCounts                 = binCounts;
+        this._binWidths                 = {};
+        this._drModelMetadata           = drModelMetadata;
+        this._supportedDRModelMeasure   = supportedDRModelMeasure;
 
-        // todo
-        // * Sample ID to sample name mapping
-        // * UI: Search field
-        // * Create dimensions and groups.
-        // * Integrate DissonanceDataset in DissonanceChart.
+        // Add DR model measure to records.
+        this._complementDatasetWithDRMeasure();
 
+        this._data = [
+	{model_id: 0, sample_id: 0, measure: 4, r_nx: 18},
+	{model_id: 1, sample_id: 0, measure: 16, r_nx: 3},
+	{model_id: 2, sample_id: 0, measure: 9, r_nx: 3},
+	{model_id: 3, sample_id: 0, measure: 16, r_nx: 13},
+	{model_id: 4, sample_id: 0, measure: 11, r_nx: 14},
+	{model_id: 5, sample_id: 0, measure: 8, r_nx: 16},
+	{model_id: 6, sample_id: 0, measure: 17, r_nx: 12},
+	{model_id: 7, sample_id: 0, measure: 11, r_nx: 7},
+	{model_id: 8, sample_id: 0, measure: 3, r_nx: 2},
+	{model_id: 9, sample_id: 0, measure: 14, r_nx: 18},
+	{model_id: 10, sample_id: 0, measure: 16, r_nx: 5},
+	{model_id: 11, sample_id: 0, measure: 6, r_nx: 0},
+	{model_id: 12, sample_id: 0, measure: 0, r_nx: 1},
+	{model_id: 13, sample_id: 0, measure: 13, r_nx: 5},
+	{model_id: 14, sample_id: 0, measure: 3, r_nx: 19},
+	{model_id: 15, sample_id: 0, measure: 2, r_nx: 1},
+	{model_id: 16, sample_id: 0, measure: 18, r_nx: 0},
+	{model_id: 17, sample_id: 0, measure: 10, r_nx: 9},
+	{model_id: 18, sample_id: 0, measure: 18, r_nx: 15},
+	{model_id: 19, sample_id: 0, measure: 10, r_nx: 16},
+	{model_id: 20, sample_id: 0, measure: 17, r_nx: 13},
+	{model_id: 21, sample_id: 0, measure: 0, r_nx: 1},
+	{model_id: 22, sample_id: 0, measure: 13, r_nx: 14},
+	{model_id: 23, sample_id: 0, measure: 1, r_nx: 9},
+	{model_id: 24, sample_id: 0, measure: 4, r_nx: 15},
+	{model_id: 25, sample_id: 0, measure: 19, r_nx: 6},
+	{model_id: 26, sample_id: 0, measure: 3, r_nx: 1},
+	{model_id: 27, sample_id: 0, measure: 17, r_nx: 4},
+	{model_id: 28, sample_id: 0, measure: 19, r_nx: 18},
+	{model_id: 29, sample_id: 0, measure: 15, r_nx: 16},
+	{model_id: 30, sample_id: 0, measure: 15, r_nx: 3},
+	{model_id: 31, sample_id: 0, measure: 19, r_nx: 7},
+	{model_id: 32, sample_id: 0, measure: 17, r_nx: 10},
+	{model_id: 33, sample_id: 0, measure: 14, r_nx: 10},
+	{model_id: 34, sample_id: 0, measure: 14, r_nx: 7},
+	{model_id: 35, sample_id: 0, measure: 2, r_nx: 4},
+	{model_id: 36, sample_id: 0, measure: 1, r_nx: 12},
+	{model_id: 37, sample_id: 0, measure: 18, r_nx: 5},
+	{model_id: 38, sample_id: 0, measure: 15, r_nx: 6},
+	{model_id: 39, sample_id: 0, measure: 8, r_nx: 2},
+	{model_id: 40, sample_id: 0, measure: 2, r_nx: 19},
+	{model_id: 41, sample_id: 0, measure: 9, r_nx: 18},
+	{model_id: 42, sample_id: 0, measure: 11, r_nx: 17},
+	{model_id: 43, sample_id: 0, measure: 16, r_nx: 4},
+	{model_id: 44, sample_id: 0, measure: 7, r_nx: 7},
+	{model_id: 45, sample_id: 0, measure: 10, r_nx: 17},
+	{model_id: 46, sample_id: 0, measure: 16, r_nx: 19},
+	{model_id: 47, sample_id: 0, measure: 7, r_nx: 18},
+	{model_id: 48, sample_id: 0, measure: 1, r_nx: 15},
+	{model_id: 49, sample_id: 0, measure: 1, r_nx: 15},
+	{model_id: 50, sample_id: 0, measure: 19, r_nx: 18},
+	{model_id: 51, sample_id: 0, measure: 6, r_nx: 8},
+	{model_id: 52, sample_id: 0, measure: 14, r_nx: 1},
+	{model_id: 53, sample_id: 0, measure: 5, r_nx: 8},
+	{model_id: 54, sample_id: 0, measure: 19, r_nx: 19},
+	{model_id: 55, sample_id: 0, measure: 15, r_nx: 3},
+	{model_id: 56, sample_id: 0, measure: 8, r_nx: 14},
+	{model_id: 57, sample_id: 0, measure: 0, r_nx: 9},
+	{model_id: 58, sample_id: 0, measure: 15, r_nx: 16},
+	{model_id: 59, sample_id: 0, measure: 15, r_nx: 10},
+	{model_id: 60, sample_id: 0, measure: 4, r_nx: 1},
+	{model_id: 61, sample_id: 0, measure: 16, r_nx: 7},
+	{model_id: 62, sample_id: 0, measure: 18, r_nx: 14},
+	{model_id: 63, sample_id: 0, measure: 10, r_nx: 16},
+	{model_id: 64, sample_id: 0, measure: 6, r_nx: 15},
+	{model_id: 65, sample_id: 0, measure: 8, r_nx: 13},
+	{model_id: 66, sample_id: 0, measure: 4, r_nx: 15},
+	{model_id: 67, sample_id: 0, measure: 16, r_nx: 19},
+	{model_id: 68, sample_id: 0, measure: 3, r_nx: 4},
+	{model_id: 69, sample_id: 0, measure: 5, r_nx: 9},
+	{model_id: 70, sample_id: 0, measure: 10, r_nx: 19},
+	{model_id: 71, sample_id: 0, measure: 18, r_nx: 10},
+	{model_id: 72, sample_id: 0, measure: 8, r_nx: 11},
+	{model_id: 73, sample_id: 0, measure: 14, r_nx: 8},
+	{model_id: 74, sample_id: 0, measure: 14, r_nx: 17},
+	{model_id: 75, sample_id: 0, measure: 11, r_nx: 2},
+	{model_id: 76, sample_id: 0, measure: 17, r_nx: 16},
+	{model_id: 77, sample_id: 0, measure: 3, r_nx: 10},
+	{model_id: 78, sample_id: 0, measure: 9, r_nx: 8},
+	{model_id: 79, sample_id: 0, measure: 18, r_nx: 13},
+	{model_id: 80, sample_id: 0, measure: 9, r_nx: 11},
+	{model_id: 81, sample_id: 0, measure: 13, r_nx: 9},
+	{model_id: 82, sample_id: 0, measure: 1, r_nx: 13},
+	{model_id: 83, sample_id: 0, measure: 19, r_nx: 3},
+	{model_id: 84, sample_id: 0, measure: 3, r_nx: 12},
+	{model_id: 85, sample_id: 0, measure: 12, r_nx: 16},
+	{model_id: 86, sample_id: 0, measure: 18, r_nx: 0},
+	{model_id: 87, sample_id: 0, measure: 8, r_nx: 13},
+	{model_id: 88, sample_id: 0, measure: 7, r_nx: 4},
+	{model_id: 89, sample_id: 0, measure: 11, r_nx: 10},
+	{model_id: 90, sample_id: 0, measure: 6, r_nx: 18},
+	{model_id: 91, sample_id: 0, measure: 4, r_nx: 2},
+	{model_id: 92, sample_id: 0, measure: 19, r_nx: 3},
+	{model_id: 93, sample_id: 0, measure: 6, r_nx: 8},
+	{model_id: 94, sample_id: 0, measure: 12, r_nx: 18},
+	{model_id: 95, sample_id: 0, measure: 1, r_nx: 3},
+	{model_id: 96, sample_id: 0, measure: 16, r_nx: 7},
+	{model_id: 97, sample_id: 0, measure: 19, r_nx: 15},
+	{model_id: 98, sample_id: 0, measure: 17, r_nx: 3},
+	{model_id: 99, sample_id: 0, measure: 5, r_nx: 17}
+];
         // Set up containers for crossfilter data.
         this._crossfilter = crossfilter(this._data);
 
@@ -34,6 +136,31 @@ export default class DissonanceDataset extends Dataset
         this._initSingularDimensionsAndGroups();
         this._initHistogramDimensionsAndGroups();
         this._initBinaryDimensionsAndGroups();
+    }
+
+    /**
+     * Adds model measures to internal dataset.
+     * @private
+     */
+    _complementDatasetWithDRMeasure()
+    {
+        let drModelIDToMeasureValue = {};
+
+        // Iterate over DR model indices, store corresponding measure.
+        for (let drModelID in this._drModelMetadata._dataIndicesByID) {
+            let drModelIndex                    = this._drModelMetadata._dataIndicesByID[drModelID];
+            drModelIDToMeasureValue[drModelID]  = this._drModelMetadata._data[drModelIndex][this._supportedDRModelMeasure];
+        }
+
+        // Update internal dataset.
+        for (let sampleInModelIndex in this._data) {
+            // this._data[sampleInModelIndex][this._supportedDRModelMeasure] = drModelIDToMeasureValue[
+            //     this._data[sampleInModelIndex].model_id
+            // ];
+            // this._data[sampleInModelIndex][this._supportedDRModelMeasure] = Math.floor(Math.random() * 20);
+            // this._data[sampleInModelIndex].measure = Math.floor(Math.random() * 20);
+        }
+
     }
 
     /**
@@ -60,7 +187,7 @@ export default class DissonanceDataset extends Dataset
 
     _initSingularDimensionsAndGroups()
     {
-        let attributes = ["sample_id", "model_id", "measure"];
+        let attributes = ["sample_id", "model_id", "measure", this._supportedDRModelMeasure];
 
         for (let attribute of attributes) {
             this._cf_dimensions[attribute] = this._crossfilter.dimension(
@@ -97,95 +224,20 @@ export default class DissonanceDataset extends Dataset
      */
     _initHistogramDimensionsAndGroups()
     {
-        let scope                           = this;
-        let yAttribute                      = "measure";
+        let yAttribute                      = null;
         let extrema                         = {min: 0, max: 1};
         let histogramAttribute              = null;
-
-        // todo
-        // Binning:
-        //  x. Add bin size argument in constructor.
-        //  2. Bin values (store either in measureAvgs or binnedMeasureAvgs).
-        //     Note that binning should happen in step 1 already (calc. avg.
-        //     measure values) - and that avg. shouldn't be calculated before,
-        //     but in custom reducer.
-        //  3. Write custom reducer (calculating avg.) or just use reduction.avg() (https://github.com/crossfilter/reductio).
-        //
-
-        // -----------------------------------------------------
-        // 1. Bin samples-in-models (SIMs) by quality measure
-        // values.
-        // -----------------------------------------------------
-        //
-        // for (let j = 0; j < this._data.length; j++) {
-        //     let value   = this._data[j][yAttribute];
-        //     if (value <= extrema.min)
-        //         value = extrema.min;
-        //     else if (value >= extrema.max) {
-        //         value = extrema.max - binWidth * 1.1;
-        //     }
-        //
-        //     this._data[j][binnedYAttribute] = Math.floor(value / binWidth) * binWidth;
-        // }
-        // // Add new dimension for binned values.
-        // this._cf_dimensions[binnedYAttribute] = this._crossfilter.dimension(
-        //         function(d) { return d[binnedYAttribute]; }
-        // );
-
-        // Create dimension for binned attribute.
-
-        // -----------------------------------------------------
-        // 1. Calculate sum of measure values per bin.
-        // -----------------------------------------------------
-        //
-        // for (let record of this._data) {
-        //     for (let attribute of xAttributes) {
-        //         let value = record[attribute];
-        //         if (!(value in measureAvgs[attribute]))
-        //             measureAvgs[attribute][value] = record[yAttribute];
-        //         else
-        //             measureAvgs[attribute][value] += record[yAttribute];
-        //     }
-        // }
-        //
-        // // -----------------------------------------------------
-        // // 2. Average measure sum over number of records.
-        // // -----------------------------------------------------
-        //
-        // for (let attribute in measureAvgs) {
-        //     for (let value in measureAvgs[attribute]) {
-        //         measureAvgs[attribute][value] /= this._recordCounts[attribute];
-        //     }
-        // }
+        let binWidth                        = null;
 
         // -----------------------------------------------------
         // 1. Create group for histogram on x-axis (SIMs).
         // -----------------------------------------------------
 
-        histogramAttribute                  = "samplesInModels#measure";
+        yAttribute                          = "measure";
+        histogramAttribute                  = "samplesInModels#" + yAttribute;
+        extrema.max = 20; extrema.min = 0;
         this._binWidths[histogramAttribute] = (extrema.max - extrema.min) / this._binCounts.x;
-        let binWidth                        = this._binWidths[histogramAttribute];
-
-
-        // conclusion:
-        //  1. use average sample measure on x-axis and model-measure on y-axis.
-        //     idea: make it possible to find good/bad sample repr. in good/bad models.
-        //  2. fix values. argumentation: drill-down would lead to changing heatmap, which would
-        //     be exhausting to follow and understand (and might require re-adjusting selection and destroy current order).
-        //     instead, consider barcharts as constant reminders as to quality of selected and
-        //     not selected models and samples.
-        //     element of interactivity is given by different sorting options and selection of cells
-        //     -> detail view of selected samples-in-models.
-        //  3. to be realized w/ different crossfilters - linking has to be done manually (shouldn't
-        //     be too much of a hassle).
-        //  4. add histogram for filtering out individual sample-in-model cells? also: only histogram
-        //     -> heatmap and heatmap -> histogram and no histogram -> histogram, as with other charts.
-        //  addendum: to make clearer that histograms are not influenced by other histograms, title
-        //            accordingly (e. g. "all samples by pointwise quality" or similar) and place with a
-        //            a bit of space to heatmap.
-        open questions:
-            1. is fixing histogram <-> histogram relationships reasonable?
-            2. color coding of heatmap? number of elements or avg. measure?
+        binWidth                            = this._binWidths[histogramAttribute];
 
         // Form group.
         this._cf_groups[histogramAttribute] = this._cf_dimensions[yAttribute]
@@ -193,47 +245,41 @@ export default class DissonanceDataset extends Dataset
                 if (value <= extrema.min)
                     value = extrema.min;
                 else if (value >= extrema.max) {
-                    value = extrema.max - binWidth * 0.9;
+                    value = extrema.max - binWidth;
                 }
 
                 return Math.floor(value / binWidth) * binWidth;
             });
 
-        // todo *** HISTOGRAM BUG metadata: Because data is ordered alphabetically instead of numerically? -> should happen with values >= 10.
         // https://stackoverflow.com/questions/25204782/sorting-ordering-the-bars-in-a-bar-chart-by-the-bar-values-with-dc-js
-        this._cf_groups[histogramAttribute].order(function(d) { return +d.key; });
-
         // Calculate extrema.
         this._calculateHistogramExtremaForAttribute(histogramAttribute);
 
         // -----------------------------------------------------
-        // 2. Create group for histogram on y-axis (SIMs).
+        // 2. Create group for histogram on y-axis (number of
+        //    samples-in-models with given DR modelmeasure).
         // -----------------------------------------------------
 
-        histogramAttribute                  = "model_id#sample_id";
-        extrema                             = this._cf_extrema["sample_id"];
-        this._binWidths[histogramAttribute] = (extrema.max - extrema.min) / this._binCounts.x;
+        yAttribute                          = this._supportedDRModelMeasure;
+        histogramAttribute                  = "samplesInModels#" + yAttribute;
+        this._binWidths[histogramAttribute] = (extrema.max - extrema.min) / this._binCounts.y;
         binWidth                            = this._binWidths[histogramAttribute];
 
         // Form group.
-        this._cf_groups[histogramAttribute] = this._cf_dimensions["sample_id"]
+        this._cf_groups[histogramAttribute] = this._cf_dimensions[yAttribute]
             .group(function(value) {
                 if (value <= extrema.min)
                     value = extrema.min;
                 else if (value >= extrema.max) {
-                    value = extrema.max - binWidth * 0.9;
+                    value = extrema.max - binWidth;
                 }
 
                 return Math.floor(value / binWidth) * binWidth;
             });
 
-        // todo *** HISTOGRAM BUG metadata: Because data is ordered alphabetically instead of numerically? -> should happen with values >= 10.
         // https://stackoverflow.com/questions/25204782/sorting-ordering-the-bars-in-a-bar-chart-by-the-bar-values-with-dc-js
-        this._cf_groups[histogramAttribute].order(function(d) { return +d.key; });
-
         // Calculate extrema.
         this._calculateHistogramExtremaForAttribute(histogramAttribute);
-
     }
 
     /**
@@ -243,7 +289,7 @@ export default class DissonanceDataset extends Dataset
     _calculateHistogramExtremaForAttribute(histogramAttribute)
     {
         // Calculate extrema for histograms.
-        let sortedData          = this._cf_groups[histogramAttribute].all();
+        let sortedData = JSON.parse(JSON.stringify(this._cf_groups[histogramAttribute].all()))
 
         // Sort data by number of entries in this attribute's histogram.
         sortedData.sort(function(entryA, entryB) {
@@ -260,8 +306,8 @@ export default class DissonanceDataset extends Dataset
         };
 
         // Update extrema by padding values (hardcoded to 10%) for x-axis.
-        this._cf_intervals[histogramAttribute] = this._cf_extrema[histogramAttribute].max - this._cf_extrema[histogramAttribute].min;
-        // this._cf_extrema[histogramAttribute].min -= this._cf_intervals[histogramAttribute] / this._axisPaddingRatio;
-        // this._cf_extrema[histogramAttribute].max += this._cf_intervals[histogramAttribute] / this._axisPaddingRatio;
+        this._cf_intervals[histogramAttribute] =
+            this._cf_extrema[histogramAttribute].max -
+            this._cf_extrema[histogramAttribute].min;
     }
 }

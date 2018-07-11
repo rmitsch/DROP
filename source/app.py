@@ -216,7 +216,7 @@ def get_sample_dissonance():
         df = df.melt("model_id", var_name='sample_id', value_name="measure")
 
         # Return jsonified version of model x sample quality matrix.
-        return df.to_json(orient='records')
+        return df.head(n=100).to_json(orient='records')
 
     else:
         return "File does not exist.", 400

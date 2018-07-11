@@ -39,9 +39,9 @@
 }
 
 .dissonance-variance-chart.vertical {
-    transform: rotate(270deg);
     display: block;
     position: absolute;
+    right: 300px;
 }
 
 .dissonance-heatmap {

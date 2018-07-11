@@ -37,19 +37,6 @@ export default class DRMetaDataset extends Dataset
             this._dataIndicesByID[this._data[i].id] = i;
         }
 
-        // DRAGONS ARE NEAR
-        let minRnx = 1000;
-        for (let i = 0; i < this._data.length; i++) {
-            minRnx = this._data[i]["r_nx"] < minRnx ? this._data[i]["r_nx"] : minRnx;
-        }
-        let rnxvals = [];
-        for (let i = 0; i < this._data.length; i++) {
-            this._data[i]["r_nx"] = this._data[i]["n_iter"] / 2.5 + Math.random() * 100;
-            rnxvals.push(this._data[i]["r_nx"]);
-        }
-        //console.log(rnxvals);
-
-
         // Translate categorical variables into numerical ones; store maps for translation.
         this._categoricalToNumericalValues = {};
         this._numericalToCategoricalValues = {};
@@ -106,7 +93,7 @@ export default class DRMetaDataset extends Dataset
     {
         // Calculate extrema for histograms.
         let histogramAttribute  = attribute + "#histogram";
-        let sortedData          = this._cf_groups[histogramAttribute].all();
+        let sortedData          = JSON.parse(JSON.stringify(this._cf_groups[histogramAttribute].all()))
 
         // Sort data by number of entries in this attribute's histogram.
         sortedData.sort(function(entryA, entryB) {
@@ -173,22 +160,16 @@ export default class DRMetaDataset extends Dataset
             histogramAttribute  = attribute + "#histogram";
             let binWidth        = instance._cf_intervals[attribute] / this._binCount;
 
-            if (attribute === "r_nx")
-                binWidth = (Math.round(instance._cf_intervals[attribute] / this._binCount * 100 ) / 100).toFixed(2);
-
-            // HERE BE DRAGONS
             let extrema = this._cf_extrema[attribute];
             for (let j = 0; j < this._data.length; j++) {
                 let value   = this._data[j][attribute];
-                // todo POSSIBLE CAUSE FOR SSP bug: extrema[0] instead of extrema.min. Same applies for .max.
+
                 if (value <= extrema[0])
                     value = extrema[0];
                 else if (value >= extrema[1])
                     value = extrema[1] - binWidth;
 
                 this._data[j][histogramAttribute] = (Math.round(value / binWidth) * binWidth);
-                // if (attribute === "r_nx")
-                //     console.log(this._data[j][histogramAttribute]);
             }
 
             // If this is a numerical hyperparameter or an objective: Returned binned width.
@@ -196,7 +177,6 @@ export default class DRMetaDataset extends Dataset
                 this._metadata.hyperparameters[i].type === "numeric" ||
                 i >= hyperparameters.length
             ) {
-                // todo POSSIBLE SSP bug cause to use histogramAttribute instead of attribute here?
                 // Dimension with rounded values (for histograms).
                 this._cf_dimensions[histogramAttribute] = this._crossfilter.dimension(
                     function (d) { return d[histogramAttribute]; }
@@ -304,22 +284,15 @@ export default class DRMetaDataset extends Dataset
                return elements;
             },
             function(elements, item) {
-                // console.log("item.id = " + item.id);
                 let match = false;
-                let values = [];
-                for (let i = 0; i < elements.items.length; i++) {
-                    //console.log(elements.items[i].id);
-                    // console.log("bleb");
-                    values.push(elements.items[i]["r_nx"]);
 
+                for (let i = 0; i < elements.items.length; i++) {
                     // Compare hyperparameter signature.
                     if (item.id === elements.items[i].id) {
                         match = true;
                         elements.items.splice(i, 1);
-                        //elements.items.splice(elements.items.indexOf(item), 1);
+
                         elements.count--;
-                        if (primitiveAttributes.length === 1 && primitiveAttributes[0] === "r_nx#histogram")
-                            console.log("match = " + match);
                     }
                 }
 
