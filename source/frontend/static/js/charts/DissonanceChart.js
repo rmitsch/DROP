@@ -34,56 +34,6 @@ export default class DissonanceChart extends Chart
         // Use operator's target ID as group name.
         let dcGroupName = this._panel._operator._target;
 
-        // let dataset = this._dataset;
-        //
-        // // Create dimensions.
-        // let dim1 = dataset._cf_dimensions["measure"]; //cf.dimension(function(d) { return d.measure; });
-        // let dim2 = dataset._cf_dimensions["r_nx"]; //cf.dimension(function(d) { return d.r_nx; });
-        //
-        // // Create groups.
-        //
-        // // samplesInModels#rnx
-        // let group1  = dataset._cf_groups["samplesInModels#measure"];
-        // let group2  = dataset._cf_groups["samplesInModels#r_nx"]
-        //
-        //
-        //
-        // // Plot.
-        // this._horizontalHistogram = dc.barChart("#" + this._divStructure.horizontalHistogramDivID, "chartGroup");
-        // this._verticalHistogram = dc.barChart("#" + this._divStructure.verticalHistogramDivID, "chartGroup");
-        //
-        // this._horizontalHistogram
-        //   .height(100)
-        //   .width(200)
-        //   .valueAccessor( function(d) { return d.value; } )
-        //   .x(d3.scale.linear().domain([0, 20]))
-        //   .elasticY(true)
-        //   .brushOn(true)
-        //   .dimension(dim1)
-        //   .group(group1)
-        //   .margins({top: 5, right: 5, bottom: 25, left: 35})
-        //   .gap(0);
-        //
-        // this._verticalHistogram
-        //   .height(100)
-        //   .width(200)
-        //   .valueAccessor( function(d) { return d.value; } )
-        //   .x(d3.scale.linear().domain([0, 20]))
-        //   .elasticY(true)
-        //   .brushOn(true)
-        //   .dimension(dim2)
-        //   .group(group2)
-        //   .margins({top: 5, right: 5, bottom: 25, left: 35})
-        //   .gap(0);
-        //
-        // this._horizontalHistogram.xUnits(dc.units.fp.precision(binWidth));
-        // this._verticalHistogram.xUnits(dc.units.fp.precision(binWidth));
-        //
-        // this._horizontalHistogram.yAxis().ticks(2);
-        // this._verticalHistogram.yAxis().ticks(2);
-
-
-
         // -----------------------------------
         // 1. Generate horizontal (sample)
         // histogram.
@@ -133,10 +83,11 @@ export default class DissonanceChart extends Chart
                 this._verticalHistogram.width() / 2 -
                 this._verticalHistogram.margins().top -
                 this._verticalHistogram.margins().bottom -
-                8 - 200
+                8
             ) + "px"
         });
         this._verticalHistogram.render();
+
         //
         // // -------------------------------
         // // 3. Render heatmap.
@@ -251,7 +202,7 @@ export default class DissonanceChart extends Chart
             .width($("#" + this._target).width())
             .valueAccessor( function(d) { return d.value; } )
             .elasticY(false)
-            .x(d3.scale.linear().domain([0, 20]))
+            .x(d3.scale.linear().domain([0, 1]))
             .y(d3.scale.linear().domain([0, extrema[yAttribute].max]))
             .brushOn(true)
             .filterOnBrushEnd(true)
@@ -296,7 +247,7 @@ export default class DissonanceChart extends Chart
             .width($("#" + this._panel._target).height())
             .valueAccessor( function(d) { return d.value; } )
             .elasticY(false)
-            .x(d3.scale.linear().domain([0, 20]))
+            .x(d3.scale.linear().domain([0, 1]))
             .y(d3.scale.linear().domain([0, extrema[yAttribute].max]))
             .brushOn(true)
             .filterOnBrushEnd(true)
@@ -305,6 +256,7 @@ export default class DissonanceChart extends Chart
             .margins({top: 5, right: 5, bottom: 5, left: 35})
             .gap(0);
 
+        console.log(dataset._cf_groups[yAttribute].top(Infinity))
         // Set bar width.
         this._verticalHistogram.xUnits(dc.units.fp.precision(binWidth));
         // Set tick format on y-axis.
