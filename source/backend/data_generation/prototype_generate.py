@@ -21,11 +21,11 @@ logger = Utils.create_logger()
 # Define name of dataset to use (appended to file name).
 dataset_name = "wine"
 # Define DR method to use.
-dim_red_method = "TSNE"
+dim_red_kernel = "TSNE"
 
 # Get all parameter configurations (to avoid duplicate model generations).
 existent_parameter_sets = []
-file_name = os.getcwd() + "/../data/drop_" + dataset_name + "_" + dim_red_method + ".h5"
+file_name = os.getcwd() + "/../data/drop_" + dataset_name + "_" + dim_red_kernel + ".h5"
 if os.path.isfile(file_name):
     h5file = open_file(filename=file_name, mode="r+")
     for row in h5file.root.metadata:
@@ -150,7 +150,7 @@ for i in range(0, n_jobs):
             parameter_sets=parameter_sets[first_index:last_index],
             input_dataset=high_dim_dataset,
             high_dimensional_neighbourhood_rankings=high_dim_neighbourhood_rankings,
-            dim_red_method=dim_red_method
+            dim_red_kernel=dim_red_kernel
         )
     )
 

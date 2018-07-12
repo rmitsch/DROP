@@ -21,7 +21,7 @@ class DimensionalityReductionThread(threading.Thread):
             parameter_sets: list,
             input_dataset: InputDataset,
             high_dimensional_neighbourhood_rankings: dict,
-            dim_red_method: str
+            dim_red_kernel: str
     ):
         """
         Initializes thread instance that will calculate the low-dimensional representation of the specified distance
@@ -32,7 +32,7 @@ class DimensionalityReductionThread(threading.Thread):
         :param input_dataset:
         :param high_dimensional_neighbourhood_rankings: Neighbourhood rankings in original high-dimensional space. Dict.
         with one entry per distance metric.
-        :param dim_red_method: Dimensionality reduction algorithm to apply.
+        :param dim_red_kernel: Dimensionality reduction algorithm to apply.
         """
         threading.Thread.__init__(self)
 
@@ -41,7 +41,7 @@ class DimensionalityReductionThread(threading.Thread):
         self._results = results
         self._input_dataset = input_dataset
         self._high_dimensional_neighbourhood_rankings = high_dimensional_neighbourhood_rankings
-        self._dim_red_method = dim_red_method
+        self._dim_red_kernel = dim_red_kernel
 
     def run(self):
         """
@@ -179,7 +179,7 @@ class DimensionalityReductionThread(threading.Thread):
         :return:
         """
 
-        if self._dim_red_method == "TSNE":
+        if self._dim_red_kernel == "TSNE":
             return MulticoreTSNE(
                 n_components=parameter_set["n_components"],
                 perplexity=parameter_set["perplexity"],
