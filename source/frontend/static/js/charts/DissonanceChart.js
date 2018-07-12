@@ -25,6 +25,9 @@ export default class DissonanceChart extends Chart
         // Generate div structure for child nodes.
         this._divStructure = this._createDivStructure();
 
+        // Constant width in pixel heatmap SVG is too wide.
+        this._heatmapCutoff = 20;
+
         // Construct graph.
         this.constructCFChart();
     }
@@ -57,18 +60,15 @@ export default class DissonanceChart extends Chart
 
     render()
     {
-        let numCols     = this._dataset._binCounts.x;
-        let numRows     = this._dataset._binCounts.y;
+        let numCols         = this._dataset._binCounts.x;
+        let numRows         = this._dataset._binCounts.y;
         // Use heatmap width and height as yard stick for histograms.
-        let newHeight   = Math.floor(
+        let newHeight       = Math.floor(
             ($("#" + this._panel._target).height() * 0.9 - 55) / numRows
         ) * numRows;
-        let newWidth    = Math.floor(
-            //$("#" + this._target).width()  / numCols
-            523 / numCols
+        let newWidth        = Math.floor(
+            $("#" + this._target).width() * 0.95 / numCols
         ) * numCols;
-        newWidth = 20 * 30;
-        console.log(newWidth);
 
         // -------------------------------
         // 1. Render horizontal histogram.
@@ -77,7 +77,8 @@ export default class DissonanceChart extends Chart
         this._horizontalHistogram.width(
             newWidth +
             this._horizontalHistogram.margins().left +
-            this._horizontalHistogram.margins().right
+            this._horizontalHistogram.margins().right -
+            this._heatmapCutoff + 2
         );
         this._horizontalHistogram.render();
 
@@ -102,7 +103,7 @@ export default class DissonanceChart extends Chart
                 this._verticalHistogram.width() / 2 -
                 this._verticalHistogram.margins().top -
                 this._verticalHistogram.margins().bottom -
-                17
+                this._heatmapCutoff + 3
             ) + "px"
         });
         this._verticalHistogram.render();
@@ -130,6 +131,7 @@ export default class DissonanceChart extends Chart
         );
 
         // Create shorthand references.
+        let scope       = this;
         let dataset     = this._dataset;
         let extrema     = dataset._cf_extrema;
         let dimensions  = dataset._cf_dimensions;
@@ -147,8 +149,8 @@ export default class DissonanceChart extends Chart
             .colors(
                 d3.scale
                     .linear()
-                    .domain([0, extrema[attribute].max])
-                    .range(["white", "blue"])
+                    .domain([0, extrema[attribute].max / 2, extrema[attribute].max])
+                    .range(["#deebf7", "#9ecae1", "#3182bd"])
             )
             .keyAccessor(function(d) {
                 return d.key[0];
@@ -162,7 +164,18 @@ export default class DissonanceChart extends Chart
             // Supress column/row label output.
             .colsLabel(function(d) { return ""; })
             .rowsLabel(function(d) { return ""; })
-            .margins({top: 0, right: 20, bottom: 0, left: 0});
+            .margins({top: 0, right: 20, bottom: 0, left: 0})
+            .transitionDuration(0)
+            // Cut off superfluous SVG height (probably reserved for labels).
+            // Note: Has to be tested with different widths and heights.
+            .on('postRedraw', function(chart) {
+                let svg = $("#" + scope._divStructure.heatmapDivID).find('svg')[0];
+                svg.setAttribute('width', (svg.width.baseVal.value - scope._heatmapCutoff) + "px");
+            })
+            .on('postRender', function(chart) {
+                let svg = $("#" + scope._divStructure.heatmapDivID).find('svg')[0];
+                svg.setAttribute('width', (svg.width.baseVal.value - scope._heatmapCutoff) + "px");
+            });;
 
         // No rounded corners.
         this._dissonanceHeatmap.xBorderRadius(0);
@@ -202,7 +215,7 @@ export default class DissonanceChart extends Chart
             .filterOnBrushEnd(true)
             .dimension(dimensions[xAttribute])
             .group(dataset._cf_groups[yAttribute])
-            .margins({top: 5, right: 5, bottom: 25, left: 40})
+            .margins({top: 5, right: 5, bottom: 5, left: 40})
             .gap(0);
 
         // Set bar width.
@@ -211,7 +224,7 @@ export default class DissonanceChart extends Chart
         this._horizontalHistogram.yAxis().tickFormat(d3.format('.3s'));
         // Set number of ticks.
         this._horizontalHistogram.yAxis().ticks(2);
-        this._horizontalHistogram.xAxis().ticks(5);
+        this._horizontalHistogram.xAxis().ticks(0);
     }
 
     /**
@@ -255,7 +268,7 @@ export default class DissonanceChart extends Chart
         // Set tick format on y-axis.
         this._verticalHistogram.yAxis().tickFormat(d3.format('.3s'));
         // Set number of ticks.
-        this._verticalHistogram.yAxis().ticks(2);
+        this._verticalHistogram.yAxis().ticks(1);
         this._verticalHistogram.xAxis().ticks(0);
     }
 
