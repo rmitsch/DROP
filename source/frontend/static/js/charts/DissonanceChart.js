@@ -41,11 +41,11 @@ export default class DissonanceChart extends Chart
 
         this._generateHorizontalHistogram(dcGroupName);
 
-        // // -----------------------------------
-        // // 2. Generate heatmap.
-        // // -----------------------------------
-        //
-        // // this._generateDissonanceHeatmap(dcGroupName);
+        // -----------------------------------
+        // 2. Generate heatmap.
+        // -----------------------------------
+
+        this._generateDissonanceHeatmap(dcGroupName);
 
         // -----------------------------------
         // 3. Generate vertical (k-neighbour-
@@ -57,13 +57,31 @@ export default class DissonanceChart extends Chart
 
     render()
     {
-        let newHeight   = null;
-        let newWidth    = null;
+        let numCols     = this._dataset._binCounts.x;
+        let numRows     = this._dataset._binCounts.y;
+        // Use heatmap width and height as yard stick for histograms.
+        let newHeight   = Math.floor(
+            ($("#" + this._panel._target).height() * 0.9 - 55) / numRows
+        ) * numRows;
+        let newWidth    = Math.floor(
+            $("#" + this._target).width() * 0.9 / numCols
+        ) * numCols;
+        console.log(newWidth);
+
+        var data = this._dataset._cf_groups["samplesInModelsMeasure:sampleDRModelMeasure"].all();
+        var ncols = d3.set(data.map(function(x) { return x.key[0]; })).size();
+        var nrows = d3.set(data.map(function(x) { return x.key[1]; })).size();
+        console.log(ncols + "; " + nrows);
 
         // -------------------------------
         // 1. Render horizontal histogram.
         // -------------------------------
 
+        this._horizontalHistogram.width(
+            newWidth +
+            this._horizontalHistogram.margins().left +
+            this._horizontalHistogram.margins().right
+        );
         this._horizontalHistogram.render();
 
         // -------------------------------
@@ -71,63 +89,43 @@ export default class DissonanceChart extends Chart
         // -------------------------------
 
         // Has to be drawn with updated height value.
-        newHeight = $("#" + this._panel._target).height() - 55;
-        this._verticalHistogram.width(newHeight);
+        this._verticalHistogram.width(
+            newHeight +
+            this._verticalHistogram.margins().left +
+            this._verticalHistogram.margins().right
+        );
+
         $("#" + this._divStructure.verticalHistogramDivID).css({
             "top": (
                 this._verticalHistogram.width() / 2 +
                 // Additional margin to align with heatmap.
-                9
+                8
             ) + "px",
             "left": -(
                 this._verticalHistogram.width() / 2 -
                 this._verticalHistogram.margins().top -
                 this._verticalHistogram.margins().bottom -
-                8
+                17
             ) + "px"
         });
         this._verticalHistogram.render();
 
-        //
-        // // -------------------------------
-        // // 3. Render heatmap.
-        // // -------------------------------
-        //
-        // this._dissonanceHeatmap.width(
-        //     this._horizontalHistogram.width() -
-        //     8
-        // );
-        //
-        // newHeight = this._verticalHistogram.width() * 1 -
-        //     8 +
-        //     (67.6);
-        // let bla = this._dataset._recordCounts["model_id"] / newHeight;
-        // console.log(1 / bla);
-        // this._dissonanceHeatmap.height(
-        //     newHeight
-        // );
-        //
-        // this._dissonanceHeatmap.render();
+        // -------------------------------
+        // 3. Render heatmap.
+        // -------------------------------
+
+        this._dissonanceHeatmap.width(newWidth);
+        this._dissonanceHeatmap.height(newHeight);
+        this._dissonanceHeatmap.render();
     }
 
     /**
-     *
+     * Generates dissonance heatmap.
      * @param dcGroupName
      * @private
      */
     _generateDissonanceHeatmap(dcGroupName)
     {
-        // Next steps:
-        //     x Draw common scatterplot (with useCanvas = true and filterOnBrushEnd: true).
-        //     - Continue with other issues -
-        //         * Sample interpolation,
-        //         * design of other panels,
-        //         * data generation,
-        //         * UMAP instead of t-SNE,
-        //         * using real instead of mocked data for model-sample dissonance and surrogate model,
-        //         * implementing correlation overview for alpha-omega SSPs,
-        //         * implementing hexagon-heatmaps (with area brush! -> how?) for omega-omega plots - no detail view.
-
         // Use operator's target ID as group name.
         this._dissonanceHeatmap = dc.heatMap(
             "#" + this._divStructure.heatmapDivID,
@@ -138,23 +136,22 @@ export default class DissonanceChart extends Chart
         let dataset     = this._dataset;
         let extrema     = dataset._cf_extrema;
         let dimensions  = dataset._cf_dimensions;
-        let dimName     = "sample_id:model_id";
-        let groupName   = dimName + "#measure";
+        let attribute   = "samplesInModelsMeasure:sampleDRModelMeasure";
 
         // Configure chart.
         this._dissonanceHeatmap
             .height(300)
             .width(300)
-            .dimension(dimensions[dimName])
-            .group(dataset._cf_groups[groupName])
+            .dimension(dimensions[attribute])
+            .group(dataset._cf_groups[attribute])
             .colorAccessor(function(d) {
                 return d.value;
             })
             .colors(
                 d3.scale
                     .linear()
-                    .domain([0, 1])
-                    .range(["white", "red"])
+                    .domain([0, extrema[attribute].max])
+                    .range(["white", "blue"])
             )
             .keyAccessor(function(d) {
                 return d.key[0];
@@ -165,7 +162,7 @@ export default class DissonanceChart extends Chart
             .title(function(d) {
                 return "";
             })
-            // Surpress column/row label output.
+            // Supress column/row label output.
             .colsLabel(function(d) { return ""; })
             .rowsLabel(function(d) { return ""; })
             .margins({top: 0, right: 20, bottom: 0, left: 0});
@@ -199,16 +196,16 @@ export default class DissonanceChart extends Chart
         // Configure chart.
         this._horizontalHistogram
             .height(40)
-            .width($("#" + this._target).width())
+            .width(Math.floor($("#" + this._target).width() / dataset._binCounts.x) * dataset._binCounts.x)
             .valueAccessor( function(d) { return d.value; } )
             .elasticY(false)
-            .x(d3.scale.linear().domain([0, 1]))
+            .x(d3.scale.linear().domain([0, extrema[xAttribute].max]))
             .y(d3.scale.linear().domain([0, extrema[yAttribute].max]))
             .brushOn(true)
             .filterOnBrushEnd(true)
             .dimension(dimensions[xAttribute])
             .group(dataset._cf_groups[yAttribute])
-            .margins({top: 5, right: 5, bottom: 5, left: 35})
+            .margins({top: 5, right: 5, bottom: 5, left: 40})
             .gap(0);
 
         // Set bar width.
@@ -247,7 +244,7 @@ export default class DissonanceChart extends Chart
             .width($("#" + this._panel._target).height())
             .valueAccessor( function(d) { return d.value; } )
             .elasticY(false)
-            .x(d3.scale.linear().domain([0, 1]))
+            .x(d3.scale.linear().domain([0, extrema[xAttribute].max]))
             .y(d3.scale.linear().domain([0, extrema[yAttribute].max]))
             .brushOn(true)
             .filterOnBrushEnd(true)
@@ -256,7 +253,6 @@ export default class DissonanceChart extends Chart
             .margins({top: 5, right: 5, bottom: 5, left: 35})
             .gap(0);
 
-        console.log(dataset._cf_groups[yAttribute].top(Infinity))
         // Set bar width.
         this._verticalHistogram.xUnits(dc.units.fp.precision(binWidth));
         // Set tick format on y-axis.

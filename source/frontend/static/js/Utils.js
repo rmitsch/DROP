@@ -85,24 +85,24 @@ export default class Utils
      * @param group
      * @returns {{all: all, top: top, bottom: bottom}}
      */
-    static remove_empty_bins(group)
+    static removeEmptyBins(group)
     {
         return {
             all: function () {
                 return group.all().filter(function(d) {
-                    return d.value.count !== 0;
+                    return d.value !== 0;
                 });
             },
 
             top: function(N) {
                 return group.top(N).filter(function(d) {
-                    return d.value.count !== 0;
+                    return d.value !== 0;
                 });
             },
 
             bottom: function(N) {
                 return group.top(Infinity).slice(-N).reverse().filter(function(d) {
-                    return d.value.count !== 0;
+                    return d.value !== 0;
                 });
             }
         };

@@ -44,15 +44,15 @@ export default class NumericalHistogram extends Histogram
             .x(d3.scale.linear().domain(
                 [extrema[instance._axes_attributes.x].min, extrema[instance._axes_attributes.x].max])
             )
-            // .y(d3.scale.linear().domain([0, extrema[key].max]))
-            .elasticY(true)
+            .y(d3.scale.linear().domain([0, extrema[key].max]))
             .brushOn(true)
             // Filter on end of brushing action, not meanwhile (performance suffers otherwise).
             .filterOnBrushEnd(true)
             .dimension(dimensions[key])
             .group(this._dataset.cf_groups[key])
             .renderHorizontalGridLines(true)
-            .margins({top: 0, right: 10, bottom: 25, left: 25});
+            .margins({top: 0, right: 10, bottom: 25, left: 25})
+            .gap(1);
 
         // Set number of ticks.
         this._cf_chart.yAxis().ticks(instance._style.numberOfTicks.y);
@@ -60,7 +60,7 @@ export default class NumericalHistogram extends Histogram
 
         // Update bin width.
         let binWidth = this._dataset._cf_intervals[this._axes_attributes.x] / this._dataset._binCount;
-        this._cf_chart.xUnits(dc.units.fp.precision(binWidth * 1));
+        this._cf_chart.xUnits(dc.units.fp.precision(binWidth));
     }
 
     highlight(id, source)

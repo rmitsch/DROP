@@ -49,7 +49,8 @@ export default class CategoricalHistogram extends Histogram
             .dimension(dimensions[key])
             .group(this._dataset.cf_groups[key])
             .renderHorizontalGridLines(true)
-            .margins({top: 0, right: 10, bottom: 25, left: 25});
+            .margins({top: 0, right: 10, bottom: 25, left: 25})
+            .gap(1);
 
         // Set number of ticks (x-axis is ignored).
         this._cf_chart.yAxis().ticks(instance._style.numberOfTicks.y);

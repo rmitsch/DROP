@@ -46,7 +46,13 @@
 
 .dissonance-heatmap {
     position: relative;
-    margin-left: 29px;
-    top: -40px;
+    margin-left: 38px;
+    top: -9px;
     z-index: 0;
+    height: calc(100% - 1px);
+}
+
+.dissonance-heatmap > svg {
+    border-right: 1px solid;
+    border-bottom: 1px solid;
 }

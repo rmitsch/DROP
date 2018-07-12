@@ -61,7 +61,7 @@ export default class PrototypeStage extends Stage
                 scope._datasets["dissonance"]       = new DissonanceDataset(
                     "Dissonance Dataset",
                     values[1],
-                    {x: 20, y: 15},
+                    {x: 20, y: 10},
                     scope._datasets["modelMetadata"],
                     "r_nx"
                 );
