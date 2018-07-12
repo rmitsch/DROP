@@ -46,7 +46,7 @@
 
 .dissonance-heatmap {
     position: relative;
-    margin-left: 38px;
+    margin-left: 42px;
     top: -9px;
     z-index: 0;
     height: calc(100% - 1px);
