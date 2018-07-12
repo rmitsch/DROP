@@ -1,7 +1,6 @@
 import threading
 import time
 
-import numpy
 from MulticoreTSNE import MulticoreTSNE
 from sklearn.preprocessing import StandardScaler
 
@@ -10,9 +9,9 @@ from backend.objectives.topology_preservation_objectives import *
 from backend.objectives.distance_preservation_objectives import *
 
 
-class TSNEThread(threading.Thread):
+class DimensionalityReductionThread(threading.Thread):
     """
-    Class calculating a t-SNE model for the given distance matrix with the specified parametrizations.
+    Thread executing DR method of choice on a specific dataset with a set of parametrizations.
     """
 
     def __init__(
@@ -21,17 +20,19 @@ class TSNEThread(threading.Thread):
             distance_matrices: dict,
             parameter_sets: list,
             input_dataset: InputDataset,
-            high_dimensional_neighbourhood_rankings: dict
+            high_dimensional_neighbourhood_rankings: dict,
+            dim_red_method: str
     ):
         """
         Initializes thread instance that will calculate the low-dimensional representation of the specified distance
-        matrices applying t-SNE.
+        matrices applying the chosen DR method.
         :param results:
         :param distance_matrices:
         :param parameter_sets:
         :param input_dataset:
         :param high_dimensional_neighbourhood_rankings: Neighbourhood rankings in original high-dimensional space. Dict.
         with one entry per distance metric.
+        :param dim_red_method: Dimensionality reduction algorithm to apply.
         """
         threading.Thread.__init__(self)
 
@@ -40,6 +41,7 @@ class TSNEThread(threading.Thread):
         self._results = results
         self._input_dataset = input_dataset
         self._high_dimensional_neighbourhood_rankings = high_dimensional_neighbourhood_rankings
+        self._dim_red_method = dim_red_method
 
     def run(self):
         """
@@ -111,15 +113,7 @@ class TSNEThread(threading.Thread):
                 coranking_matrix=coranking_matrix
             ).compute()
 
-            # Pointwise q_nx(k) = q_nx_i(k).
-            # CONTINUE HERE: xxx
-            #     - store vector q_nx_i in file.
-            #     - assemble vectors in /get_sample_dissonance to model x sample quality matrix.
-            #     - consider changing panel title.
-            #     - frontend:
-            #         * create crossfilter dataset.
-            #         * update charts with data (pay attention to scatterplot/barchart correlation bug!).
-
+            # Pointwise Q_nx -> q_nx.
             q_nx_i = PointwiseCorankingMatrixQualityCriterion(
                 high_dimensional_data=self._distance_matrices[metric],
                 low_dimensional_data=low_dimensional_projection,
@@ -176,3 +170,31 @@ class TSNEThread(threading.Thread):
                 "objectives": objectives,
                 "low_dimensional_projection": low_dimensional_projection
             })
+
+    def reduce_dimensionality(self, parameter_set: dict, metric: str):
+        """
+        Calculations low-dim. projection of original dataset.
+        :param parameter_set:
+        :param metric: Defines which distance matrix to use for this projection.
+        :return:
+        """
+
+        if self._dim_red_method == "TSNE":
+            return MulticoreTSNE(
+                n_components=parameter_set["n_components"],
+                perplexity=parameter_set["perplexity"],
+                early_exaggeration=parameter_set["early_exaggeration"],
+                learning_rate=parameter_set["learning_rate"],
+                n_iter=parameter_set["n_iter"],
+                # min_grad_norm=parameter_set["min_grad_norm"],
+                angle=parameter_set["angle"],
+                # Always set metric to 'precomputed', since distance matrices are calculated previously. If other
+                # metrics are desired, the corresponding preprocessing step has to be extended.
+                metric='precomputed',
+                method='barnes_hut' if parameter_set["n_components"] < 4 else 'exact',
+                # Set n_jobs to 1, since we parallelize at a higher level by splitting up model parametrizations amongst
+                # threads.
+                n_jobs=1
+            ).fit_transform(self._distance_matrices[metric])
+
+        return None

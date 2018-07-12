@@ -7,6 +7,7 @@ from tables import *
 import backend.objectives.topology_preservation_objectives.CorankingMatrix as CorankingMatrix
 from backend.data_generation.PersistenceThread import PersistenceThread
 from backend.data_generation.TSNEThread import TSNEThread
+from backend.data_generation.DimensionaliyReductionThread import DimensionalityReductionThread
 from backend.data_generation.datasets.WineDataset import WineDataset
 from backend.utils import Utils
 
@@ -19,10 +20,12 @@ logger = Utils.create_logger()
 
 # Define name of dataset to use (appended to file name).
 dataset_name = "wine"
+# Define DR method to use.
+dim_red_method = "TSNE"
 
 # Get all parameter configurations (to avoid duplicate model generations).
 existent_parameter_sets = []
-file_name = os.getcwd() + "/../data/drop_" + dataset_name + ".h5"
+file_name = os.getcwd() + "/../data/drop_" + dataset_name + "_" + dim_red_method + ".h5"
 if os.path.isfile(file_name):
     h5file = open_file(filename=file_name, mode="r+")
     for row in h5file.root.metadata:
@@ -141,12 +144,13 @@ for i in range(0, n_jobs):
 
     # Instantiate thread.
     threads.append(
-        TSNEThread(
+        DimensionalityReductionThread(
             results=results,
             distance_matrices=distance_matrices,
             parameter_sets=parameter_sets[first_index:last_index],
             input_dataset=high_dim_dataset,
-            high_dimensional_neighbourhood_rankings=high_dim_neighbourhood_rankings
+            high_dimensional_neighbourhood_rankings=high_dim_neighbourhood_rankings,
+            dim_red_method=dim_red_method
         )
     )
 

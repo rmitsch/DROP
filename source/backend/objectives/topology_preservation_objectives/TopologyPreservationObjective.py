@@ -24,7 +24,6 @@ class TopologyPreservationObjective(DimensionalityReductionObjective):
         :param coranking_matrix:
         :param distance_metric: Metric to use for calculation of coranking matrix (preferrably the same that's used
         for the distance matrix supplied to DR algorithm).
-        :param k_interval: Tuple containing interval describing which values of k to consider.
         """
         super().__init__(
             low_dimensional_data=low_dimensional_data,
