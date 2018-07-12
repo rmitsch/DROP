@@ -64,14 +64,11 @@ export default class DissonanceChart extends Chart
             ($("#" + this._panel._target).height() * 0.9 - 55) / numRows
         ) * numRows;
         let newWidth    = Math.floor(
-            $("#" + this._target).width() * 0.9 / numCols
+            //$("#" + this._target).width()  / numCols
+            523 / numCols
         ) * numCols;
+        newWidth = 20 * 30;
         console.log(newWidth);
-
-        var data = this._dataset._cf_groups["samplesInModelsMeasure:sampleDRModelMeasure"].all();
-        var ncols = d3.set(data.map(function(x) { return x.key[0]; })).size();
-        var nrows = d3.set(data.map(function(x) { return x.key[1]; })).size();
-        console.log(ncols + "; " + nrows);
 
         // -------------------------------
         // 1. Render horizontal histogram.
@@ -205,7 +202,7 @@ export default class DissonanceChart extends Chart
             .filterOnBrushEnd(true)
             .dimension(dimensions[xAttribute])
             .group(dataset._cf_groups[yAttribute])
-            .margins({top: 5, right: 5, bottom: 5, left: 40})
+            .margins({top: 5, right: 5, bottom: 25, left: 40})
             .gap(0);
 
         // Set bar width.
@@ -214,7 +211,7 @@ export default class DissonanceChart extends Chart
         this._horizontalHistogram.yAxis().tickFormat(d3.format('.3s'));
         // Set number of ticks.
         this._horizontalHistogram.yAxis().ticks(2);
-        this._horizontalHistogram.xAxis().ticks(0);
+        this._horizontalHistogram.xAxis().ticks(5);
     }
 
     /**

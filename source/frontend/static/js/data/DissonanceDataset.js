@@ -155,36 +155,6 @@ export default class DissonanceDataset extends Dataset
         // 2. Define group as sum of intersection sample_id/model_id - since only one element per
         // group exists, sum works just fine.
         this._cf_groups[attribute] = this._cf_dimensions[attribute].group().reduceCount();
-        //
-        //  let sortedData          = JSON.parse(JSON.stringify(this._cf_groups[attribute].all()))
-        //
-        // // Sort data by number of entries in this attribute's histogram.
-        // sortedData.sort(function(entryA, entryB) {
-        //     if (entryA.key[0] > entryB.key[0])
-        //         return 1;
-        //     else if (entryA.key[0] < entryB.key[0])
-        //         return -1;
-        //     else {
-        //         if (entryA.key[1] > entryB.key[1])
-        //             return 1;
-        //         else if (entryA.key[1] < entryB.key[1])
-        //             return -1;
-        //         else
-        //             return 0;
-        //     }
-        // });
-        //
-        // // CONTINUE HERE:
-        // //     - how to size / adjust heatmap properly if rows/columns are missing?
-        // //       -> why does heatmap not leave a free col for col 1, since no data is available?
-        //
-        //  for (let bla of sortedData)
-        //      console.log(bla.key + " -> " + bla.value);
-        //
-        // var data = this._cf_groups[attribute].all();
-        // var ncols = d3.set(data.map(function(x) { return x.key[0]; })).size();
-        // var nrows = d3.set(data.map(function(x) { return x.key[1]; })).size();
-        // console.log(ncols + "; " + nrows);
 
         // 3. Find extrema.
         this._calculateHistogramExtremaForAttribute(attribute);
@@ -220,9 +190,21 @@ export default class DissonanceDataset extends Dataset
                 }
 
                 return Math.floor(value / binWidth) * binWidth;
-            });
+            })
+            // Custome reducer ignoring dummys with model_id === -1.
+            .reduce(
+                function(counter, item) {
+                    return item.model_id !== -1 ? ++counter : counter;
+                },
+                function(counter, item) {
+                    return item.model_id !== -1 ? --counter : counter;
+                },
+                function() {
+                    let counter =0;
+                    return counter;
+                }
+            );
 
-        // https://stackoverflow.com/questions/25204782/sorting-ordering-the-bars-in-a-bar-chart-by-the-bar-values-with-dc-js
         // Calculate extrema.
         this._calculateHistogramExtremaForAttribute(histogramAttribute);
 
@@ -247,15 +229,28 @@ export default class DissonanceDataset extends Dataset
                 }
 
                 return Math.floor(value / binWidth) * binWidth;
-            });
+            })
+            // Custome reducer ignoring dummys with model_id === -1.
+            .reduce(
+                function(counter, item) {
+                    return item.model_id !== -1 ? ++counter : counter;
+                },
+                function(counter, item) {
+                    return item.model_id !== -1 ? --counter : counter;
+                },
+                function() {
+                    let counter =0;
+                    return counter;
+                }
+            );
 
-        // https://stackoverflow.com/questions/25204782/sorting-ordering-the-bars-in-a-bar-chart-by-the-bar-values-with-dc-js
         // Calculate extrema.
         this._calculateHistogramExtremaForAttribute(histogramAttribute);
     }
 
     /**
      * Calculates extrema for all histogram dimensions/groups.
+     * See https://stackoverflow.com/questions/25204782/sorting-ordering-the-bars-in-a-bar-chart-by-the-bar-values-with-dc-js.
      * @param histogramAttribute
      */
     _calculateHistogramExtremaForAttribute(histogramAttribute)
