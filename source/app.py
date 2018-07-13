@@ -32,6 +32,7 @@ def init_flask_app():
     # Limit of 100 MB for upload.
     flask_app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024
 
+    # todo Parametrize - make algorithm-dependent, use static information in DimensionalityKernel.
     flask_app.config["METADATA_TEMPLATE"] = {
         "hyperparameters": [
                 {"name": "n_components", "type": "numeric"},

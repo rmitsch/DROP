@@ -7,6 +7,7 @@ from sklearn.preprocessing import StandardScaler
 from backend.data_generation import InputDataset, sklearn
 from backend.objectives.topology_preservation_objectives import *
 from backend.objectives.distance_preservation_objectives import *
+from .DimensionalityReductionKernel import DimensionalityReductionKernel
 
 
 class DimensionalityReductionThread(threading.Thread):
@@ -21,7 +22,7 @@ class DimensionalityReductionThread(threading.Thread):
             parameter_sets: list,
             input_dataset: InputDataset,
             high_dimensional_neighbourhood_rankings: dict,
-            dim_red_kernel: str
+            dim_red_kernel_name: str
     ):
         """
         Initializes thread instance that will calculate the low-dimensional representation of the specified distance
@@ -32,7 +33,7 @@ class DimensionalityReductionThread(threading.Thread):
         :param input_dataset:
         :param high_dimensional_neighbourhood_rankings: Neighbourhood rankings in original high-dimensional space. Dict.
         with one entry per distance metric.
-        :param dim_red_kernel: Dimensionality reduction algorithm to apply.
+        :param dim_red_kernel_name: Name of dimensionality reduction algorithm to apply.
         """
         threading.Thread.__init__(self)
 
@@ -41,7 +42,7 @@ class DimensionalityReductionThread(threading.Thread):
         self._results = results
         self._input_dataset = input_dataset
         self._high_dimensional_neighbourhood_rankings = high_dimensional_neighbourhood_rankings
-        self._dim_red_kernel = dim_red_kernel
+        self._dim_red_kernel = DimensionalityReductionKernel(dim_red_kernel_name)
 
     def run(self):
         """
@@ -58,10 +59,13 @@ class DimensionalityReductionThread(threading.Thread):
 
             # Calculate t-SNE. Surpress output while doing so.
             start = time.time()
-            low_dimensional_projection = self._reduce_dimensionality(parameter_set)
+            low_dimensional_projection = self._dim_red_kernel.run(
+                high_dim_data=self._distance_matrices[metric],
+                parameter_set=parameter_set
+            )
 
             # Scale projection data for later use.
-            scaled_low_dim_projection = StandardScaler().fit_transform(low_dimensional_projection)
+            scaled_low_dim_projection = low_dimensional_projection #StandardScaler().fit_transform(low_dimensional_projection)
 
             ###################################################
             # 2. Calculate objectives.
@@ -155,29 +159,3 @@ class DimensionalityReductionThread(threading.Thread):
                 "objectives": objectives,
                 "low_dimensional_projection": low_dimensional_projection
             })
-
-    def _reduce_dimensionality(self, parameter_set: dict):
-        """
-        Calculations low-dim. projection of original dataset.
-        :param parameter_set:
-        :return:
-        """
-
-        if self._dim_red_kernel == "TSNE":
-            return MulticoreTSNE(
-                n_components=parameter_set["n_components"],
-                perplexity=parameter_set["perplexity"],
-                early_exaggeration=parameter_set["early_exaggeration"],
-                learning_rate=parameter_set["learning_rate"],
-                n_iter=parameter_set["n_iter"],
-                angle=parameter_set["angle"],
-                # Always set metric to 'precomputed', since distance matrices are calculated previously. If other
-                # metrics are desired, the corresponding preprocessing step has to be extended.
-                metric='precomputed',
-                method='barnes_hut' if parameter_set["n_components"] < 4 else 'exact',
-                # Set n_jobs to 1, since we parallelize at a higher level by splitting up model parametrizations amongst
-                # threads.
-                n_jobs=1
-            ).fit_transform(self._distance_matrices[parameter_set["metric"]])
-
-        return None
