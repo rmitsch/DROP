@@ -1,14 +1,13 @@
 from random import shuffle
-import os
 
 import psutil
 from tables import *
+import os
 
 import backend.objectives.topology_preservation_objectives.CorankingMatrix as CorankingMatrix
 from backend.data_generation.PersistenceThread import PersistenceThread
-from backend.data_generation.TSNEThread import TSNEThread
-from backend.data_generation.DimensionaliyReductionThread import DimensionalityReductionThread
 from backend.data_generation.datasets.WineDataset import WineDataset
+from backend.data_generation.dimensionality_reduction.DimensionaliyReductionThread import DimensionalityReductionThread
 from backend.utils import Utils
 
 # Create logger.
@@ -52,11 +51,6 @@ parameter_values = {
     "early_exaggeration": (5.0, 10), #10.0, 15.0, 20.0),
     "learning_rate": (10.0, 250), #, 250.0), # 500.0, 1000.0),
     "n_iter": (100, 250, 500), #1000, 2000, 5000),
-    # Commenting out min_grad_norm, since a variable value for this since (1) MulticoreTSNE doesn't support dynamic
-    # values for this attribute and (2) sklearn's implementation is slow af.
-    # If a decently performing implementation (sklearn updates?) that also supports this parameter is ever available,
-    # it might be added again.
-    #"min_grad_norm": (1e-10, 1e-7, 1e-4, 1e-1),
     "angle": (0.1, 0.35), #0.35, 0.65, 0.9),
     "metrics": ('cosine', 'euclidean') #, 'euclidean')
 }
@@ -69,28 +63,27 @@ for n_components in parameter_values["n_components"]:
         for early_exaggeration in parameter_values["early_exaggeration"]:
             for n_iter in parameter_values["n_iter"]:
                 for learning_rate in parameter_values["learning_rate"]:
-                    #for min_grad_norm in parameter_values["min_grad_norm"]:
-                        for angle in parameter_values["angle"]:
-                            for metric in parameter_values["metrics"]:
-                                # Define dictionary object with values.
-                                new_parameter_set = {
-                                    "n_components": n_components,
-                                    "perplexity": perplexity,
-                                    "early_exaggeration": early_exaggeration,
-                                    "learning_rate": learning_rate,
-                                    "n_iter": n_iter,
-                                    # "min_grad_norm": min_grad_norm,
-                                    "angle": angle,
-                                    "metric": metric
-                                }
+                    for angle in parameter_values["angle"]:
+                        for metric in parameter_values["metrics"]:
+                            # Define dictionary object with values.
+                            new_parameter_set = {
+                                "n_components": n_components,
+                                "perplexity": perplexity,
+                                "early_exaggeration": early_exaggeration,
+                                "learning_rate": learning_rate,
+                                "n_iter": n_iter,
+                                # "min_grad_norm": min_grad_norm,
+                                "angle": angle,
+                                "metric": metric
+                            }
 
-                                # If new parameter set not already generated: Add to list of datasets to generate.
-                                if new_parameter_set not in existent_parameter_sets:
-                                    new_parameter_set["id"] = current_id
-                                    parameter_sets.append(new_parameter_set)
+                            # If new parameter set not already generated: Add to list of datasets to generate.
+                            if new_parameter_set not in existent_parameter_sets:
+                                new_parameter_set["id"] = current_id
+                                parameter_sets.append(new_parameter_set)
 
-                                # Keep track of number of generated parameter sets.
-                                current_id += 1
+                            # Keep track of number of generated parameter sets.
+                            current_id += 1
 
 ######################################################
 # 2. Load high-dimensional data.

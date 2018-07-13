@@ -1,10 +1,10 @@
-import os
 import threading
 import time
 
 from tables import *
 
-from backend.data_generation import TSNEMetadata
+import os
+from backend.data_generation.dimensionality_reduction.hdf5_descriptions import TSNEDescription
 
 
 class PersistenceThread(threading.Thread):
@@ -156,7 +156,7 @@ class PersistenceThread(threading.Thread):
         metadata_table = h5file.create_table(
             where=h5file.root,
             name='metadata',
-            description=TSNEMetadata.TSNEMetadata,
+            description=TSNEDescription,
             title="Metadata for t-SNE models"
         )
         metadata_table.flush()
