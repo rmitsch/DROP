@@ -82,9 +82,11 @@ class DimensionalityReductionKernel:
             ).fit_transform(high_dim_data)
 
         elif self._dim_red_kernel_name == "SVD":
+            # todo Implement SVD call.
             return None
 
         elif self._dim_red_kernel_name == "UMAP":
+            # todo Implement UMAP call.
             return None
 
         return None
