@@ -1,8 +1,7 @@
 from random import shuffle
-
 import psutil
-from tables import *
 import os
+from tables import *
 
 import backend.objectives.topology_preservation_objectives.CorankingMatrix as CorankingMatrix
 from backend.data_generation.PersistenceThread import PersistenceThread

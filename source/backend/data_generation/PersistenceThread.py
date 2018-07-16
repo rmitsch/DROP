@@ -4,6 +4,8 @@ import time
 from tables import *
 
 import os
+
+from backend.data_generation.dimensionality_reduction import DimensionalityReductionKernel
 from backend.data_generation.dimensionality_reduction.hdf5_descriptions import TSNEDescription
 
 
@@ -33,7 +35,7 @@ class PersistenceThread(threading.Thread):
         self._results = results
         self._expected_number_of_results = expected_number_of_results
         self._dataset_name = dataset_name
-        self._dim_red_kernel = dim_red_kernel_name
+        self._dim_red_kernel_name = dim_red_kernel_name
         self._checking_interval = checking_interval
 
         # Fetch .h5 file handle.
@@ -48,6 +50,8 @@ class PersistenceThread(threading.Thread):
 
         metadata_table = self._h5file.root.metadata
         metadata_row = metadata_table.row
+        # Get configuration of this DR kernel's parameter set.
+        parameter_config = DimensionalityReductionKernel.DIM_RED_KERNELS[self._dim_red_kernel_name]["parameters"]
 
         # Check on new arrivals every self._checking_interval seconds.
         last_processed_index = -1
@@ -69,18 +73,16 @@ class PersistenceThread(threading.Thread):
                     # necessary due to datasets already existing in target file for dataset.
                     valid_model_id = self.model_id_offset + result["parameter_set"]["id"]
 
-                    # Hyperparameter.
-                    result_hyperparam = result["parameter_set"]
+                    # Generic metadata.
                     metadata_row["id"] = valid_model_id
                     metadata_row["num_records"] = result["low_dimensional_projection"].shape[0]
-                    metadata_row["n_components"] = result_hyperparam["n_components"]
-                    metadata_row["perplexity"] = result_hyperparam["perplexity"]
-                    metadata_row["early_exaggeration"] = result_hyperparam["early_exaggeration"]
-                    metadata_row["learning_rate"] = result_hyperparam["learning_rate"]
-                    metadata_row["n_iter"] = result_hyperparam["n_iter"]
-                    # metadata_row["min_grad_norm"] = result["min_grad_norm"]
-                    metadata_row["angle"] = result_hyperparam["angle"]
-                    metadata_row["metric"] = result_hyperparam["metric"]
+
+                    # Hyperparameter.
+                    result_hyperparam = result["parameter_set"]
+
+                    # Add hyperparameter values.
+                    for param_config in parameter_config:
+                        metadata_row[param_config["name"]] = result_hyperparam[param_config["name"]]
 
                     # Objectives.
                     result_objectives = result["objectives"]
@@ -140,7 +142,7 @@ class PersistenceThread(threading.Thread):
         # Used to store how many models are already stored in file.
         self.model_id_offset = 0
 
-        file_name = os.getcwd() + "/../data/drop_" + self._dataset_name + "_" + self._dim_red_kernel + ".h5"
+        file_name = os.getcwd() + "/../data/drop_" + self._dataset_name + "_" + self._dim_red_kernel_name + ".h5"
         # If file exists: Return handle to existing file (assuming file is not corrupt).
         if os.path.isfile(file_name):
             h5file = open_file(filename=file_name, mode="r+")
