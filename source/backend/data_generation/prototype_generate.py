@@ -20,7 +20,7 @@ logger = Utils.create_logger()
 # Define name of dataset to use (appended to file name).
 dataset_name = "wine"
 # Define DR method to use.
-dim_red_kernel_name = "TSNE"
+dim_red_kernel_name = "SVD"
 
 # Get all parameter configurations (to avoid duplicate model generations).
 existent_parameter_sets = []

@@ -1,10 +1,8 @@
 import numpy
 from MulticoreTSNE import MulticoreTSNE
-import sklearn
-
-from backend.objectives.topology_preservation_objectives import *
-from backend.objectives.distance_preservation_objectives import *
+from sklearn.decomposition import TruncatedSVD
 from . import hdf5_descriptions
+import umap
 
 
 class DimensionalityReductionKernel:
@@ -22,7 +20,6 @@ class DimensionalityReductionKernel:
                 {"name": "early_exaggeration", type: "numeric"},
                 {"name": "learning_rate", type: "numeric"},
                 {"name": "n_iter", type: "numeric"},
-                {"name": "min_grad_norm", type: "numeric"},
                 {"name": "angle", type: "numeric"},
                 {"name": "metric", type: "categorical"}
             ],
@@ -30,13 +27,20 @@ class DimensionalityReductionKernel:
         },
         "SVD": {
             "parameters": [
-                {"name": "n_components", type: "numeric"}
+                {"name": "n_components", type: "numeric"},
+                {"name": "n_iter", type: "numeric"}
             ],
             "hdf5_description": hdf5_descriptions.SVDDescription
         },
         "UMAP": {
             "parameters": [
-                {"name": "n_components", type: "numeric"}
+                {"name": "n_components", type: "numeric"},
+                {"name": "n_neighbors", type: "numeric"},
+                {"name": "n_epochs", type: "numeric"},
+                {"name": "learning_rate", type: "numeric"},
+                {"name": "min_dist", type: "numeric"},
+                {"name": "spread", type: "numeric"},
+                {"name": "metric", type: "categorical"}
             ],
             "hdf5_description": hdf5_descriptions.UMAPDescription
         }
@@ -82,11 +86,22 @@ class DimensionalityReductionKernel:
             ).fit_transform(high_dim_data)
 
         elif self._dim_red_kernel_name == "SVD":
-            # todo Implement SVD call.
-            return None
+            return TruncatedSVD(
+                n_components=parameter_set["n_components"],
+                n_iter=parameter_set["n_iter"]
+            ).fit_transform(high_dim_data)
 
         elif self._dim_red_kernel_name == "UMAP":
-            # todo Implement UMAP call.
-            return None
+            return umap.UMAP(
+                n_components=parameter_set["n_components"],
+                n_neighbors=parameter_set["n_neighbors"],
+                n_epochs=parameter_set["n_epochs"],
+                learning_rate=parameter_set["learning_rate"],
+                min_dist=parameter_set["min_dist"],
+                spread=parameter_set["spread"],
+                # Always set metric to 'precomputed', since distance matrices are calculated previously. If other
+                # metrics are desired, the corresponding preprocessing step has to be extended.
+                metric='precomputed',
+            ).fit_transform(high_dim_data)
 
         return None
