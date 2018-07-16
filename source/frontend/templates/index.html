@@ -38,7 +38,7 @@
     <!------------------------------------------------------>
 
     <div class="header">
-        <div class="pure-menu pure-menu-horizontal">
+        <div class="pure-menu pure-menu-horizontal custom-restricted-width">
             <a class="pure-menu-heading" id='icon-link' href="/"> <img src="./static/img/icon_white.png" class="navIconImage" alt="DROP" width="20px">DROP</a>
 
             <ul class="pure-menu-list">
@@ -50,6 +50,46 @@
                     <a href="#menu_about" class="pure-menu-link">About</a>
                 </li>
             </ul>
+
+            <div class="dataset-selection-menu">
+                <ul class="pure-menu-list">
+                    <li class="pure-menu-item pure-menu-has-children pure-menu-allow-hover">
+                        <a href="#" id="datasetLink" class="pure-menu-link">Wine</a>
+                        <ul class="pure-menu-children">
+                            <li class="pure-menu-item">
+                                <a class="pure-menu-link" href="#" onclick="$('#datasetLink').html('MNIST')">MNIST</a>
+                            </li>
+                            <li class="pure-menu-item">
+                                <a class="pure-menu-link" href="#" onclick="$('#datasetLink').html('Swiss Roll')">Swiss Roll</a>
+                            </li>
+                            <li class="pure-menu-item">
+                                <a class="pure-menu-link" href="#" onclick="$('#datasetLink').html('VIS Papers')">VIS Papers</a>
+                            </li>
+                            <li class="pure-menu-item">
+                                <a class="pure-menu-link" href="#" onclick="$('#datasetLink').html('Wine')">Wine</a>
+                            </li>
+                        </ul>
+                    </li>
+                    with DR kernel
+                    <li class="pure-menu-item pure-menu-has-children pure-menu-allow-hover">
+                        <a href="#" id="drkernelLink" class="pure-menu-link">t-SNE</a>
+                        <ul class="pure-menu-children">
+                            <li class="pure-menu-item">
+                                <a class="pure-menu-link" href="#" onclick="$('#drkernelLink').html('UMAP')">UMAP</a>
+                            </li>
+                            <li class="pure-menu-item">
+                                <a class="pure-menu-link" href="#" onclick="$('#drkernelLink').html('t-SNE')">t-SNE</a>
+                            </li>
+                            <li class="pure-menu-item">
+                                <a class="pure-menu-link" href="#" onclick="$('#drkernelLink').html('SVD')">SVD</a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+                <a id='load-dataset-link' href="/">
+                    <img src="./static/img/load.png" alt="Load dataset" class="navIconImage" width="23px">
+                </a>
+            </div>
         </div>
     </div>
 

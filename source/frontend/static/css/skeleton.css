@@ -82,3 +82,26 @@ li.pure-menu-item.pure-menu-selected {
     background-color: #3d4a57;
     color: #fff;
 }
+
+.custom-restricted-width{
+    display:inline-block;
+}
+
+.dataset-selection-menu {
+    float: right;
+    color: #fff;
+}
+
+ul.pure-menu-children li {
+    background-color: #3d4a57;
+}
+
+#datasetLink, #drkernelLink {
+    font-weight: bold;
+}
+
+#load-dataset-link {
+    position: relative;
+    top: 2px;
+    margin-right: 10px;
+}
