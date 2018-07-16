@@ -7,6 +7,7 @@ import os
 import backend.objectives.topology_preservation_objectives.CorankingMatrix as CorankingMatrix
 from backend.data_generation.PersistenceThread import PersistenceThread
 from backend.data_generation.datasets.WineDataset import WineDataset
+from backend.data_generation.dimensionality_reduction import DimensionalityReductionKernel
 from backend.data_generation.dimensionality_reduction.DimensionaliyReductionThread import DimensionalityReductionThread
 from backend.utils import Utils
 
@@ -20,70 +21,13 @@ logger = Utils.create_logger()
 # Define name of dataset to use (appended to file name).
 dataset_name = "wine"
 # Define DR method to use.
-dim_red_kernel_name = "SVD"
+dim_red_kernel_name = "TSNE"
 
 # Get all parameter configurations (to avoid duplicate model generations).
-existent_parameter_sets = []
-file_name = os.getcwd() + "/../data/drop_" + dataset_name + "_" + dim_red_kernel_name + ".h5"
-if os.path.isfile(file_name):
-    h5file = open_file(filename=file_name, mode="r+")
-    for row in h5file.root.metadata:
-        # Note: We don't use the model ID here, since that would never lead to comparison hits.
-        existent_parameter_sets.append({
-            "n_components": row["n_components"],
-            "perplexity": row["perplexity"],
-            "early_exaggeration": row["early_exaggeration"],
-            "learning_rate": row["learning_rate"],
-            "n_iter": row["n_iter"],
-            # "min_grad_norm": row["min_grad_norm"],
-            "angle": row["angle"],
-            "metric": str(row["metric"], "utf-8")
-        })
-
-    # Close file after reading parameter set data.
-    h5file.close()
-
-
-# Define parameter ranges.
-parameter_values = {
-    "n_components": (1, 2), #2, 3, 4),
-    "perplexity": (10, 25), #25, 50, 80),
-    "early_exaggeration": (5.0, 10), #10.0, 15.0, 20.0),
-    "learning_rate": (10.0, 250), #, 250.0), # 500.0, 1000.0),
-    "n_iter": (100, 250, 500), #1000, 2000, 5000),
-    "angle": (0.1, 0.35), #0.35, 0.65, 0.9),
-    "metrics": ('cosine', 'euclidean') #, 'euclidean')
-}
-
-# Filter out already existing model parametrizations.
-parameter_sets = []
-current_id = 0
-for n_components in parameter_values["n_components"]:
-    for perplexity in parameter_values["perplexity"]:
-        for early_exaggeration in parameter_values["early_exaggeration"]:
-            for n_iter in parameter_values["n_iter"]:
-                for learning_rate in parameter_values["learning_rate"]:
-                    for angle in parameter_values["angle"]:
-                        for metric in parameter_values["metrics"]:
-                            # Define dictionary object with values.
-                            new_parameter_set = {
-                                "n_components": n_components,
-                                "perplexity": perplexity,
-                                "early_exaggeration": early_exaggeration,
-                                "learning_rate": learning_rate,
-                                "n_iter": n_iter,
-                                # "min_grad_norm": min_grad_norm,
-                                "angle": angle,
-                                "metric": metric
-                            }
-
-                            # If new parameter set not already generated: Add to list of datasets to generate.
-                            if new_parameter_set not in existent_parameter_sets:
-                                new_parameter_set["id"] = current_id
-                                parameter_sets.append(new_parameter_set)
-
-                            # Keep track of number of generated parameter sets.
-                            current_id += 1
+parameter_sets = DimensionalityReductionKernel.generate_parameter_sets_for_testing(
+    data_file_path=os.getcwd() + "/../data/drop_" + dataset_name + "_" + dim_red_kernel_name + ".h5",
+    dim_red_kernel_name=dim_red_kernel_name
+)
 
 ######################################################
 # 2. Load high-dimensional data.
@@ -105,14 +49,16 @@ high_dim_features = high_dim_dataset.preprocessed_features()
 logger.info("Calculating distance matrices.")
 distance_matrices = {
     metric: high_dim_dataset.compute_distance_matrix(metric=metric)
-    for metric in parameter_values["metrics"]
+    for metric in DimensionalityReductionKernel.get_metric_values(dim_red_kernel_name)
 }
 
 # Generate neighbourhood ranking for high dimensional data w.r.t. all used distance metrics.
 logger.info("Generating neighbourhood rankings.")
 high_dim_neighbourhood_rankings = {
-    metric: CorankingMatrix.generate_neighbourhood_ranking(distance_matrix=distance_matrices[metric])
-    for metric in parameter_values["metrics"]
+    metric: CorankingMatrix.generate_neighbourhood_ranking(
+        distance_matrix=distance_matrices[metric]
+    )
+    for metric in DimensionalityReductionKernel.get_metric_values(dim_red_kernel_name)
 }
 
 ######################################################
@@ -152,7 +98,8 @@ threads.append(
     PersistenceThread(
         results=results,
         expected_number_of_results=len(parameter_sets),
-        dataset_name=dataset_name
+        dataset_name=dataset_name,
+        dim_red_kernel_name=dim_red_kernel_name
     )
 )
 

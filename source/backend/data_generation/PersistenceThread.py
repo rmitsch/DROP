@@ -12,12 +12,20 @@ class PersistenceThread(threading.Thread):
     Checks whether threads calculating t-SNE generated new output. If so, new output is stored in file.
     """
 
-    def __init__(self, results: list, expected_number_of_results: int, dataset_name: str, checking_interval: int = 20):
+    def __init__(
+            self,
+            results: list,
+            expected_number_of_results: int,
+            dataset_name: str,
+            dim_red_kernel_name: str,
+            checking_interval: int = 20
+    ):
         """
         Initializes thread for ensuring persistence of t-SNE results calculated by other threads.
         :param results: List of calculated results.
         :param expected_number_of_results: Expected number of datasets to be produced.
         :param dataset_name: Suffix of dataset to be created.
+        :param dim_red_kernel_name: Name of dimensionality reduction kernel used.
         :param checking_interval: Intervals in seconds in which thread checks for new models.
         """
         threading.Thread.__init__(self)
@@ -25,6 +33,7 @@ class PersistenceThread(threading.Thread):
         self._results = results
         self._expected_number_of_results = expected_number_of_results
         self._dataset_name = dataset_name
+        self._dim_red_kernel = dim_red_kernel_name
         self._checking_interval = checking_interval
 
         # Fetch .h5 file handle.
@@ -131,7 +140,7 @@ class PersistenceThread(threading.Thread):
         # Used to store how many models are already stored in file.
         self.model_id_offset = 0
 
-        file_name = os.getcwd() + "/../data/drop_" + self._dataset_name + ".h5"
+        file_name = os.getcwd() + "/../data/drop_" + self._dataset_name + "_" + self._dim_red_kernel + ".h5"
         # If file exists: Return handle to existing file (assuming file is not corrupt).
         if os.path.isfile(file_name):
             h5file = open_file(filename=file_name, mode="r+")
