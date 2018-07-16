@@ -8,7 +8,7 @@ import backend.objectives.topology_preservation_objectives.CorankingMatrix as Co
 from backend.data_generation.PersistenceThread import PersistenceThread
 from backend.data_generation.datasets.WineDataset import WineDataset
 from backend.data_generation.dimensionality_reduction import DimensionalityReductionKernel
-from backend.data_generation.dimensionality_reduction.DimensionaliyReductionThread import DimensionalityReductionThread
+from backend.data_generation.dimensionality_reduction.DimensionalityReductionThread import DimensionalityReductionThread
 from backend.utils import Utils
 
 # Create logger.
