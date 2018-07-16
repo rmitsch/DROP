@@ -62,11 +62,14 @@ export default class DRMetaDataset extends Dataset
 
     /**
      * Returns dict for translating column headers in JSON/dataframe into human-readable titles.
-     * @returns {{n_components: string, perplexity: string, early_exaggeration: string, learning_rate: string, n_iter: string, angle: string, metric: string, r_nx: string, b_nx: string, stress: string, classification_accuracy: string, separability_metric: string, runtime: string}}
+     * This is a catch-all for translation - all possible objectives and hyperparameters, regardless of the associated
+     * DR algorithm, are included here for translation purposes.
+     * @returns Dictionary with frontend translations for backend attributes.
      */
     static translateAttributeNames()
     {
         return {
+            // Hyperparameters.
             "n_components": "Dimensions",
             "perplexity": "Perplexity",
             "early_exaggeration": "Early exagg.",
@@ -74,6 +77,11 @@ export default class DRMetaDataset extends Dataset
             "n_iter": "Iterations",
             "angle": "Angle",
             "metric": "Dist. metric",
+            "n_neighbors": "Neighbors",
+            "min_dist": "Min. Distance",
+            "local_connectivity": "Local Conn.",
+            "n_epochs": "Iterations",
+            // From here: Objectives.
             "r_nx": "R<sub>nx</sub>",
             "b_nx": "B<sub>nx</sub>",
             "stress": "Stress",
@@ -160,6 +168,7 @@ export default class DRMetaDataset extends Dataset
             histogramAttribute  = attribute + "#histogram";
             let binWidth        = instance._cf_intervals[attribute] / this._binCount;
 
+            // Bin data for current attribute (i. e. hyperparameter or objective).
             let extrema = this._cf_extrema[attribute];
             for (let j = 0; j < this._data.length; j++) {
                 let value   = this._data[j][attribute];
@@ -286,12 +295,11 @@ export default class DRMetaDataset extends Dataset
             function(elements, item) {
                 let match = false;
 
-                for (let i = 0; i < elements.items.length; i++) {
+                for (let i = 0; i < elements.items.length && !match; i++) {
                     // Compare hyperparameter signature.
                     if (item.id === elements.items[i].id) {
                         match = true;
                         elements.items.splice(i, 1);
-
                         elements.count--;
                     }
                 }

@@ -126,4 +126,26 @@ export default class Utils
             }, delay);
         };
     }
+
+    /**
+     * Parse GET parameter string for specific parameter.
+     * Source: https://stackoverflow.com/questions/5448545/how-to-retrieve-get-parameters-from-javascript
+     * @param parameterName
+     * @returns Parsed result.
+     */
+    static findGETParameter(parameterName)
+    {
+        let result  = null;
+        let tmp     = [];
+
+        location.search
+            .substr(1)
+            .split("&")
+            .forEach(function (item) {
+                tmp = item.split("=");
+                if (tmp[0] === parameterName) result = decodeURIComponent(tmp[1]);
+            });
+
+        return result;
+    }
 }

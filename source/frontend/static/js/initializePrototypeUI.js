@@ -10,6 +10,11 @@ $(document).ready(function() {
     // Fetch model metadata.
     $.ajax({
         url: '/get_metadata',
+        data: {
+            // Read GET parameters.
+            "datasetName": Utils.findGETParameter("dataset"),
+            "drKernelName": Utils.findGETParameter("drk")
+        },
         type: 'GET',
         success: function(model_data) {
             // Parse delivered JSON with metadata for all models.
@@ -26,6 +31,8 @@ $(document).ready(function() {
             }
 
             // Get information on which hyperparameters and objectives are available.
+            // Note: Sequence of calls is important, since /get_metadata_template uses information
+            // made available by /get_metadata.
             $.ajax({
                 url: '/get_metadata_template',
                 type: 'GET',

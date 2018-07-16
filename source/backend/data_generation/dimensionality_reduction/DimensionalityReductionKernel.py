@@ -192,3 +192,13 @@ class DimensionalityReductionKernel:
                 return param_desc["values"]
 
         return None
+
+    @staticmethod
+    def check_kernel_name(parameter: str):
+        """
+        Checks whether supplied parameter is valid kernel name.
+        :param parameter:
+        :return: If exists: Uppercase version of kernel name, usable for in
+        DimensionalityReductionKernel.DIM_RED_KERNELS. If does not exist: None.
+        """
+        return parameter if parameter in ("tsne", "svd", "umap") else None

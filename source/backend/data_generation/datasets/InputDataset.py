@@ -178,3 +178,16 @@ class InputDataset:
 
         # Normalize to 0 <= x <= 1.
         return (silhouette_score + 1) / 2.0
+
+    @staticmethod
+    def check_dataset_name(parameter: str):
+        """
+        Checks whether supplied parameter is valid dataset name.
+        :param parameter:
+        :return: If exists: Dataset name. If does not exist: None.
+        """
+
+        if parameter in ("vis", "wine", "swiss_roll", "mnist"):
+            return parameter
+
+        return None

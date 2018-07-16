@@ -11,7 +11,8 @@ from sklearn.preprocessing import LabelEncoder
 from tables import *
 import numpy
 
-from backend.data_generation.datasets.WineDataset import WineDataset
+from backend.data_generation.datasets.InputDataset import InputDataset
+from backend.data_generation.dimensionality_reduction import DimensionalityReductionKernel
 from backend.utils import Utils
 
 
@@ -27,32 +28,15 @@ def init_flask_app():
     )
 
     # Define version.
-    flask_app.config["VERSION"] = "0.3"
+    flask_app.config["VERSION"] = "0.3.1"
 
-    # Limit of 100 MB for upload.
-    flask_app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024
+    # Store metadata template. Is assembled once in /get_metadata.
+    flask_app.config["METADATA_TEMPLATE"] = None
 
-    # todo Parametrize - make algorithm-dependent, use static information in DimensionalityKernel.
-    flask_app.config["METADATA_TEMPLATE"] = {
-        "hyperparameters": [
-                {"name": "n_components", "type": "numeric"},
-                {"name": "perplexity", "type": "numeric"},
-                {"name": "early_exaggeration", "type": "numeric"},
-                {"name": "learning_rate", "type": "numeric"},
-                {"name": "n_iter", "type": "numeric"},
-                {"name": "angle", "type": "numeric"},
-                {"name": "metric", "type": "categorical"}
-            ],
-
-        "objectives": [
-            "runtime",
-            "r_nx",
-            "b_nx",
-            "stress",
-            "classification_accuracy",
-            "separability_metric"
-        ]
-    }
+    # Store name of current dataset and kernel. Note that these values is only changed at call of /get_metadata.
+    flask_app.config["DATASET_NAME"] = None
+    flask_app.config["DR_KERNEL_NAME"] = None
+    flask_app.config["FULL_FILE_NAME"] = None
 
     return flask_app
 
@@ -73,13 +57,22 @@ def index():
 def get_metadata():
     """
     Reads metadata content (i. e. model parametrizations and objectives) of specified .h5 file.
+    GET parameters:
+        - datasetName with "dataset".
+        - drKernelName with "drk".
     :return:
     """
-    # todo Should be customized (e. g. filename should be selected in UI).
+    app.config["DATASET_NAME"] = InputDataset.check_dataset_name(request.args.get('datasetName'))
+    app.config["DR_KERNEL_NAME"] = DimensionalityReductionKernel.check_kernel_name(request.args.get('drKernelName'))
 
-    # Open .h5 file.
-    file_name = os.getcwd() + "/../data/drop_wine.h5"
-    if os.path.isfile(file_name):
+    # Build file name.
+    file_name = os.getcwd() + "/../data/drop_" + app.config["DATASET_NAME"] + "_" + app.config["DR_KERNEL_NAME"] + ".h5"
+    app.config["FULL_FILE_NAME"] = file_name
+
+    # Open .h5 file, if dataset name and DR kernel name are valid and file exists.
+    if app.config["DATASET_NAME"] is not None and \
+            app.config["DR_KERNEL_NAME"] is not None and \
+            os.path.isfile(file_name):
         h5file = tables.open_file(filename=file_name, mode="r")
         # Cast to dataframe, then return as JSON.
         df = pandas.DataFrame(h5file.root.metadata[:]).set_index("id")
@@ -89,7 +82,7 @@ def get_metadata():
         return jsonify(df.to_json(orient='index'))
 
     else:
-        return "File does not exist.", 400
+        return "File/kernel does not exist.", 400
 
 
 @app.route('/get_metadata_template', methods=["GET"])
@@ -98,6 +91,20 @@ def get_metadata_template():
     Assembles metadata template (i. e. which hyperparameters and objectives are available).
     :return: Dictionary: {"hyperparameters": [...], "objectives": [...]}
     """
+
+    app.config["METADATA_TEMPLATE"] = {
+        "hyperparameters":
+            DimensionalityReductionKernel.DIM_RED_KERNELS[app.config["DR_KERNEL_NAME"].upper()]["parameters"],
+        "objectives": [
+            "runtime",
+            "r_nx",
+            "b_nx",
+            "stress",
+            "classification_accuracy",
+            "separability_metric"
+        ]
+    }
+
     return jsonify(app.config["METADATA_TEMPLATE"])
 
 
@@ -111,8 +118,6 @@ def get_surrogate_model_data():
         - Max. depth of decision tree with depth=x.
     :return: Jsonified structure of surrogate model for DR metadata.
     """
-    # todo Add file name as parameter.
-
     metadata_template = app.config["METADATA_TEMPLATE"]
     surrogate_model_type = request.args["modeltype"]
     objective_names = request.args["objs"].split(",")
@@ -134,9 +139,8 @@ def get_surrogate_model_data():
     # ------------------------------------------------------
 
     # Open .h5 file.
-    file_name = os.getcwd() + "/../data/drop_wine.h5"
+    file_name = app.config["FULL_FILE_NAME"]
     if os.path.isfile(file_name):
-
         h5file = tables.open_file(filename=file_name, mode="r")
         # Cast to dataframe, then return as JSON.
         df = pandas.DataFrame(h5file.root.metadata[:]).set_index("id")
@@ -179,13 +183,10 @@ def get_sample_dissonance():
     """
     Calculates and fetches variance/divergence of individual samples over all DR model parametrizations.
     GET parameters:
-        - File name (not supported yet).
         - Distance function to use for determining neighbourhoods (not supported yet).
     :return:
     """
-    # todo Add filename as GET parameter/make dataset-variant, load file according to param.
-    # todo Store distance matrices in file.
-    file_name = os.getcwd() + "/../data/drop_wine.h5"
+    file_name = app.config["FULL_FILE_NAME"]
 
     if os.path.isfile(file_name):
         h5file = open_file(filename=file_name, mode="r+")

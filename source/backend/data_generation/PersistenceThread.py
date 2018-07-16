@@ -142,7 +142,7 @@ class PersistenceThread(threading.Thread):
         # Used to store how many models are already stored in file.
         self.model_id_offset = 0
 
-        file_name = os.getcwd() + "/../data/drop_" + self._dataset_name + "_" + self._dim_red_kernel_name + ".h5"
+        file_name = os.getcwd() + "/../data/drop_" + self._dataset_name + "_" + self._dim_red_kernel_name.lower() + ".h5"
         # If file exists: Return handle to existing file (assuming file is not corrupt).
         if os.path.isfile(file_name):
             h5file = open_file(filename=file_name, mode="r+")
