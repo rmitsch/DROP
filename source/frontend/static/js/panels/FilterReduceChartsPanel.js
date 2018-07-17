@@ -3,8 +3,8 @@ import Utils from "../Utils.js";
 import ParetoScatterplot from "../charts/ParetoScatterplot.js";
 import NumericalHistogram from "../charts/NumericalHistogram.js";
 import CategoricalHistogram from "../charts/CategoricalHistogram.js";
-import ParallelCoordinates from "../charts/ParallelCoordinates.js"
 import Dataset from "../data/DRMetaDataset.js";
+import HexagonalHeatmap from "../charts/HexagonalHeatmap.js";
 
 /**
  * Panel holding scatterplots and histograms in operator FilterReduce.
@@ -263,6 +263,17 @@ export default class FilterReduceChartsPanel extends Panel
                     scatterplot.render();
             }
         }
+
+        // Test: Hexagonal heatmap.
+        let bla = new HexagonalHeatmap(
+            "objective1" + ":" + "objective2",
+            this,
+            ["objective1", "objective2"],
+            dataset,
+            null,
+            // Place chart in previously generated container div.
+            this._containerDivIDs["objective1"]
+        );
     }
 
     /**
