@@ -32,6 +32,7 @@ export default class NumericalHistogram extends Histogram
         // Create shorthand references.
         let instance    = this;
         let extrema     = this._dataset._cf_extrema;
+        let intervals   = this._dataset._cf_intervals;
         let dimensions  = this._dataset._cf_dimensions;
         let key         = this._axes_attributes.x + "#histogram";
 
@@ -41,9 +42,11 @@ export default class NumericalHistogram extends Histogram
             .width(instance._style.width)
             .valueAccessor( function(d) { return  d.value.count; } )
             .elasticY(false)
-            .x(d3.scale.linear().domain(
-                [extrema[instance._axes_attributes.x].min, extrema[instance._axes_attributes.x].max])
-            )
+            .x(d3.scale.linear().domain([
+                extrema[instance._axes_attributes.x].min,
+                extrema[instance._axes_attributes.x].max +
+                intervals[instance._axes_attributes.x] * 0.1
+            ]))
             .y(d3.scale.linear().domain([0, extrema[key].max]))
             .brushOn(true)
             // Filter on end of brushing action, not meanwhile (performance suffers otherwise).

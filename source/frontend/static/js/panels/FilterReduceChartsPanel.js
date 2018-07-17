@@ -246,7 +246,6 @@ export default class FilterReduceChartsPanel extends Panel
                 updatedStyle.showAxisLabels.x   = false;
                 updatedStyle.showAxisLabels.y   = false;
 
-
                 // Instantiate new scatterplot.
                 let scatterplot = new ParetoScatterplot(
                     objective1 + ":" + objective2,

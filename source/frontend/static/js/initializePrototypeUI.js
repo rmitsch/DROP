@@ -3,18 +3,39 @@ import Dataset from './data/DRMetaDataset.js';
 import Utils from './Utils.js'
 
 // IDs of menu buttons.
-let menuIDs = ["menu_prototype", "menu_about"]
+let menuIDs = ["menu_prototype", "menu_about"];
 
 // Initialize setup UI.
 $(document).ready(function() {
-    // Fetch model metadata.
+    // -----------------------------------------------------
+    // 1. Process GET parameters.
+    // -----------------------------------------------------
+
+    let metadataGETParameters = processGETParameters();
+
+    // -----------------------------------------------------
+    // 2. Initialize loading button.
+    // -----------------------------------------------------
+
+    $("#load-dataset-link").click(function() {
+        let baseURL = location.protocol + '//' + location.hostname + (location.port ? ':'+location.port: '');
+        // Get content of dropdowns, preprocess for backend.
+        let datasetNameTranslation = {Wine: "wine", MNIST: "mnist", "Swiss Roll": "swiss_roll", "VIS Papers": "vis"};
+        let drkTranslation = {"t-SNE": "tsne", UMAP: "umap", SVD: "svd"};
+        // Load new page.
+        window.location.href =
+            baseURL + "?dataset=" +
+            datasetNameTranslation[$("#datasetLink").html()] + "&drk=" +
+            drkTranslation[$("#drkernelLink").html()];
+    });
+
+    // -----------------------------------------------------
+    // 3. Fetch model metadata - both structure and content.
+    // -----------------------------------------------------
+
     $.ajax({
         url: '/get_metadata',
-        data: {
-            // Read GET parameters.
-            "datasetName": Utils.findGETParameter("dataset"),
-            "drKernelName": Utils.findGETParameter("drk")
-        },
+        data: metadataGETParameters,
         type: 'GET',
         success: function(model_data) {
             // Parse delivered JSON with metadata for all models.
@@ -57,3 +78,26 @@ $(document).ready(function() {
         }
      });
 });
+
+/**
+ * Reads GET parameters defining which dataset and kernel to use.
+ * Defaults to wine dataset + t-SNE, if none specified.
+ * @returns {{datasetName: *, drKernelName: *}}
+ */
+function processGETParameters()
+{
+    // Read GET parameters.
+    let datasetName     = Utils.findGETParameter("dataset") === null ? "wine" : Utils.findGETParameter("dataset");
+    let drKernelName    = Utils.findGETParameter("drk") === null ? "tsne" : Utils.findGETParameter("drk");
+
+    // Update displayed value of dropdown based on current URL parameters.
+    let datasetNameTranslation = {wine: "Wine", mnist: "MNIST", swiss_roll: "Swiss Roll", vis: "VIS Papers"};
+    let drkTranslation = {tsne: "t-SNE", umap: "UMAP", svd: "SVD"};
+    $("#datasetLink").html(datasetNameTranslation[datasetName]);
+    $("#drkernelLink").html(drkTranslation[drKernelName]);
+
+    return {
+        datasetName: datasetName,
+        drKernelName: drKernelName
+    }
+}
