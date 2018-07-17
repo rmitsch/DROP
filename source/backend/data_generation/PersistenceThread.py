@@ -167,7 +167,7 @@ class PersistenceThread(threading.Thread):
         metadata_table = h5file.create_table(
             where=h5file.root,
             name='metadata',
-            description=TSNEDescription,
+            description=DimensionalityReductionKernel.DIM_RED_KERNELS[self._dim_red_kernel_name]["hdf5_description"],
             title="Metadata for t-SNE models"
         )
         metadata_table.flush()

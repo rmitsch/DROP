@@ -149,8 +149,8 @@ export default class DissonanceChart extends Chart
             .colors(
                 d3.scale
                     .linear()
-                    .domain([0, extrema[attribute].max / 2, extrema[attribute].max])
-                    .range(["#deebf7", "#9ecae1", "#3182bd"])
+                    .domain([0, 1, extrema[attribute].max / 2, extrema[attribute].max])
+                    .range(["#fff", "#deebf7", "#9ecae1", "#3182bd"])
             )
             .keyAccessor(function(d) {
                 return d.key[0];

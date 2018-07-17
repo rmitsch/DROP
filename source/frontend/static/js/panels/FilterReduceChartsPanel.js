@@ -241,7 +241,7 @@ export default class FilterReduceChartsPanel extends Panel
                 // Adapt style settings, based on whether this is the first scatterplot or not.
                 let updatedStyle                = $.extend(true, {}, style);
                 updatedStyle.numberOfTicks.y    = 0;
-                updatedStyle.numberOfTicks.x    = updatedStyle.numberOfXTicksInLastRow + 3// j === dataset.metadata.objectives.length - 1 ? updatedStyle.numberOfXTicksInLastRow : updatedStyle.numberOfTicks.x;
+                updatedStyle.numberOfTicks.x    = j === dataset.metadata.objectives.length - 1 ? updatedStyle.numberOfXTicksInLastRow : updatedStyle.numberOfTicks.x;
                 // Note: Categorical barchart apparently does not allow unlabeld x-axis.
                 updatedStyle.showAxisLabels.x   = false;
                 updatedStyle.showAxisLabels.y   = false;

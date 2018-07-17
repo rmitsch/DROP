@@ -38,6 +38,8 @@ class Stress(DistancePreservationObjective):
             * S stress http://gifi.stat.ucla.edu/janspubs/1977/articles/takane_young_deleeuw_A_77.pdf
             * Sammon stress http://ieeexplore.ieee.org/document/1671271/?reload=true
             * Quadratic Loss
+        Source: https://github.com/flowersteam/Unsupervised_Goal_Space_Learning/blob/master/src/embqual.py.
+        :return: Stress measure.
         """
         
         # We retrieve dimensions of the data

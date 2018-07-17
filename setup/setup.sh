@@ -2,6 +2,9 @@
 
 ## Manual setup steps. ##
 
+# Note: All Numba decorators in umap_.py have to be set to @numba.njit(parallel=False, fastmath=True)!
+# Otherwise external thread-level parallelism leads to deadlocking threads due to Numba parallelization.
+
 # Download MNIST dataset.
 python -c 'from sklearn.datasets import fetch_mldata; fetch_mldata("MNIST original")'
 

@@ -41,11 +41,11 @@ class DimensionalityReductionKernel:
             "parameters": [
                 {"name": "n_components", "type": "numeric", "values": [1, 2]},
                 {"name": "n_neighbors", "type": "numeric", "values": [5, 15]},
-                {"name": "n_epochs", "type": "numeric", "values": [200, 400]},
-                {"name": "learning_rate", "type": "numeric", "values": [0.5, 1]},
+                {"name": "n_epochs", "type": "numeric", "values": [200, 500]},
+                {"name": "learning_rate", "type": "numeric", "values": [0.5, 1.0]},
                 {"name": "min_dist", "type": "numeric", "values": [0.05, 0.1]},
-                {"name": "local_connectivity", "type": "numeric", "values": [1, 5]},
-                {"name": "metric", "type": "categorical", "values": ['cosine', 'euclidean']}
+                {"name": "local_connectivity", "type": "numeric", "values": [1, 2]},
+                {"name": "metric", "type": "categorical", "values": ['euclidean', 'cosine']}
             ],
             "hdf5_description": hdf5_descriptions.UMAPDescription
         }
@@ -100,17 +100,30 @@ class DimensionalityReductionKernel:
             ).fit_transform(high_dim_data)
 
         elif self._dim_red_kernel_name == "UMAP":
-            return umap.UMAP(
-                n_components=parameter_set["n_components"],
-                n_neighbors=parameter_set["n_neighbors"],
-                n_epochs=parameter_set["n_epochs"],
-                learning_rate=parameter_set["learning_rate"],
-                min_dist=parameter_set["min_dist"],
-                spread=parameter_set["spread"],
-                # Always set metric to 'precomputed', since distance matrices are calculated previously. If other
-                # metrics are desired, the corresponding preprocessing step has to be extended.
-                metric='precomputed',
-            ).fit_transform(high_dim_data)
+            # Workaround for spectral initialization bug (?): Repeat with different seed until valid results are
+            # produced. See https://github.com/lmcinnes/umap/issues/85.
+            res = None
+            valid_res = False
+            while not valid_res:
+                res = umap.UMAP(
+                    n_components=parameter_set["n_components"],
+                    n_neighbors=parameter_set["n_neighbors"],
+                    n_epochs=parameter_set["n_epochs"],
+                    learning_rate=parameter_set["learning_rate"],
+                    min_dist=parameter_set["min_dist"],
+                    # Note: Recommended approach to keep spread and min_dist proportional - since original ration of
+                    # min_dist:spread is 1:10, we follow this ratio.
+                    spread=parameter_set["min_dist"] * 10,
+                    local_connectivity=parameter_set["local_connectivity"],
+                    # Always set metric to 'precomputed', since distance matrices are calculated previously. If other
+                    # metrics are desired, the corresponding preprocessing step has to be extended.
+                    metric='precomputed'
+                ).fit_transform(high_dim_data)
+
+                # Check validity of result by making sure it does not contain any NaNs.
+                valid_res = (numpy.count_nonzero(numpy.isnan(res)) == 0)
+
+            return res
 
         return None
 

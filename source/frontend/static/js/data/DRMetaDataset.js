@@ -178,7 +178,7 @@ export default class DRMetaDataset extends Dataset
                 else if (value >= extrema[1])
                     value = extrema[1] - binWidth;
 
-                this._data[j][histogramAttribute] = (Math.round(value / binWidth) * binWidth);
+                this._data[j][histogramAttribute] = binWidth !== 0 ? (Math.round(value / binWidth) * binWidth) : 0;
             }
 
             // If this is a numerical hyperparameter or an objective: Returned binned width.

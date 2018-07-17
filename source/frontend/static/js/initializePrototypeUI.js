@@ -19,6 +19,7 @@ $(document).ready(function() {
         success: function(model_data) {
             // Parse delivered JSON with metadata for all models.
             model_data = JSON.parse(model_data);
+
             // Cast Object to array.
             let model_data_list = [];
             for (let key in model_data) {

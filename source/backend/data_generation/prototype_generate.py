@@ -20,7 +20,7 @@ logger = Utils.create_logger()
 # Define name of dataset to use (appended to file name).
 dataset_name = "wine"
 # Define DR method to use.
-dim_red_kernel_name = "SVD"
+dim_red_kernel_name = "UMAP"
 
 # Get all parameter configurations (to avoid duplicate model generations).
 parameter_sets = DimensionalityReductionKernel.generate_parameter_sets_for_testing(
@@ -73,7 +73,7 @@ threads = []
 results = []
 
 # Split parameter sets amongst workers.
-logger.info("Generating t-SNE models.")
+logger.info("Generating dimensionality reduction models.")
 num_parameter_sets = int(len(parameter_sets) / n_jobs)
 for i in range(0, n_jobs):
     first_index = num_parameter_sets * i
