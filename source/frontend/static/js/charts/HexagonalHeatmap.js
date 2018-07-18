@@ -21,8 +21,6 @@ export default class HexagonalHeatmap extends Chart
     {
         super(name, panel, attributes, dataset, style, parentDivID);
 
-        console.log(d3);
-
         // Construct graph.
         this.constructCFChart();
     }
@@ -78,14 +76,14 @@ export default class HexagonalHeatmap extends Chart
             .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
             .attr("fill", function(d) { return color(d.length); });
 
-        g.append("g")
-            .attr("class", "axis axis--y")
-            .call(d3.axisLeft(y).tickSizeOuter(-width));
-
-        g.append("g")
-            .attr("class", "axis axis--x")
-            .attr("transform", "translate(0," + height + ")")
-            .call(d3.axisBottom(x).tickSizeOuter(-height));
+        // g.append("g")
+        //     .attr("class", "axis axis--y")
+        //     .call(d3.axisLeft(y).tickSizeOuter(-width));
+        //
+        // g.append("g")
+        //     .attr("class", "axis axis--x")
+        //     .attr("transform", "translate(0," + height + ")")
+        //     .call(d3.axisBottom(x).tickSizeOuter(-height));
     }
 
     highlight(id, source)

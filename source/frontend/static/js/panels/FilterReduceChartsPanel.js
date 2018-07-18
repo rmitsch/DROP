@@ -254,26 +254,18 @@ export default class FilterReduceChartsPanel extends Panel
                     dataset,
                     updatedStyle,
                     // Place chart in previously generated container div.
-                    this._containerDivIDs[objective1]
+                    this._containerDivIDs[objective1],
+                    // Draw hexagonal heatmap, hence don't draw any points.
+                    true
                 );
 
+                // Render.
                 this._charts[scatterplot.name] = scatterplot;
+                // Render scatterplot.
                 if (render)
-                    // Render scatterplot.
                     scatterplot.render();
             }
         }
-
-        // Test: Hexagonal heatmap.
-        let bla = new HexagonalHeatmap(
-            "objective1" + ":" + "objective2",
-            this,
-            ["objective1", "objective2"],
-            dataset,
-            null,
-            // Place chart in previously generated container div.
-            this._containerDivIDs["objective1"]
-        );
     }
 
     /**

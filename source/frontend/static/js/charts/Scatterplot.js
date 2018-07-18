@@ -15,8 +15,9 @@ export default class Scatterplot extends Chart
      * @param style Various style settings (chart width/height, colors, ...). Arbitrary format, has to be parsed indivdually
      * by concrete classes.
      * @param parentDivID
+     * @param useBinning Defines whether (hexagonal) binning should be used.
      */
-    constructor(name, panel, attributes, dataset, style, parentDivID)
+    constructor(name, panel, attributes, dataset, style, parentDivID, useBinning)
     {
         super(name, panel, attributes, dataset, style, parentDivID);
 
@@ -30,6 +31,9 @@ export default class Scatterplot extends Chart
             x: attributes[0],
             y: attributes[1]
         };
+        // Store binning preference.
+        this._useBinning = useBinning;
+
 
         // Construct graph.
         this.constructCFChart();

@@ -45,6 +45,7 @@ export default class NumericalHistogram extends Histogram
             .x(d3.scale.linear().domain([
                 extrema[instance._axes_attributes.x].min,
                 extrema[instance._axes_attributes.x].max +
+                // Add padding so that last bar is not cut off in the middle.
                 intervals[instance._axes_attributes.x] * 0.1
             ]))
             .y(d3.scale.linear().domain([0, extrema[key].max]))

@@ -14,7 +14,7 @@ export default class Dataset
         this._cf_intervals  = {};
 
         // Defines how much padding (relative to the shown interval) any axis should have.
-        this._axisPaddingRatio  = 6.0;
+        this._axisPaddingRatio  = 0.0;
     }
 
     get name()
@@ -70,7 +70,6 @@ export default class Dataset
         this._cf_intervals[attribute]   = this._cf_extrema[attribute].max - this._cf_extrema[attribute].min;
 
         // Add padding, if specified. Goal: Make also fringe elements clearly visible (other approach?).
-        // todo *** METADATA SSP BUG: possible cause.
         if (this._axisPaddingRatio > 0) {
             this._cf_extrema[attribute].min -= this._cf_intervals[attribute] / this._axisPaddingRatio;
             this._cf_extrema[attribute].max += this._cf_intervals[attribute] / this._axisPaddingRatio;

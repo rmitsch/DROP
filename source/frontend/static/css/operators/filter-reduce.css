@@ -95,3 +95,10 @@ span.filter-reduce-row-label-text {
     margin-right: 10px;
     font-weight: bold;
 }
+
+.pareto-scatterplot-hexheatmap {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    background-color: #ccc;
+}

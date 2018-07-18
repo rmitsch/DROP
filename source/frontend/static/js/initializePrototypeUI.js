@@ -1,6 +1,6 @@
 import PrototypeStage from './stages/PrototypeStage.js';
-import Dataset from './data/DRMetaDataset.js';
 import Utils from './Utils.js'
+import DRMetaDataset from "./data/DRMetaDataset.js";
 
 // IDs of menu buttons.
 let menuIDs = ["menu_prototype", "menu_about"];
@@ -60,7 +60,11 @@ $(document).ready(function() {
                 type: 'GET',
                 success: function(model_metadata) {
                     // Generate dataset.
-                    let dataset = new Dataset("PrototypeDataset", model_data_list, model_metadata, 5);
+                    let dataset = new DRMetaDataset(
+                        "PrototypeDataset",
+                        model_data_list,
+                        model_metadata,
+                        10 - 1);
 
                     // All components inside a panel are automatically linked with dc.js. Panels have to be linked
                     // with each other explicitly, if so desired (since used datasets may differ).

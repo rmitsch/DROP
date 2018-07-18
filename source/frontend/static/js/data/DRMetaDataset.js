@@ -119,8 +119,10 @@ export default class DRMetaDataset extends Dataset
 
         // Update extrema by padding values (hardcoded to 10%) for x-axis.
         this._cf_intervals[histogramAttribute]   = this._cf_extrema[histogramAttribute].max - this._cf_extrema[histogramAttribute].min;
-        this._cf_extrema[histogramAttribute].min -= this._cf_intervals[histogramAttribute] / this._axisPaddingRatio;
-        this._cf_extrema[histogramAttribute].max += this._cf_intervals[histogramAttribute] / this._axisPaddingRatio;
+        if (this._axisPaddingRatio > 0) {
+            this._cf_extrema[histogramAttribute].min -= this._cf_intervals[histogramAttribute] / this._axisPaddingRatio;
+            this._cf_extrema[histogramAttribute].max += this._cf_intervals[histogramAttribute] / this._axisPaddingRatio;
+        }
     }
 
     _initSingularDimensionsAndGroups()

@@ -127,7 +127,7 @@ export default class PrototypeStage extends Stage
                 $("#" + splitBottomDiv.id).addClass("split split-vertical");
                 Split(["#" + splitTopDiv.id, "#" + splitBottomDiv.id], {
                     direction: "vertical",
-                    sizes: [53, 47],
+                    sizes: [57, 43],
                     onDragEnd: function() {
                     }
                 });
