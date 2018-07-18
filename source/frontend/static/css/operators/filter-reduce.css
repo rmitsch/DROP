@@ -100,5 +100,6 @@ span.filter-reduce-row-label-text {
     position: absolute;
     top: 0px;
     left: 0px;
-    background-color: #ccc;
+    border-right: 1px solid;
+    border-top: 1px solid;
 }

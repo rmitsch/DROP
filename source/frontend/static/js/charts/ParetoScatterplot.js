@@ -25,6 +25,8 @@ export default class ParetoScatterplot extends Scatterplot
 
         // If binning is required: Create separate, contained SVG.
         this._hexHeatmapContainerID = null;
+        // Used to store max. value in heatmap cell - important for setting color of cells.
+        this._maxCellValue = null;
         if (this._useBinning) {
             this._hexHeatmapContainerID = Utils.spawnChildDiv(this._target, null, 'pareto-scatterplot-hexheatmap').id;
         }
@@ -73,7 +75,8 @@ export default class ParetoScatterplot extends Scatterplot
         // Configure chart.
         this._cf_chart
             .height(instance._style.height)
-            .width(instance._style.width)
+            // Take into account missing width in histograms.
+            .width(instance._style.width - 8)
             .useCanvas(true)
             .x(d3.scale.linear().domain(
                 [extrema[instance._axes_attributes.x].min, extrema[instance._axes_attributes.x].max]
@@ -100,10 +103,10 @@ export default class ParetoScatterplot extends Scatterplot
             .filterOnBrushEnd(true)
             .mouseZoomable(false)
             .margins({top: 0, right: 0, bottom: 25, left: 25})
-            .on('postRedraw', function(chart) {
+            .on('preRedraw', function(chart) {
                 // If binning is used: Redraw heatmap.
                 if (instance._useBinning) {
-
+                    instance._drawHexagonalHeatmap();
                 }
             });
 
@@ -139,10 +142,10 @@ export default class ParetoScatterplot extends Scatterplot
 
     /**
      * Draws hexagonal heatmap behind scatterplot. Uses existing chart SVG.
-     * @param chartDivID
+     * Source for heatmap code: https://bl.ocks.org/mbostock/4248145.
      * @private
      */
-    _drawHexagonalHeatmap(chartDivID)
+    _drawHexagonalHeatmap()
     {
         // --------------------------------------
         // 1. Append/reset SVG to container div.
@@ -163,8 +166,8 @@ export default class ParetoScatterplot extends Scatterplot
 
         // Container div.
         let heatmapContainer = $("#" + this._hexHeatmapContainerID);
-        heatmapContainer.width(this._cf_chart.width() - this._cf_chart.margins().left);
-        heatmapContainer.height(this._cf_chart.height() - this._cf_chart.margins().bottom);
+        heatmapContainer.width(this._cf_chart.width() - this._cf_chart.margins().left - 1);
+        heatmapContainer.height(this._cf_chart.height() - this._cf_chart.margins().bottom - 1);
         heatmapContainer.css("left", this._cf_chart.margins().left);
         // SVG.
         heatmapContainer.find("svg")[0].setAttribute('width', heatmapContainer.width());
@@ -207,11 +210,24 @@ export default class ParetoScatterplot extends Scatterplot
         for (let record of records) {
             recordCoords.push([
                 translateIntoCoordinates(record, "x"),
-                translateIntoCoordinates(record, "y")
+                height - translateIntoCoordinates(record, "y")
             ]);
         }
 
-        Next up: Draw recordCoords; then test and review next steps.
+        // Do actual binning.
+        let hexbin = d3.hexbin()
+            .radius(5)
+            .extent([[0, 0], [width, height]]);
+        let cells = hexbin(recordCoords);
+
+        // Find max. value/number of values in cell, if not done yet.
+        // -> Do only once to initialize.
+        if (this._maxCellValue === null) {
+            this._maxCellValue = cells.reduce(
+                (currIndex, maxCell, maxCellIndex, allCells) =>
+                allCells[currIndex].length > maxCell.length ? currIndex : maxCellIndex, 0
+            );
+        }
 
         // --------------------------------------
         // 4. Draw heatmap.
@@ -219,24 +235,8 @@ export default class ParetoScatterplot extends Scatterplot
 
         let g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-        var randomX = d3.randomNormal(width / 2, width / 2),
-            randomY = d3.randomNormal(height / 2, height / 2),
-            points = d3.range(2000).map(function() { return [randomX(), randomY()]; });
-
-        var color = d3.scaleSequential(d3.interpolateLab("white", "steelblue"))
-            .domain([0, 20]);
-
-        var hexbin = d3.hexbin()
-            .radius(6)
-            .extent([[0, 0], [width, height]]);
-
-        var x = d3.scaleLinear()
-            .domain([0, width])
-            .range([0, width]);
-
-        var y = d3.scaleLinear()
-            .domain([0, height])
-            .range([height, 0]);
+        let color = d3.scaleSequential(d3.interpolateLab("white", "steelblue"))
+            .domain([0, this._maxCellValue]);
 
         g.append("clipPath")
             .attr("id", "clip")
@@ -248,7 +248,7 @@ export default class ParetoScatterplot extends Scatterplot
             .attr("class", "hexagon")
             .attr("clip-path", "url(#clip)")
             .selectAll("path")
-            .data(hexbin(points))
+            .data(cells)
             .enter().append("path")
             .attr("d", hexbin.hexagon())
             .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })

@@ -100,6 +100,14 @@ ul.pure-menu-children li {
     font-weight: bold;
 }
 
+#datasetLink {
+    text-align: right;
+}
+
+#drkernelLink {
+    width: 60px;
+}
+
 #load-dataset-link {
     position: relative;
     top: 2px;
