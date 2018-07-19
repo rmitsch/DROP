@@ -22,14 +22,33 @@ export default class DissonanceChart extends Chart
     {
         super(name, panel, attributes, dataset, style, parentDivID);
 
+        // Constant width in pixel heatmap SVG is too wide.
+        this._heatmapCutoff = 20;
+        // Constant for color scheme.
+        this._colorScheme = ["#fff", "#fff7fb","#ece7f2","#d0d1e6","#a6bddb","#74a9cf","#3690c0","#0570b0","#045a8d","#023858"];
+        // Define color domain.
+        this._colorDomain = this._calculateColorDomain();
+
         // Generate div structure for child nodes.
         this._divStructure = this._createDivStructure();
 
-        // Constant width in pixel heatmap SVG is too wide.
-        this._heatmapCutoff = 20;
-
         // Construct graph.
         this.constructCFChart();
+    }
+
+    /**
+     * Calculates color domain based on existing color scheme and data extrema.
+     * @private
+     */
+    _calculateColorDomain()
+    {
+        let colorDomain = [0];
+        let extrema     = this._dataset._cf_extrema["samplesInModelsMeasure:sampleDRModelMeasure"];
+        for (let i = 1; i < this._colorScheme.length; i++) {
+            colorDomain.push(extrema.max / (this._colorScheme.length - 1) * i);
+        }
+
+        return colorDomain;
     }
 
     constructCFChart()
@@ -109,12 +128,21 @@ export default class DissonanceChart extends Chart
         this._verticalHistogram.render();
 
         // -------------------------------
-        // 3. Render heatmap.
+        // 3. Render heatmap and color
+        //    scale.
         // -------------------------------
 
         this._dissonanceHeatmap.width(newWidth);
         this._dissonanceHeatmap.height(newHeight);
         this._dissonanceHeatmap.render();
+
+        // Adjust color scale height.
+        $("#" + this._divStructure.colorPaletteDiv.id).height(newHeight);
+        // Adjust color scale's labels' positions.
+        for (let label of $(".color-palette-label")) {
+            let labelElement = $("#" + label.id);
+            labelElement.css("top", labelElement.parent().height() / 2 - labelElement.height() / 2);
+        }
     }
 
     /**
@@ -149,8 +177,8 @@ export default class DissonanceChart extends Chart
             .colors(
                 d3.scale
                     .linear()
-                    .domain([0, 1, extrema[attribute].max / 2, extrema[attribute].max])
-                    .range(["#fff", "#deebf7", "#9ecae1", "steelblue"])
+                    .domain(this._colorDomain)
+                    .range(this._colorScheme)
             )
             .keyAccessor(function(d) {
                 return d.key[0];
@@ -175,7 +203,7 @@ export default class DissonanceChart extends Chart
             .on('postRender', function(chart) {
                 let svg = $("#" + scope._divStructure.heatmapDivID).find('svg')[0];
                 svg.setAttribute('width', (svg.width.baseVal.value - scope._heatmapCutoff) + "px");
-            });;
+            });
 
         // No rounded corners.
         this._dissonanceHeatmap.xBorderRadius(0);
@@ -285,11 +313,38 @@ export default class DissonanceChart extends Chart
         let sampleHistogramDiv  = Utils.spawnChildDiv(this._target, null, "dissonance-variance-chart horizontal");
         let heatmapDiv          = Utils.spawnChildDiv(this._target, null, "dissonance-heatmap");
         let kHistogramDiv       = Utils.spawnChildDiv(this._target, null, "dissonance-variance-chart vertical");
+        let paletteDiv          = Utils.spawnChildDiv(this._target, null, "color-palette");
+
+        // Generate divs inside palette - one for each color.
+        let colorToPaletteCellMap = {};
+        for (let i = this._colorScheme.length - 1; i >= 0; i--) {
+            let color                       = this._colorScheme[i];
+            let cell                        = Utils.spawnChildDiv(paletteDiv.id, null, "color-palette-cell");
+            colorToPaletteCellMap[color]    = cell.id;
+
+            // Set color of cell.
+            $("#" + cell.id).css("background-color", color);
+
+            // Create labels indicating color <-> percentage mapping.
+            if (i === this._colorScheme.length - 1 ||
+                i === Math.round(this._colorScheme.length / 2) ||
+                i === 0
+            ) {
+                let percentage = (this._colorDomain[i] / this._dataset._crossfilter.all().length) * 100;
+                // Spawn label.
+                Utils.spawnChildSpan(cell.id, null, "color-palette-label", Math.round(percentage) + "%");
+            }
+        }
 
         return {
             horizontalHistogramDivID: sampleHistogramDiv.id,
             heatmapDivID: heatmapDiv.id,
-            verticalHistogramDivID: kHistogramDiv.id
+            verticalHistogramDivID: kHistogramDiv.id,
+            colorPaletteDiv: {
+                id: paletteDiv.id,
+                cells: colorToPaletteCellMap,
+                labels: null
+            }
         };
     }
 }

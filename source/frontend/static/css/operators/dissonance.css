@@ -28,8 +28,11 @@
     width: 80%;
     height: calc(100% - 10px);
     position: relative;
-    margin-left: auto;
-    margin-right: auto;
+    margin-left: 6%;
+}
+
+.dissonance-charts-container .chart {
+    height: 100%;
 }
 
 .dissonance-variance-chart.horizontal {
@@ -55,3 +58,35 @@
     border-right: 1px solid;
     border-bottom: 1px solid;
 }
+
+/* Color palette. */
+
+.color-palette {
+    display: inline-block;
+    position: absolute;
+    top: 34px;
+    right: -30px;
+    width: 20px;
+    vertical-align: bottom;
+    background: #ccc;
+    border: solid 1px #aaa;
+}
+
+.color-palette-cell {
+    position: relative;
+    display: block;
+    /* Assumption of 10 color steps in scale. */
+    height: 10%;
+    width: 100%;
+    background-color: #00cc33;;
+}
+
+.color-palette-label {
+    position: absolute;
+    width: 35px;
+    right: -40px;
+    font-size: 12px;
+    text-align: left;
+}
+
+/* /Color palette. */
