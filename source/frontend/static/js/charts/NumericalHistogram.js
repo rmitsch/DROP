@@ -35,6 +35,15 @@ export default class NumericalHistogram extends Histogram
         let intervals   = this._dataset._cf_intervals;
         let dimensions  = this._dataset._cf_dimensions;
         let key         = this._axes_attributes.x + "#histogram";
+        // Use padding so that first/last bar are not cut off in chart.
+        let dataPadding = intervals[this._axes_attributes.x] * this._style.paddingFactor;
+
+        if (key === "angle#histogram") {
+            console.log(key);
+            console.log(extrema[instance._axes_attributes.x]);
+            console.log(intervals[instance._axes_attributes.x]);
+        }
+
 
         // Configure chart.
         this._cf_chart
@@ -43,10 +52,8 @@ export default class NumericalHistogram extends Histogram
             .valueAccessor( function(d) { return  d.value.count; } )
             .elasticY(false)
             .x(d3.scale.linear().domain([
-                extrema[instance._axes_attributes.x].min,
-                extrema[instance._axes_attributes.x].max +
-                // Add padding so that last bar is not cut off in the middle.
-                intervals[instance._axes_attributes.x] * 0.1
+                extrema[instance._axes_attributes.x].min - dataPadding,
+                extrema[instance._axes_attributes.x].max + dataPadding
             ]))
             .y(d3.scale.linear().domain([0, extrema[key].max]))
             .brushOn(true)

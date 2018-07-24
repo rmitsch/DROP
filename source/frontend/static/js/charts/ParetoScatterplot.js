@@ -69,8 +69,11 @@ export default class ParetoScatterplot extends Scatterplot
         // Create shorthand references.
         let instance    = this;
         let extrema     = this._dataset._cf_extrema;
+        let intervals   = this._dataset._cf_intervals;
         let dimensions  = this._dataset._cf_dimensions;
         let key         = this._axes_attributes.x + ":" + this._axes_attributes.y;
+        // Use padding so that first/last bar are not cut off in chart.
+        let dataPadding = intervals[this._axes_attributes.x] * this._style.paddingFactor;
 
         // Configure chart.
         this._cf_chart
@@ -78,12 +81,14 @@ export default class ParetoScatterplot extends Scatterplot
             // Take into account missing width in histograms.
             .width(instance._style.width - 8)
             .useCanvas(true)
-            .x(d3.scale.linear().domain(
-                [extrema[instance._axes_attributes.x].min, extrema[instance._axes_attributes.x].max]
-            ))
-            .y(d3.scale.linear().domain(
-                [extrema[instance._axes_attributes.y].min, extrema[instance._axes_attributes.y].max]
-            ))
+            .x(d3.scale.linear().domain([
+                extrema[instance._axes_attributes.x].min - dataPadding,
+                extrema[instance._axes_attributes.x].max + dataPadding
+            ]))
+            .y(d3.scale.linear().domain([
+                extrema[instance._axes_attributes.y].min,
+                extrema[instance._axes_attributes.y].max
+            ]))
             .xAxisLabel(instance._style.showAxisLabels.x ? instance._axes_attributes.x : null)
             .yAxisLabel(instance._style.showAxisLabels.y ? instance._axes_attributes.y : null)
             .renderHorizontalGridLines(true)
@@ -187,16 +192,26 @@ export default class ParetoScatterplot extends Scatterplot
         let instance    = this;
         let key         = this._axes_attributes.x + ":" + this._axes_attributes.y;
         let records     = this._dataset._cf_dimensions[key].top(Infinity);
+        let dataPadding = {
+            x: this._dataset._cf_intervals[this._axes_attributes.x] * this._style.paddingFactor,
+            y: this._dataset._cf_intervals[this._axes_attributes.y] * this._style.paddingFactor
+        };
 
-        // Prepare data necessary for binning.
+        // Prepare data necessary for binning. Take padding values into account to ensure matching with histograms.
         let extrema = {
-            x: this._dataset._cf_extrema[this._axes_attributes.x],
-            y: this._dataset._cf_extrema[this._axes_attributes.y],
+            x: {
+                min: this._dataset._cf_extrema[this._axes_attributes.x].min - dataPadding.x,
+                max: this._dataset._cf_extrema[this._axes_attributes.x].max + dataPadding.x,
+            },
+            y:  {
+                min: this._dataset._cf_extrema[this._axes_attributes.y].min - dataPadding.y,
+                max: this._dataset._cf_extrema[this._axes_attributes.y].max + dataPadding.y,
+            }
         };
         // Calculate translation factors.
         let translationFactors = {
-            x: width / (this._dataset._cf_intervals[this._axes_attributes.x] * 1.1),
-            y: height / (this._dataset._cf_intervals[this._axes_attributes.y]),
+            x: width / (this._dataset._cf_intervals[this._axes_attributes.x] + dataPadding.x * 2),
+            y: height / (this._dataset._cf_intervals[this._axes_attributes.y] + dataPadding.y * 2),
         };
         // Calculate translations for binning so that value extrema match coordinate extrema.
         let translateIntoCoordinates = function(d, axis) {

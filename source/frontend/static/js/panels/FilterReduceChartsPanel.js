@@ -51,6 +51,7 @@ export default class FilterReduceChartsPanel extends Panel
             // Use current container dimensions as size for chart.
             height: 65,
             width: $("#" + this._containerDivIDs["n_components"]).width(),
+            paddingFactor: 0.15,
             excludedColor: "#ccc",
             numberOfTicks: {
                 x: 2,
@@ -68,6 +69,7 @@ export default class FilterReduceChartsPanel extends Panel
             // Use current container dimensions as size for chart.
             height: 65,
             width: $("#" + this._containerDivIDs["n_components"]).width(),
+            paddingFactor: 0.15,
             symbolSize: 1,
             excludedOpacity: 1,
             excludedSymbolSize: 1,
