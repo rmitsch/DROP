@@ -40,15 +40,15 @@ export default class SurrogateModelChart extends Chart
      */
     render()
     {
+        let margin      = {top: 5, right: 120, bottom: 20, left: 120};
         let baseWidth   = $("#" + this._panel._operator._target).width() - 0;
         let baseHeight  = $("#" + this._panel._operator._target).height() - 5;
         let treeData    = this._dataset;
         let scope       = this;
 
         // Generate chart.
-        var margin = {top: 10, right: 120, bottom: 20, left: 120},
-            width = baseWidth - margin.right - margin.left,
-            height = baseHeight - margin.top - margin.bottom;
+        var width   = baseWidth - margin.right - margin.left;
+        var height  = baseHeight - margin.top - margin.bottom;
 
         var i = 0,
             duration = 500,
@@ -62,10 +62,8 @@ export default class SurrogateModelChart extends Chart
                 return [d.y, d.x];
             });
 
-        // Remove old chart, if it exists.
-        //d3.select("#" + this._target).remove();
         let svgContainer = d3.select("#" + this._target);
-        // Create new chart.
+        // Create chart.
         var svg = svgContainer.append("svg")
             .attr("id", "surrogate-model-chart-svg")
             .attr("width", "100%")
@@ -243,8 +241,9 @@ export default class SurrogateModelChart extends Chart
     }
 
      /**
-     * Create (hardcoded) div structure for child nodes.
-     * @returns {Object}
+      * Create (hardcoded) div structure for child nodes.
+      * @deprecated
+      * @returns {Object}
      */
     _createDivStructure()
     {
