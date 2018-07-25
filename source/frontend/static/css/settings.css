@@ -23,7 +23,7 @@ datalist {
 datalist option {
     display: inline-block;
     font-size: 12px;
-    width: 8px;
+    width: 9px;
 }
 
 .setting-option {
@@ -42,6 +42,11 @@ datalist option {
     top: -15px;
 }
 
+#filter-reduce-settings-line-width {
+    position: relative;
+    top: -15px;
+}
+
 #surrogate-settings-target-objective {
     position: relative;
     top: -30px;
@@ -49,4 +54,8 @@ datalist option {
 
 .range-control {
     display: inline-block;
+}
+
+datalist#filter-reduce-tickmarks option {
+    width: 22px;
 }

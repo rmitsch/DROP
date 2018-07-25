@@ -25,6 +25,20 @@ export default class FilterReduceSettingsPanel extends SettingsPanel {
 
         let settingsHTML = "";
 
+        // Add range control for tree depth.
+        settingsHTML += "<div class='setting-option'>";
+        settingsHTML += "<span id='filter-reduce-settings-line-width'>Line width</span>";
+        settingsHTML += "<div class='range-control'>" +
+            "<datalist id='filter-reduce-tickmarks'>" +
+            "  <option value='0.1' label='0.1'>" +
+            "  <option value='0.2'>" +
+            "  <option value='0.3'>" +
+            "  <option value='0.4'>" +
+            "  <option value='0.5' label='0.5'>" +
+            "</datalist>" +
+            "<input type='range' min='0.1' max='0.5' step='0.1' list='filter-reduce-tickmarks'>" +
+            "</div>";
+        settingsHTML += "</div>";
 
         // -----------------------------------
         // 2. Create title and options container.

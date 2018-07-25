@@ -30,7 +30,7 @@ export default class SurrogateModelSettingsPanel extends SettingsPanel {
         settingsHTML += "<div class='setting-option'>";
         settingsHTML += "<span id='surrogate-settings-tree-depth-label'>Tree Depth</span>";
         settingsHTML += "<div class='range-control'>" +
-            "<datalist id='tickmarks'>" +
+            "<datalist id='surrogate-tickmarks'>" +
             "  <option value='1' label='0'>" +
             "  <option value='2'>" +
             "  <option value='3'>" +
@@ -42,7 +42,7 @@ export default class SurrogateModelSettingsPanel extends SettingsPanel {
             "  <option value='9'>" +
             "  <option value='10' label='10'>" +
             "</datalist>" +
-            "<input type='range' list='tickmarks'>" +
+            "<input type='range' min='1' max='10' step='1' list='surrogate-tickmarks'>" +
             "</div>";
         settingsHTML += "</div>";
 
