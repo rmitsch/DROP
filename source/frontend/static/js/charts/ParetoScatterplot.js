@@ -238,15 +238,7 @@ export default class ParetoScatterplot extends Scatterplot
 
         let g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-        // Continous color scheme.
-        // let color = d3.scaleSequential(d3.interpolateLab("white", "steelblue"))
-        //     .domain([0, this._maxCellValue]);
-
-        // Discrete color scheme.
-        // Taken from colorbrewer/https://bl.ocks.org/mbostock/5577023.
-        // let colors = d3.scaleQuantize()
-        //         .domain([0, this._maxCellValue])
-        //         .range(["#fff7fb","#ece7f2","#d0d1e6","#a6bddb","#74a9cf","#3690c0","#0570b0","#045a8d","#023858"]);
+        // Generate color scheme.
         let colors = d3.scale
             .linear()
             .domain([0, this._maxCellValue])
