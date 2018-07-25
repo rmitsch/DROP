@@ -30,7 +30,7 @@ export default class Panel
         let div         = document.createElement('div');
         div.id          = this._target;
         div.className   = 'panel';
-        $("#" + (typeof parentDivID == "undefined" ? this._operator.target : parentDivID)).append(div);
+        $("#" + ((typeof parentDivID == "undefined" || parentDivID === null) ? this._operator.target : parentDivID)).append(div);
 
         // Make class abstract.
         if (new.target === Panel) {
@@ -57,7 +57,7 @@ export default class Panel
     /**
      * Resizes all charts in this panel.
      */
-    render()
+    resize()
     {
         throw new TypeError("Panel.resize(): Abstract method must not be called.");
     }

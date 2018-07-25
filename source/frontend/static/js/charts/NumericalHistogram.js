@@ -38,13 +38,6 @@ export default class NumericalHistogram extends Histogram
         // Use padding so that first/last bar are not cut off in chart.
         let dataPadding = intervals[this._axes_attributes.x] * this._style.paddingFactor;
 
-        if (key === "angle#histogram") {
-            console.log(key);
-            console.log(extrema[instance._axes_attributes.x]);
-            console.log(intervals[instance._axes_attributes.x]);
-        }
-
-
         // Configure chart.
         this._cf_chart
             .height(instance._style.height)

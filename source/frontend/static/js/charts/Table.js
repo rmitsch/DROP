@@ -180,7 +180,6 @@ export default class Table extends Chart
         dc.chartRegistry.register(this._cf_chart, this._panel._operator._target);
     }
 
-
     highlight(id, source)
     {
         if (source !== this._target) {

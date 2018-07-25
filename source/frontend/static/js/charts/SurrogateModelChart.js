@@ -209,11 +209,12 @@ export default class SurrogateModelChart extends Chart
 
             // Widen panel, if necessary.
             if (d.children) {
-                let value = (d.depth + 1) * 110 + margin.left;
+                // Add margin.left and 120 to reflect offset on the left and length of result label on the right.
+                let value = (d.depth + 1) * 110 + margin.left + 120;
                 let currPanelWidth = $("#" + scope._panel._target).width();
 
                 if (currPanelWidth < value) {
-                    $("#" + scope._panel._target).width(value + 10);
+                    $("#" + scope._panel._target).width(value);
                 }
             }
 

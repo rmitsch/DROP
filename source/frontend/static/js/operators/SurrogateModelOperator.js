@@ -1,6 +1,7 @@
 import Operator from "./Operator.js";
 import SurrogateModelPanel from "../panels/SurrogateModelPanel.js";
 import SurrogateModelChart from "../charts/SurrogateModelChart.js";
+import SettingsPanel from "../panels/settings/SettingsPanel.js";
 
 
 /**
@@ -42,17 +43,53 @@ export default class SurrogateModelOperator extends Operator
      */
     constructPanels()
     {
-        // Construct panel for surrogate model visualization.
+        // ----------------------------------------------
+        // Generate panels.
+        // ----------------------------------------------
+
+        // 1. Construct panel for surrogate model visualization.
         let surrModelPanel = new SurrogateModelPanel(
             "Surrogate Model",
             this
         );
         this._panels[surrModelPanel.name] = surrModelPanel;
+
+        // 2. Construct panel for settings.
+        let settingsPanel = new SettingsPanel(
+            "Surrogate Model: Settings",
+            this,
+            null,
+            {
+                "Target Objective": {
+                    type: "dropdown",
+                    values: ["Runtime", "R<sub>nx</sub>", "B<sub>nx</sub>", "Stress", "Accuracy", "Silhouette"],
+                    default: "Runtime"
+                },
+                "Depth": {
+                    type: "range",
+                    range: [1, 10],
+                    default: 5
+                }
+            }
+        );
+        this._panels[settingsPanel.name] = settingsPanel;
+
+        // ----------------------------------------------
+        // Configure modals.
+        // ----------------------------------------------
+
+        let scope = this;
+
+        // 3. Set click listener for FRC panel's settings modal.
+        $("#surrogate-info-settings-icon").click(function() {
+            $("#" + scope._panels[settingsPanel.name]._target).dialog({
+                title: "Settings",
+                width: $("#" + scope._stage._target).width() / 4,
+                height: $("#" + scope._stage._target).height() / 2
+            });
+        });
     }
 
-    /**
-     * (Re-)Renders all panels.
-     */
     render()
     {
         for (let panelName in this._panels) {

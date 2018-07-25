@@ -1,0 +1,38 @@
+.settings-panel {
+    display: none;
+    position: relative;
+    text-align: center;
+}
+
+.settings-content {
+    width: 100%;
+    height: calc(100% - 50px);
+    text-align: left;
+}
+
+.settings-update-button {
+    background: #3d4a57;
+    color: #fff;
+}
+
+datalist {
+    display: block;
+    margin-bottom: 5px;
+}
+
+datalist option {
+    display: inline-block;
+    font-size: 12px;
+}
+
+.setting-option span {
+    font-size: 14px;
+    font-style: italic;
+    margin-right: 20px;
+}
+
+.range-control {
+    display: inline-block;
+    position: relative;
+    top: 12px;
+}
