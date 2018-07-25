@@ -244,11 +244,13 @@ export default class ParetoScatterplot extends Scatterplot
 
         // Discrete color scheme.
         // Taken from colorbrewer/https://bl.ocks.org/mbostock/5577023.
-
-
-        let colors = d3.scaleQuantize()
-                .domain([0, this._maxCellValue])
-                .range(["#fff7fb","#ece7f2","#d0d1e6","#a6bddb","#74a9cf","#3690c0","#0570b0","#045a8d","#023858"]);
+        // let colors = d3.scaleQuantize()
+        //         .domain([0, this._maxCellValue])
+        //         .range(["#fff7fb","#ece7f2","#d0d1e6","#a6bddb","#74a9cf","#3690c0","#0570b0","#045a8d","#023858"]);
+        let colors = d3.scale
+            .linear()
+            .domain([0, this._maxCellValue])
+            .range(["#fff7fb","#ece7f2","#d0d1e6","#a6bddb","#74a9cf","#3690c0","#0570b0","#045a8d","#023858"]);
 
         g.append("clipPath")
             .attr("id", "clip")
