@@ -2,49 +2,60 @@ import SettingsPanel from "./SettingsPanel.js";
 import Utils from "../../Utils.js";
 
 /**
- * Class for settings panels.
- * Accepts a map of options.
+ * Class for surrogate model settings panel.
  */
 export default class SurrogateModelSettingsPanel extends SettingsPanel {
     /**
-     * Constructs new panel for charts for DissonanceOperator.
+     * Constructs new settings panel for surrogate model operator.
      * @param name
      * @param operator
      * @param parentDivID
+     * @param iconID
      */
-    constructor(name, operator, parentDivID)
+    constructor(name, operator, parentDivID, iconID)
     {
-        super(name, operator, parentDivID);
+        super(name, operator, parentDivID, iconID);
     }
 
-    _createDivStructure() {
-        let scope = this;
+    _createDivStructure()
+    {
+        let settingsHTML = "";
 
         // -----------------------------------
         // 1. Generate HTML for setting
         //    options.
         // -----------------------------------
 
-        let settingsHTML = "";
-
-        settingsHTML += "<div class='setting-option'>" +
-            "<span>Depth:</span>";
-
+        // Add range control for tree depth.
+        settingsHTML += "<div class='setting-option'>";
+        settingsHTML += "<span id='surrogate-settings-tree-depth-label'>Tree Depth</span>";
         settingsHTML += "<div class='range-control'>" +
-            "<datalist id=\"tickmarks\">" +
-            "  <option value=\"0\" label=\"0%\">" +
-            "  <option value=\"10\">" +
-            "  <option value=\"20\">" +
-            "  <option value=\"30\">" +
-            "  <option value=\"40\">" +
-            "  <option value=\"50\" label=\"50%\">" +
-            "  <option value=\"60\">" +
-            "  <option value=\"70\">" +
-            "  <option value=\"80\">" +
-            "  <option value=\"90\">" +
-            "  <option value=\"100\" label=\"100%\">" +
-            "</datalist>" + "<input type=\"range\" list=\"tickmarks\">" +
+            "<datalist id='tickmarks'>" +
+            "  <option value='1' label='0'>" +
+            "  <option value='2'>" +
+            "  <option value='3'>" +
+            "  <option value='4'>" +
+            "  <option value='5' label='5'>" +
+            "  <option value='6'>" +
+            "  <option value='7'>" +
+            "  <option value='8'>" +
+            "  <option value='9'>" +
+            "  <option value='10' label='10'>" +
+            "</datalist>" +
+            "<input type='range' list='tickmarks'>" +
             "</div>";
+        settingsHTML += "</div>";
+
+        // Add <select multiple> for selection of target objective(s).
+        settingsHTML += "<div class='setting-option'>";
+        settingsHTML += "<span id='surrogate-settings-target-objective'>Target objective</span>";
+        settingsHTML += "<select multiple>" +
+            "  <option value='runtime'>Runtime</option>" +
+            "  <option value='rnx'>R<sub>nx</sub></option>" +
+            "  <option value='bnx'>B<sub>nx</sub></option>" +
+            "  <option value='stress'>Stress</option>" +
+            "  <option value='accuracy'>Accuracy</option>" +
+        "</select>";
         settingsHTML += "</div>";
 
         // -----------------------------------

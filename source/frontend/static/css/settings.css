@@ -23,6 +23,12 @@ datalist {
 datalist option {
     display: inline-block;
     font-size: 12px;
+    width: 8px;
+}
+
+.setting-option {
+    font-size: 14px;
+    margin-bottom: 20px;
 }
 
 .setting-option span {
@@ -31,8 +37,16 @@ datalist option {
     margin-right: 20px;
 }
 
+#settings-tree-depth-label {
+    position: relative;
+    top: -15px;
+}
+
+#surrogate-settings-target-objective {
+    position: relative;
+    top: -30px;
+}
+
 .range-control {
     display: inline-block;
-    position: relative;
-    top: 12px;
 }

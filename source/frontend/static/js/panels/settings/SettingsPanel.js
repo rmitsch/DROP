@@ -3,7 +3,6 @@ import Utils from "../../Utils.js";
 
 /**
  * Abstract base class for settings panels.
- * Accepts a map of options.
  */
 export default class SettingsPanel extends Panel
 {
@@ -12,8 +11,9 @@ export default class SettingsPanel extends Panel
      * @param name
      * @param operator
      * @param parentDivID
+     * @param iconID ID of icon used to launch options panel.
      */
-    constructor(name, operator, parentDivID)
+    constructor(name, operator, parentDivID, iconID)
     {
         super(name, operator, parentDivID);
 
@@ -22,6 +22,16 @@ export default class SettingsPanel extends Panel
 
         // Create div structure for child nodes.
         this._divStructure = this._createDivStructure();
+
+        // Set click listener.
+        let scope = this;
+        $("#" + iconID).click(function() {
+            $("#" + scope._target).dialog({
+                title: scope._name,
+                width: $("#" + scope._operator._stage._target).width() / 4,
+                height: $("#" + scope._operator._stage._target).height() / 2
+            });
+        });
 
         // Make class abstract.
         if (new.target === SettingsPanel) {

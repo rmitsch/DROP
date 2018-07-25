@@ -1,7 +1,7 @@
 import Operator from "./Operator.js";
 import FilterReduceChartsPanel from "../panels/FilterReduceChartsPanel.js";
 import FilterReduceTablePanel from "../panels/FilterReduceTablePanel.js";
-import SettingsPanel from "../panels/settings/SettingsPanel.js";
+import FilterReduceSettingsPanel from "../panels/settings/FilterReduceSettingsPanel.js";
 
 /**
  * Class for FilterReduceOperators with scattered (scree) and violin plots.
@@ -54,14 +54,8 @@ export default class FilterReduceOperator extends Operator
         this._panels[tablePanel.name] = tablePanel;
 
         // 3. Construct panel for settings.
-        let settingsPanel = new SettingsPanel(
-            "Hyperparameters & Objectives: Settings",
-            this,
-            null,
-            {
-                optionName: {type: "Interval", range: [0, 1], default: 0},
-                optionName2: {type: "Toggle", range: [false, true], default: true}
-            }
+        let settingsPanel = new FilterReduceSettingsPanel(
+            "Hyperparameters & Objectives: Settings", this, null, "filter-reduce-info-settings-icon"
         );
         this._panels[settingsPanel.name] = settingsPanel;
 
@@ -76,15 +70,6 @@ export default class FilterReduceOperator extends Operator
             $("#" + scope._panels[tablePanel.name]._target).dialog({
                 title: "All models",
                 width: $("#" + scope._stage._target).width() / 2,
-                height: $("#" + scope._stage._target).height() / 2
-            });
-        });
-
-        // 5. Set click listener for FRC panel's settings modal.
-        $("#filter-reduce-info-settings-icon").click(function() {
-            $("#" + scope._panels[settingsPanel.name]._target).dialog({
-                title: "Settings",
-                width: $("#" + scope._stage._target).width() / 4,
                 height: $("#" + scope._stage._target).height() / 2
             });
         });

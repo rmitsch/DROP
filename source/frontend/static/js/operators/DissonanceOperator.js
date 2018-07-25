@@ -1,5 +1,6 @@
 import Operator from "./Operator.js";
 import DissonancePanel from "../panels/DissonancePanel.js";
+import DissonanceSettingsPanel from "../panels/settings/DissonanceSettingsPanel.js";
 
 
 /**
@@ -32,12 +33,18 @@ export default class DissonanceOperator extends Operator
      */
     constructPanels()
     {
-        // Construct panel for surrogate model visualization.
+        // 1. Construct panel for surrogate model visualization.
         let dissPanel = new DissonancePanel(
             "Model Disagreement",
             this
         );
         this._panels[dissPanel.name] = dissPanel;
+
+        // 2. Construct panel for settings.
+        let settingsPanel = new DissonanceSettingsPanel(
+            "Sample Dissonance: Settings", this, null, "dissonance-info-settings-icon"
+        );
+        this._panels[settingsPanel.name] = settingsPanel;
     }
 
     render()
