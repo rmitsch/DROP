@@ -33,6 +33,7 @@ $(document).ready(function() {
     // 3. Fetch model metadata - both structure and content.
     // -----------------------------------------------------
 
+    console.log("Fetch metadata.");
     $.ajax({
         url: '/get_metadata',
         data: metadataGETParameters,
@@ -60,6 +61,7 @@ $(document).ready(function() {
                 type: 'GET',
                 success: function(model_metadata) {
                     // Generate dataset.
+                    console.log("Compiling DRMetaDataset.");
                     let dataset = new DRMetaDataset(
                         "PrototypeDataset",
                         model_data_list,
@@ -68,6 +70,7 @@ $(document).ready(function() {
 
                     // All components inside a panel are automatically linked with dc.js. Panels have to be linked
                     // with each other explicitly, if so desired (since used datasets may differ).
+                    console.log("Constructing stage.");
                     let prototypeStage = new PrototypeStage(
                         "PrototypeStage",
                         "stage",

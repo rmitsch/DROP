@@ -26,7 +26,6 @@ export default class DissonanceDataset extends Dataset
 
         // Add DR model measure to records.
         this._complementModelMeasures();
-
         // Set up containers for crossfilter data.
         this._crossfilter = crossfilter(this._data);
 
@@ -79,16 +78,19 @@ export default class DissonanceDataset extends Dataset
         let rowBinWidth     = (rowExtrema.max - rowExtrema.min) / this._binCounts.y;
         let colBinWidth     = (colExtrema.max - colExtrema.min) / this._binCounts.x;
 
-        for (let i = 0; i < this._binCounts.y; i ++) {
-            for (let j = 0; j < this._binCounts.x; j ++) {
-                let dummyRecord = {model_id: -1, sample_id: -1};
-                dummyRecord[colAttribute] = j * colBinWidth;
-                dummyRecord[rowAttribute] = i * rowBinWidth;
+        // Generate dummy records for heatmap and add to crossfilter's dataset.
+        let dummyRecords = Array(this._binCounts.y * this._binCounts.x).fill(0);
+        for (let i = 0; i < this._binCounts.y; i++) {
+            for (let j = 0; j < this._binCounts.x; j++) {
+                let dummyRecord             = {model_id: -1, sample_id: -1};
+                dummyRecord[colAttribute]   = j * colBinWidth;
+                dummyRecord[rowAttribute]   = i * rowBinWidth;
 
                 // Add record to crossfilter dataset.
-                this._crossfilter.add([dummyRecord]);
+                dummyRecords[i * this._binCounts.x + j] = dummyRecord;
             }
         }
+        this._crossfilter.add(dummyRecords);
     }
 
     _initSingularDimensionsAndGroups()
@@ -239,7 +241,7 @@ export default class DissonanceDataset extends Dataset
                     return item.model_id !== -1 ? --counter : counter;
                 },
                 function() {
-                    let counter =0;
+                    let counter = 0;
                     return counter;
                 }
             );

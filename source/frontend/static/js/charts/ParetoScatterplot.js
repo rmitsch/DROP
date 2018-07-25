@@ -35,18 +35,6 @@ export default class ParetoScatterplot extends Scatterplot
         $("#" + this._target).addClass("pareto-scatterplot");
     }
 
-    /**
-     * Connects model parametrizations by specified attribute name. Used to e. g. draw pareto fronts.
-     * @param hyperparameter Name of attribute to be used to connect models. Default value 'native' connects models with
-     * diverging values for attribute on x-axis, but constant for all hyperparameter otherwise. Note that for
-     * hyperparameter-objective plots all attributes other than native are ignored. Objective-objective plots accept all
-     * available hyperparameters.
-     */
-    connectBy(hyperparameter = 'native')
-    {
-        throw new Error("ParetoScatterplot.connectBy(): Not implemented yet.");
-    }
-
     render()
     {
         this._cf_chart.render();
@@ -256,6 +244,8 @@ export default class ParetoScatterplot extends Scatterplot
 
         // Discrete color scheme.
         // Taken from colorbrewer/https://bl.ocks.org/mbostock/5577023.
+
+
         let colors = d3.scaleQuantize()
                 .domain([0, this._maxCellValue])
                 .range(["#fff7fb","#ece7f2","#d0d1e6","#a6bddb","#74a9cf","#3690c0","#0570b0","#045a8d","#023858"]);

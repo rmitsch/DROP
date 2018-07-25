@@ -1,9 +1,9 @@
 import os
 import itertools
-from tables import *
-import numpy
-from MulticoreTSNE import MulticoreTSNE
 from sklearn.decomposition import TruncatedSVD
+import numpy
+from tables import *
+from MulticoreTSNE import MulticoreTSNE
 import umap
 
 from . import hdf5_descriptions
@@ -39,12 +39,12 @@ class DimensionalityReductionKernel:
         },
         "UMAP": {
             "parameters": [
-                {"name": "n_components", "type": "numeric", "values": [1, 2]},
-                {"name": "n_neighbors", "type": "numeric", "values": [5, 15]},
-                {"name": "n_epochs", "type": "numeric", "values": [200, 500]},
-                {"name": "learning_rate", "type": "numeric", "values": [0.5, 1.0]},
-                {"name": "min_dist", "type": "numeric", "values": [0.05, 0.1]},
-                {"name": "local_connectivity", "type": "numeric", "values": [1, 2]},
+                {"name": "n_components", "type": "numeric", "values": [2, 3, 4]},
+                {"name": "n_neighbors", "type": "numeric", "values": [4, 10, 15]},
+                {"name": "n_epochs", "type": "numeric", "values": [200, 500, 750]},
+                {"name": "learning_rate", "type": "numeric", "values": [0.1, 0.5, 1.0]},
+                {"name": "min_dist", "type": "numeric", "values": [0.05, 0.1, 0.2]},
+                {"name": "local_connectivity", "type": "numeric", "values": [1, 2, 3]},
                 {"name": "metric", "type": "categorical", "values": ['euclidean', 'cosine']}
             ],
             "hdf5_description": hdf5_descriptions.UMAPDescription

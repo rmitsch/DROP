@@ -33,9 +33,7 @@ export default class FilterReduceChartsPanel extends Panel
         this._generateCharts();
 
         // Render all charts in prototype stage (work with groups instead of using .renderAll()!).
-        console.log("Rendering...");
         // dc.renderAll();
-        console.log("Finished rendering.");
     }
 
     /**
@@ -97,9 +95,6 @@ export default class FilterReduceChartsPanel extends Panel
         // -----------------------------------
 
         this._createScatterplots(dataset, scatterplotStyle);
-
-
-        console.log("Finished generating.");
     }
 
     /**
