@@ -1,3 +1,4 @@
+import sys
 from random import shuffle
 import psutil
 import os
@@ -18,9 +19,9 @@ logger = Utils.create_logger()
 ######################################################
 
 # Define name of dataset to use (appended to file name).
-dataset_name = "wine"
+dataset_name = sys.argv[1] if len(sys.argv) > 1 else "wine"
 # Define DR method to use.
-dim_red_kernel_name = "UMAP"
+dim_red_kernel_name = sys.argv[2] if len(sys.argv) > 2 else "SVD"
 
 # Get all parameter configurations (to avoid duplicate model generations).
 parameter_sets = DimensionalityReductionKernel.generate_parameter_sets_for_testing(

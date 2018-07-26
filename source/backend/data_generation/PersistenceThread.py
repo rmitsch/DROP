@@ -7,7 +7,7 @@ import os
 
 from backend.data_generation.dimensionality_reduction import DimensionalityReductionKernel
 from backend.data_generation.dimensionality_reduction.hdf5_descriptions import TSNEDescription
-
+from backend.utils import Utils
 
 class PersistenceThread(threading.Thread):
     """
@@ -59,7 +59,7 @@ class PersistenceThread(threading.Thread):
         while num_of_results_so_far < self._expected_number_of_results:
             # Check how many results are available so far.
             num_of_results_so_far = len(self._results)
-            print(num_of_results_so_far / float(self._expected_number_of_results))
+            Utils.logger.info(num_of_results_so_far / float(self._expected_number_of_results))
 
             # If number of records has changed: Add to file.
             if num_of_results_so_far > last_processed_index + 1:
