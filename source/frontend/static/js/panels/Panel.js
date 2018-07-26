@@ -63,6 +63,15 @@ export default class Panel
     }
 
     /**
+     * Processes changes in data or configuration caused by changes in settings.
+     * @param delta New/updated dataset or configuration.
+     */
+    processSettingsChange(delta)
+    {
+        throw new TypeError("Panel.processSettingsChange(): Abstract method must not be called.");
+    }
+
+    /**
      * Highlights data point in all charts in this panel.
      * @param id
      * @param source

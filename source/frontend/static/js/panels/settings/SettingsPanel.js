@@ -17,6 +17,14 @@ export default class SettingsPanel extends Panel
     {
         super(name, operator, parentDivID);
 
+        // Define ID of "Apply changes" button.
+        this._applyChangesButtonID = name
+            .toLowerCase()
+            .replace("&", "-")
+            .replace(" ", "-")
+            .replace(":", "-")
+            .replace("- ", "-") + "-apply-changes-btn";
+
         // Update involved CSS classes.
         $("#" + this._target).addClass("settings-panel");
 
@@ -24,7 +32,24 @@ export default class SettingsPanel extends Panel
         this._divStructure = this._createDivStructure();
 
         // Set click listener.
+        this._setClickListener(iconID);
+
+        // Make class abstract.
+        if (new.target === SettingsPanel) {
+            throw new TypeError("Cannot construct SettingsPanel instances.");
+        }
+    }
+
+    /**
+     * Sets click listener for activation and updating charts.
+     * @param iconID
+     * @private
+     */
+    _setClickListener(iconID)
+    {
         let scope = this;
+
+        // Set listener for opening settings panel.
         $("#" + iconID).click(function() {
             $("#" + scope._target).dialog({
                 title: scope._name,
@@ -33,10 +58,20 @@ export default class SettingsPanel extends Panel
             });
         });
 
-        // Make class abstract.
-        if (new.target === SettingsPanel) {
-            throw new TypeError("Cannot construct SettingsPanel instances.");
-        }
+        // Set listener for parsing options and applying changes.
+        $("#" + this._applyChangesButtonID).click(function() {
+            scope._applyOptionChanges();
+        });
+    }
+
+    /**
+     * Apply new set of options (if different from previous set of options).
+     * Instruct visualizations to update based on new data/configuration.
+     * @private
+     */
+    _applyOptionChanges()
+    {
+        throw new TypeError("SettingsPanel._applyOptionChanges(): Abstract method must not be called.");
     }
 
     _generateCharts()

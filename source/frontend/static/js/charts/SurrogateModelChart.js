@@ -35,11 +35,23 @@ export default class SurrogateModelChart extends Chart
     }
 
     /**
+     * Resets canvas and updates dataset.
+     * @param dataset
+     */
+    reset(dataset)
+    {
+        this._dataset = dataset;
+        // Remove SVG.
+        d3.select("#surrogate-model-chart-svg").remove();
+    }
+
+    /**
      * Constructs and draws chart drawing decision tree.
      * Source: https://bl.ocks.org/ajschumacher/65eda1df2b0dd2cf616f.
      */
     render()
     {
+        console.log("render");
         let margin      = {top: 5, right: 120, bottom: 20, left: 120};
         let baseWidth   = $("#" + this._panel._operator._target).width() - 0;
         let baseHeight  = $("#" + this._panel._operator._target).height() - 5;

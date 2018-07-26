@@ -58,6 +58,7 @@ export default class PrototypeStage extends Stage
         Promise.all([surrModelJSON, dissonanceDataJSON])
             .then(function(values) {
                 scope._datasets["surrogateModel"]   = values[0];
+                // Compile DissonanceDataset.
                 console.log("Compiling DissonanceDataset.");
                 scope._datasets["dissonance"]       = new DissonanceDataset(
                     "Dissonance Dataset",

@@ -64,6 +64,21 @@ export default class Operator
     }
 
     /**
+     * Propagate changes after settings in corresponding SettingsPanel have been changed.
+     * @param delta Resulting diff. from change in settings - can be a new dataset or just changes in configuration.
+     * Note that Operator.propagateSettingsChanges() is agnostic towards the content - the associated panels/charts have
+     * to deal with the data.
+     * @param sourcePanelName Name of the panel acting as source.
+     */
+    propagateSettingsChanges(delta, sourcePanelName)
+    {
+        for (let key in this._panels) {
+            if (this._panels[key]._name !== sourcePanelName)
+                this._panels[key].processSettingsChange(delta);
+        }
+    }
+
+    /**
      * Highlights data point in all charts in all panels in this operator.
      * @param id
      * @param source

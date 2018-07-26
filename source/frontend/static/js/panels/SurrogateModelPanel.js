@@ -93,4 +93,10 @@ export default class SurrogateModelPanel extends Panel
     {
         this._chart.resize();
     }
+
+    processSettingsChange(delta)
+    {
+        this._chart.reset(delta);
+        this._chart.render();
+    }
 }
