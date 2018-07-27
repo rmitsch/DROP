@@ -347,4 +347,38 @@ export default class DissonanceChart extends Chart
             }
         };
     }
+
+    /**
+     * Orders all charts by specified sorting criterion.
+     * @param orderCriterion Possible values:
+     *  - "sim-quality" for sample-in-model quality (horizontal barchart),
+     *  - "m-quality" for model quality (vertical barchart),
+     *  - "cluster" for sorting by strongest clusters in heatmap,
+     *  - "natural" for natural sorting (i. e. by values instead counts of values).
+     */
+    orderBy(orderCriterion)
+    {
+        switch (orderCriterion) {
+            case "natural":
+                console.log("natural sort")
+                this._horizontalHistogram.ordering(dc.pluck('value'));
+                this._horizontalHistogram.renderGroup();
+                break;
+
+            case "sim-quality":
+                console.log("sim sort")
+
+
+                break;
+
+            case "m-quality":
+                break;
+
+            case "cluster":
+                break;
+
+            default:
+                throw new RangeError("Invalid value for DissonanceChart's sort criterion chosen.");
+        }
+    }
 }

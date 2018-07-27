@@ -207,6 +207,52 @@ export default class DissonanceDataset extends Dataset
                 }
             );
 
+        // CONTINUE HERE. Idea: Offer sorting options
+        //  (1) Rows and orders separately - offer sorting by natural order (i. e. quality values) or sorting by
+        //      frequency (i. e. sorting by numbers of SIMs in this group).
+        //      Note that UI has to offer options separately by axes.
+        //  (2) Cluster sorting - how exactly? Cluster cells of similar value/color? Discuss.
+        //
+        // TECHNICAL REALIZATION:
+        //      Add one value per sorting option to group reflecting at which position this group should be.
+        //      Use a lookup dict to return the "correct" key (which is the actual value from the natural sort order,
+        //      i. e. between 0 and 1, so we don't have to change the chart's range etc.).
+        //      Values are calculated by DissonanceDataset. Note that values have to be recalculated in case cross-
+        //      operator brushing + linking is to be implemented.
+        //      Then, in processSettingsChanges(), key accessor is set to corresponding value - directly or indirectly
+        //      by just updating the instance attribute used for the lookup dict. Charts have to be re-rendered.
+        //      Note that label function has to be updated as well to reflect the true value as opposed to the currently
+        //      active one that's just used for placement purposes.
+        //
+        //      Consider also that changes on one axis can influence sort order on other axis, so a recalculation after
+        //      any brushing action is necessary anyway (even w/o cross-op. b+l). -> Sort groups by values and update
+        //      lookup dict.
+        //
+        //      CAVEAT: Does association of items with bins work correctly with this approach? What are possible
+        //      alternative approaches, since chart.ordering() does not seem to work?
+        //      -> Post on SO! Might save a lot of trouble.
+        //
+        //      Safer approach: Instead of showing range from extrema.min to extrema.max, use a range from 1 to
+        //      binCount - keep bin value information in group and show in labels, if desired.
+        //      Analogous approach to heatmap binning and should ensure correct B+L process in dc.js/crossfilter.js
+        //      framework, since no key faking is going on (just group key re-assignments).
+        //      Hence, each group would carry it's key (sort index), a value (number of records) and it's property
+        //      threshold (min. value to be associated with this group).
+        //
+        //      Probably the cleanest way: Redefine .group() function (with external data structs. like dicts to keep
+        //      track of _all_ the information) - use original group as base. When data is grouped in original group,
+        //      keep track of which group key -> which sort index (can be computed after grouping with sort of copy).
+        //      Intermediate: Which group key -> which data item. Then sort and compute aggregate information.
+        //      Then, in dedicated sort group (one per sort order): Use external information computed in first group
+        //      (i. e. which "normal" group has which sort index) to group data.
+        //      Then update chart and set group with corresponding ordering as group for chart.
+        //      Caveat: Grouping has to be performed in desired order (perhaps manually).
+
+        for (let group of this._cf_groups[histogramAttribute].all()) {
+            group["blub"] ="bla";
+        }
+        console.log(this._cf_groups[histogramAttribute].all());
+
         // Calculate extrema.
         this._calculateHistogramExtremaForAttribute(histogramAttribute);
 

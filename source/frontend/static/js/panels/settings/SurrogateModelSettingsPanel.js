@@ -4,7 +4,8 @@ import Utils from "../../Utils.js";
 /**
  * Class for surrogate model settings panel.
  */
-export default class SurrogateModelSettingsPanel extends SettingsPanel {
+export default class SurrogateModelSettingsPanel extends SettingsPanel
+{
     /**
      * Constructs new settings panel for surrogate model operator.
      * @param name

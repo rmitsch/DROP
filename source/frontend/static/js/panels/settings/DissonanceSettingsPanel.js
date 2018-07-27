@@ -4,7 +4,8 @@ import Utils from "../../Utils.js";
 /**
  * Class for dissonance settings panel.
  */
-export default class DissonanceSettingsPanel extends SettingsPanel {
+export default class DissonanceSettingsPanel extends SettingsPanel
+{
     /**
      * Constructs new settings panel for dissonance operator.
      * @param name
@@ -19,7 +20,8 @@ export default class DissonanceSettingsPanel extends SettingsPanel {
 
     _createDivStructure()
     {
-        let settingsHTML = "";
+        let settingsHTML    = "";
+        let scope           = this;
 
         // -----------------------------------
         // 1. Generate HTML for setting
@@ -29,7 +31,8 @@ export default class DissonanceSettingsPanel extends SettingsPanel {
         // Add <select> for selection of sorting order.
         settingsHTML += "<div class='setting-option'>";
         settingsHTML += "<span id='dissonance-settings-sort-order'>Sorting order</span>";
-        settingsHTML += "<select>" +
+        settingsHTML += "<select id='dissonance-settings-sort-order-select'>" +
+            "  <option value='natural'>Default sort (by values)</option>" +
             "  <option value='sim-quality'>By sample-in-model quality</option>" +
             "  <option value='m-quality'>By model quality</option>" +
             "  <option value='cluster'>By clusters</option>" +
@@ -44,11 +47,21 @@ export default class DissonanceSettingsPanel extends SettingsPanel {
         // panel.
         $("#" + this._target).html(
             "<div class='settings-content'>" + settingsHTML + "</div>" +
-            "<button class='pure-button pure-button-primary settings-update-button'>Apply changes</button>"
+            "<button class='pure-button pure-button-primary settings-update-button' id='" + scope._applyChangesButtonID + "'>Apply changes</button>"
         );
 
         return {
             content: this._target
         };
+    }
+
+    _applyOptionChanges()
+    {
+         this._operator.propagateSettingsChanges($("#dissonance-settings-sort-order-select").val(), this._name)
+    }
+
+    processSettingsChange(delta)
+    {
+        // Do nothing (alt.: Show that settings have been propagated/updated).
     }
 }

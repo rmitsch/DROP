@@ -51,7 +51,6 @@ export default class SurrogateModelChart extends Chart
      */
     render()
     {
-        console.log("render");
         let margin      = {top: 5, right: 120, bottom: 20, left: 120};
         let baseWidth   = $("#" + this._panel._operator._target).width() - 0;
         let baseHeight  = $("#" + this._panel._operator._target).height() - 5;
