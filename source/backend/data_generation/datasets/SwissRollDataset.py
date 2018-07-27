@@ -1,4 +1,4 @@
-from backend.data_generation import InputDataset
+from backend.data_generation.datasets import InputDataset
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.datasets.samples_generator import make_swiss_roll
 from sklearn.neighbors import kneighbors_graph
@@ -24,7 +24,7 @@ class SwissRollDataset(InputDataset):
         # 1. Generate swiss roll dataset.
         ####################################
 
-        n_samples = 1500
+        n_samples = 1000
         noise = 0.05
         X, _ = make_swiss_roll(n_samples, noise)
         # Make it thinner

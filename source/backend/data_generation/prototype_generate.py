@@ -6,7 +6,7 @@ from tables import *
 
 import backend.objectives.topology_preservation_objectives.CorankingMatrix as CorankingMatrix
 from backend.data_generation.PersistenceThread import PersistenceThread
-from backend.data_generation.datasets.WineDataset import WineDataset
+from backend.data_generation.datasets import *
 from backend.data_generation.dimensionality_reduction import DimensionalityReductionKernel
 from backend.data_generation.dimensionality_reduction.DimensionalityReductionThread import DimensionalityReductionThread
 from backend.utils import Utils
@@ -19,9 +19,9 @@ logger = Utils.create_logger()
 ######################################################
 
 # Define name of dataset to use (appended to file name).
-dataset_name = sys.argv[1] if len(sys.argv) > 1 else "wine"
+dataset_name = sys.argv[1] if len(sys.argv) > 1 else "mnist"
 # Define DR method to use.
-dim_red_kernel_name = sys.argv[2] if len(sys.argv) > 2 else "SVD"
+dim_red_kernel_name = sys.argv[2] if len(sys.argv) > 2 else "TSNE"
 
 # Get all parameter configurations (to avoid duplicate model generations).
 parameter_sets = DimensionalityReductionKernel.generate_parameter_sets_for_testing(
@@ -36,7 +36,15 @@ parameter_sets = DimensionalityReductionKernel.generate_parameter_sets_for_testi
 logger.info("Creating dataset.")
 
 # Load dataset.
-high_dim_dataset = WineDataset()
+high_dim_dataset = None
+if dataset_name == "wine":
+    high_dim_dataset = WineDataset()
+elif dataset_name == "swiss_roll":
+    high_dim_dataset = SwissRollDataset()
+elif dataset_name == "mnist":
+    high_dim_dataset = MNISTDataset()
+elif dataset_name == "vis":
+    high_dim_dataset = VISPaperDataset()
 
 # Scale attributes, fetch predictors.
 high_dim_features = high_dim_dataset.preprocessed_features()
@@ -107,7 +115,7 @@ threads.append(
 # 3. Calculate low-dim. represenatations.
 ######################################################
 
-print("Generating models.")
+logger.info("Generating models.")
 for thread in threads:
     thread.start()
 for thread in threads:

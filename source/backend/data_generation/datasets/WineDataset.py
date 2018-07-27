@@ -1,6 +1,6 @@
-from backend.data_generation import InputDataset
 from sklearn.datasets import load_wine
 from sklearn.preprocessing import StandardScaler
+from backend.data_generation.datasets import InputDataset
 
 
 class WineDataset(InputDataset):

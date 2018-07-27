@@ -1,8 +1,6 @@
-from backend.data_generation import InputDataset
+from backend.data_generation.datasets import InputDataset
 from sklearn.datasets import fetch_mldata
 from sklearn.model_selection import StratifiedShuffleSplit
-import numpy
-from sklearn.datasets import load_wine
 from sklearn.preprocessing import StandardScaler
 
 
@@ -15,7 +13,7 @@ class MNISTDataset(InputDataset):
         super().__init__()
 
     def _load_data(self):
-        mnist_data = fetch_mldata('MNIST original')
+        mnist_data = fetch_mldata('MNIST original', data_home="data")
         reduced_mnist_data = {
             "features": None,
             "labels": None

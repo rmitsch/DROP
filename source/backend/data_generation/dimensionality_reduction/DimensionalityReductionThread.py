@@ -81,7 +81,7 @@ class DimensionalityReductionThread(threading.Thread):
             # Create coranking matrix for topology-based objectives.
             coranking_matrix = CorankingMatrix(
                 high_dimensional_data=self._distance_matrices[metric],
-                low_dimensional_data=low_dimensional_projection,
+                low_dimensional_data=scaled_low_dim_projection,
                 distance_metric=metric,
                 high_dimensional_neighbourhood_ranking=self._high_dimensional_neighbourhood_rankings[metric]
             )
@@ -89,7 +89,7 @@ class DimensionalityReductionThread(threading.Thread):
             # R_nx.
             r_nx = CorankingMatrixQualityCriterion(
                 high_dimensional_data=self._distance_matrices[metric],
-                low_dimensional_data=low_dimensional_projection,
+                low_dimensional_data=scaled_low_dim_projection,
                 distance_metric=metric,
                 coranking_matrix=coranking_matrix
             ).compute()
@@ -97,7 +97,7 @@ class DimensionalityReductionThread(threading.Thread):
             # B_nx.
             b_nx = CorankingMatrixBehaviourCriterion(
                 high_dimensional_data=self._distance_matrices[metric],
-                low_dimensional_data=low_dimensional_projection,
+                low_dimensional_data=scaled_low_dim_projection,
                 distance_metric=metric,
                 coranking_matrix=coranking_matrix
             ).compute()
@@ -105,7 +105,7 @@ class DimensionalityReductionThread(threading.Thread):
             # Pointwise Q_nx -> q_nx.
             q_nx_i = PointwiseCorankingMatrixQualityCriterion(
                 high_dimensional_data=self._distance_matrices[metric],
-                low_dimensional_data=low_dimensional_projection,
+                low_dimensional_data=scaled_low_dim_projection,
                 distance_metric=metric,
                 coranking_matrix=coranking_matrix
             ).compute()
@@ -116,7 +116,7 @@ class DimensionalityReductionThread(threading.Thread):
 
             stress = Stress(
                 high_dimensional_data=self._distance_matrices[metric],
-                low_dimensional_data=low_dimensional_projection,
+                low_dimensional_data=scaled_low_dim_projection,
                 distance_metric=metric,
                 use_geodesic_distances=False
             ).compute()
@@ -157,5 +157,5 @@ class DimensionalityReductionThread(threading.Thread):
             self._results.append({
                 "parameter_set": parameter_set,
                 "objectives": objectives,
-                "low_dimensional_projection": low_dimensional_projection
+                "low_dimensional_projection": scaled_low_dim_projection
             })
