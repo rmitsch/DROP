@@ -50,17 +50,23 @@ RUN	apt-get update  && \
 EXPOSE 2483
 CMD ["python", "./source/app.py"]
 
+##########################################
+# Useful commands
+##########################################
+
 # Build image (build file to specify instead of .):
 # docker build -t "drop-0.4.0" -f Dockerfile .
+
 # Run container:
 # docker run --name DROP -p 2483:2483 -t -d -v /home/raphael/Development/data/DROP:/data drop-0.4.0:latest
+
 # Execute data generation script:
-# docker exec DROP python /source/backend/data_generation/prototype_generate.py
+# docker exec DROP python /source/backend/data_generation/prototype_generate.py [DATASET] [DRKERNEL]
 
 # Enter /bin/bash for running non-interactive container:
 # docker exec -it DROP /bin/bash
 
-# Clean-up commands.
-# kill all running containers with docker kill $(docker ps -q)
-# delete all stopped containers with docker rm $(docker ps -a -q)
-# delete all images with docker rmi $(docker images -q)
+# Clean-up commands:
+# Kill all running containers with docker kill $(docker ps -q).
+# Delete all stopped containers with docker rm $(docker ps -a -q).
+# Delete all images with docker rmi $(docker images -q).
