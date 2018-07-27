@@ -47,13 +47,13 @@ RUN	apt-get update  && \
 ##########################################
 
 # Expose and launch only if this is supposed to run frontend.
-# EXPOSE 2483
-# CMD ["python", "./source/app.py"]
+EXPOSE 2483
+CMD ["python", "./source/app.py"]
 
 # Build image (build file to specify instead of .):
 # docker build -t "drop-0.4.0" -f Dockerfile .
 # Run container:
-# docker run --name DROP -t -d -v /home/raphael/Development/data/DROP:/data drop-0.4.0:latest
+# docker run --name DROP -p 2483:2483 -t -d -v /home/raphael/Development/data/DROP:/data drop-0.4.0:latest
 # Execute data generation script:
 # docker exec DROP python /source/backend/data_generation/prototype_generate.py
 
