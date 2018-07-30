@@ -242,13 +242,13 @@ export default class DissonanceChart extends Chart
             .y(d3.scale.linear().domain([0, extrema[yAttribute].max]))
             .brushOn(true)
             .filterOnBrushEnd(true)
-            .dimension(this._dataset._cf_dimensions["measure#sort"]) // dimensions[xAttribute]
-            .group(dataset._cf_groups[yAttribute])
+            .dimension(dataset._cf_dimensions[xAttribute + "#sort"]) // dimensions[xAttribute]
+            .group(dataset.sortGroup(dataset._cf_groups[yAttribute], "asc"))
             .margins({top: 5, right: 5, bottom: 5, left: 40})
             .gap(0);
 
         // Set bar width.
-        this._horizontalHistogram.xUnits(dc.units.fp.precision(1)); // dc.units.fp.precision(binWidth)
+        this._horizontalHistogram.xUnits(dc.units.fp.precision(1));
         // Set tick format on y-axis.
         this._horizontalHistogram.yAxis().tickFormat(d3.format('.3s'));
         // Set number of ticks.
