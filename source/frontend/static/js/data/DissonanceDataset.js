@@ -186,6 +186,7 @@ export default class DissonanceDataset extends Dataset
         let extrema                         = {min: 0, max: 1};
         let histogramAttribute              = "samplesInModels#" + yAttribute;
         let binWidth                        = null;
+        let sortSettings                    = null;
 
         // -----------------------------------------------------
         // 1. Create group for histogram on x-axis (SIMs).
@@ -194,6 +195,7 @@ export default class DissonanceDataset extends Dataset
         extrema                             =  this._cf_extrema[yAttribute];
         this._binWidths[histogramAttribute] = (extrema.max - extrema.min) / this._binCounts.x;
         binWidth                            = this._binWidths[histogramAttribute];
+        sortSettings                        = scope._sortSettings.horizontal;
 
         // Form group.
         this._cf_groups[histogramAttribute] = this._cf_dimensions[yAttribute]
@@ -206,9 +208,8 @@ export default class DissonanceDataset extends Dataset
                 }
 
                 // Store association of record value for this dimension to bin index.
-                scope._sortSettings.horizontal.recordValueToNaturalBinIndex[originalValue] = Math.floor(value / binWidth);
-
-                return scope._sortSettings.horizontal.recordValueToNaturalBinIndex[originalValue]; // * binWidth;
+                sortSettings.recordValueToNaturalBinIndex[originalValue] = Math.floor(value / binWidth);
+                return sortSettings.recordValueToNaturalBinIndex[originalValue];
             })
             // Custome reducer ignoring dummys with model_id === -1.
             .reduce(
@@ -227,7 +228,7 @@ export default class DissonanceDataset extends Dataset
         this._calculateHistogramExtremaForAttribute(histogramAttribute);
 
         // Implement sorting mechanism in dc.js/crossfilter.js framework.
-        this._initSortingMechanism("measure");
+        this._initSortingMechanism(yAttribute, this._sortSettings.horizontal);
 
         // -----------------------------------------------------
         // 2. Create group for histogram on y-axis (number of
@@ -239,17 +240,21 @@ export default class DissonanceDataset extends Dataset
         histogramAttribute                  = "samplesInModels#" + yAttribute;
         this._binWidths[histogramAttribute] = (extrema.max - extrema.min) / this._binCounts.y;
         binWidth                            = this._binWidths[histogramAttribute];
+        sortSettings                        = scope._sortSettings.vertical;
 
         // Form group.
         this._cf_groups[histogramAttribute] = this._cf_dimensions[yAttribute]
             .group(function(value) {
+                let originalValue = value;
                 if (value <= extrema.min)
                     value = extrema.min;
                 else if (value >= extrema.max) {
                     value = extrema.max - binWidth;
                 }
 
-                return Math.floor(value / binWidth) * binWidth;
+                // Store association of record value for this dimension to bin index.
+                sortSettings.recordValueToNaturalBinIndex[originalValue] = Math.floor(value / binWidth);
+                return sortSettings.recordValueToNaturalBinIndex[originalValue];
             })
             // Custome reducer ignoring dummys with model_id === -1.
             .reduce(
@@ -267,24 +272,26 @@ export default class DissonanceDataset extends Dataset
         // Calculate extrema.
         this._calculateHistogramExtremaForAttribute(histogramAttribute);
 
+        // Implement sorting mechanism in dc.js/crossfilter.js framework.
+        this._initSortingMechanism(yAttribute, this._sortSettings.vertical);
     }
 
     /**
      * Initializes sorting for dissonance data.
      * Has to use a few workaround, hence some custom code.
      * @param attribute
+     * @param settings Settings object to use.
      * @private
      */
-    _initSortingMechanism(attribute)
+    _initSortingMechanism(attribute, settings)
     {
-        let scope       = this;
-        let settings    = this._sortSettings;
+        let scope = this;
 
         this._cf_dimensions[attribute + "#sort"] = {
             // For reset: filter(null).
             filter: function(f) {
                 if (f !== null)
-                    throw new Error("uh oh don't know what to do here");
+                    throw new Error("DissonanceDataset._initSortingMechanism: filter(f) with f !== null called.");
                 scope._cf_dimensions[attribute].filter(null);
             },
             // Filter selected range.
@@ -292,64 +299,69 @@ export default class DissonanceDataset extends Dataset
                 // 1. Get all bins corresponding with selected range.
                 //    In order to do that, we pick the corresponding natural filtered bins
                 //    and compare against them.
-                console.log(r)
-                let filteredNaturalBinIndices   = [];
+                let filteredNaturalBinIndices = [];
                 for (let i = Math.floor(r[0]); i < Math.ceil(r[1]); i++) {
-                    filteredNaturalBinIndices.push(settings.horizontal.sortOrderToNaturalOrder[i]);
+                    filteredNaturalBinIndices.push(settings.sortOrderToNaturalOrder[i]);
                 }
 
                 // 2. Set filtering function for individual records.
                 scope._cf_dimensions[attribute].filterFunction(function(value) {
                     // Check if this record's natural bin was selected.
                     return filteredNaturalBinIndices.indexOf(
-                        scope._sortSettings.horizontal.recordValueToNaturalBinIndex[value]
+                        settings.recordValueToNaturalBinIndex[value]
                     ) > -1;
                 });
             }
         };
+
     }
 
     /**
      * Sorts group by specified criterion (e. g. "asc", "desc" or "natural").
      * @param group
+     * @param settings Corresponding settings object.
      * @param sortCriterion
      * @returns {{all: all}}
      * @private
      */
-    sortGroup(group, sortCriterion)
+    sortGroup(group, settings, sortCriterion)
     {
-        if (sortCriterion !== "natural" &&
-            sortCriterion !== "asc" &&
-            sortCriterion !== "desc"
-        )
-            throw new RangeError("Sorting criterion " + sortCriterion + " not supported.");
-
         // ----------------------------------------------
         // Sort specified groups and update internal
         // information.
         // ----------------------------------------------
 
-        let groupAll                                = group.all();
-        let sortedData                              = JSON.parse(JSON.stringify(groupAll));
-        // Reset settings.
-        let settings                                = this._sortSettings;
-        settings.horizontal.sortOrderToNaturalOrder = {};
-        settings.horizontal.criterion               = sortCriterion;
+        let groupAll                        = group.all();
+        let sortedData                      = JSON.parse(JSON.stringify(groupAll));
+        settings.sortOrderToNaturalOrder    = {};
+        settings.criterion                  = sortCriterion;
 
         // Sort data by number of entries in this attribute's histogram.
         sortedData.sort(function(entryA, entryB) {
             let countA = entryA.value;
             let countB = entryB.value;
 
-            return countA > countB ? 1 : (countB > countA ? -1 : 0);
+            switch (sortCriterion) {
+                case "natural":
+                    return entryA.key > entryB.key ? 1 : (entryB.key > entryA.key ? -1 : 0);
+
+                case "asc":
+                    return countA > countB ? 1 : (countB > countA ? -1 : 0);
+
+                case "desc":
+                    return countA < countB ? 1 : (countB < countA ? -1 : 0);
+
+                default:
+                    throw new RangeError("Sorting criterion " + sortCriterion + " not supported.");
+            }
         });
 
+        // Store association between natural and ordered bin index.
         for (let i = 0; i < sortedData.length; i++) {
-            settings.horizontal.sortOrderToNaturalOrder[groupAll[i].key] = sortedData[i].key;
+            settings.sortOrderToNaturalOrder[groupAll[i].key] = sortedData[i].key;
             sortedData[i].key = groupAll[i].key;
         }
-        console.log(sortedData)
-        console.log(settings.horizontal.sortOrderToNaturalOrder)
+
         return {
             all: function() {
                 return sortedData;

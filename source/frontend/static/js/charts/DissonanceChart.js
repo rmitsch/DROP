@@ -223,7 +223,6 @@ export default class DissonanceChart extends Chart
         let dimensions  = dataset._cf_dimensions;
         let xAttribute  = "measure";
         let yAttribute  = "samplesInModels#" + xAttribute;
-        let binWidth    = dataset._binWidths[yAttribute];
 
         // Generate dc.js chart object.
         this._horizontalHistogram = dc.barChart(
@@ -242,8 +241,12 @@ export default class DissonanceChart extends Chart
             .y(d3.scale.linear().domain([0, extrema[yAttribute].max]))
             .brushOn(true)
             .filterOnBrushEnd(true)
-            .dimension(dataset._cf_dimensions[xAttribute + "#sort"]) // dimensions[xAttribute]
-            .group(dataset.sortGroup(dataset._cf_groups[yAttribute], "asc"))
+            .dimension(dimensions[xAttribute + "#sort"])
+            .group(dataset.sortGroup(
+                dataset._cf_groups[yAttribute],
+                dataset._sortSettings.horizontal,
+                "natural"
+            ))
             .margins({top: 5, right: 5, bottom: 5, left: 40})
             .gap(0);
 
@@ -269,7 +272,6 @@ export default class DissonanceChart extends Chart
         let dimensions  = dataset._cf_dimensions;
         let xAttribute  = this._dataset._supportedDRModelMeasure;
         let yAttribute  = "samplesInModels#" + xAttribute;
-        let binWidth    = dataset._binWidths[yAttribute];
 
         // Generate dc.js chart object.
         this._verticalHistogram = dc.barChart(
@@ -283,17 +285,24 @@ export default class DissonanceChart extends Chart
             .width($("#" + this._panel._target).height())
             .valueAccessor( function(d) { return d.value; } )
             .elasticY(false)
-            .x(d3.scale.linear().domain([0, extrema[xAttribute].max]))
+            .x(d3.scale.linear().domain([0, dataset._binCounts.y]))
             .y(d3.scale.linear().domain([0, extrema[yAttribute].max]))
             .brushOn(true)
             .filterOnBrushEnd(true)
-            .dimension(dimensions[xAttribute])
-            .group(dataset._cf_groups[yAttribute])
+            // .dimension(dimensions[xAttribute])
+            // .group(dataset._cf_groups[yAttribute])
+            .dimension(dimensions[xAttribute + "#sort"])
+            .group(dataset.sortGroup(
+                dataset._cf_groups[yAttribute],
+                dataset._sortSettings.vertical,
+                "asc"
+            ))
             .margins({top: 5, right: 5, bottom: 5, left: 35})
             .gap(0);
 
         // Set bar width.
-        this._verticalHistogram.xUnits(dc.units.fp.precision(binWidth));
+        // this._verticalHistogram.xUnits(dc.units.fp.precision(binWidth));
+        this._verticalHistogram.xUnits(dc.units.fp.precision(1));
         // Set tick format on y-axis.
         this._verticalHistogram.yAxis().tickFormat(d3.format('.3s'));
         // Set number of ticks.
