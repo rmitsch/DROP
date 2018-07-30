@@ -59,3 +59,7 @@ datalist option {
 datalist#filter-reduce-tickmarks option {
     width: 22px;
 }
+
+.settings-section-header {
+    margin-bottom: 10px;
+}

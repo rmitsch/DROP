@@ -28,14 +28,24 @@ export default class DissonanceSettingsPanel extends SettingsPanel
         //    options.
         // -----------------------------------
 
+        settingsHTML += "<div class='settings-section-header'>Sorting</div>"
+
         // Add <select> for selection of sorting order.
         settingsHTML += "<div class='setting-option'>";
-        settingsHTML += "<span id='dissonance-settings-sort-order'>Sorting order</span>";
-        settingsHTML += "<select id='dissonance-settings-sort-order-select'>" +
-            "  <option value='natural'>Default sort (by values)</option>" +
-            "  <option value='sim-quality'>By sample-in-model quality</option>" +
-            "  <option value='m-quality'>By model quality</option>" +
-            "  <option value='cluster'>By clusters</option>" +
+        settingsHTML += "<span id='dissonance-settings-sort-order'>x-axis</span>";
+        settingsHTML += "<select id='dissonance-settings-sort-order-select-x'>" +
+            "  <option value='natural'>Natural order(by values)</option>" +
+            "  <option value='asc'>Ascending</option>" +
+            "  <option value='desc'>Descending</option>" +
+        "</select>";
+        settingsHTML += "</div>";
+
+        settingsHTML += "<div class='setting-option'>";
+        settingsHTML += "<span id='dissonance-settings-sort-order'>y-axis</span>";
+        settingsHTML += "<select id='dissonance-settings-sort-order-select-y'>" +
+            "  <option value='natural'>Natural order(by values)</option>" +
+            "  <option value='asc'>Ascending</option>" +
+            "  <option value='desc'>Descending</option>" +
         "</select>";
         settingsHTML += "</div>";
 
@@ -57,7 +67,10 @@ export default class DissonanceSettingsPanel extends SettingsPanel
 
     _applyOptionChanges()
     {
-         this._operator.propagateSettingsChanges($("#dissonance-settings-sort-order-select").val(), this._name)
+         this._operator.propagateSettingsChanges({
+             x: $("#dissonance-settings-sort-order-select-x").val(),
+             y: $("#dissonance-settings-sort-order-select-y").val()
+         }, this._name);
     }
 
     processSettingsChange(delta)

@@ -295,7 +295,7 @@ export default class DissonanceChart extends Chart
             .group(dataset.sortGroup(
                 dataset._cf_groups[yAttribute],
                 dataset._sortSettings.vertical,
-                "asc"
+                "natural"
             ))
             .margins({top: 5, right: 5, bottom: 5, left: 35})
             .gap(0);
@@ -368,27 +368,27 @@ export default class DissonanceChart extends Chart
      */
     orderBy(orderCriterion)
     {
-        switch (orderCriterion) {
-            case "natural":
-                console.log("natural sort")
-                this._horizontalHistogram.ordering(dc.pluck('value'));
-                this._horizontalHistogram.renderGroup();
-                break;
+        let dataset = this._dataset;
 
-            case "sim-quality":
-                console.log("sim sort")
+        if (!dataset._allowedCriterions.includes(orderCriterion.x) ||
+            !dataset._allowedCriterions.includes(orderCriterion.y)
+        )
+            throw new RangeError("Invalid value for DissonanceChart's sort criterion chosen.");
 
+        // Update sorting of horizontal histogram.
+        // todo Don't update if setting did not change.
+        this._horizontalHistogram.group(dataset.sortGroup(
+            dataset._cf_groups["samplesInModels#measure"],
+            dataset._sortSettings.horizontal,
+            orderCriterion.x
+        ));
+        this._horizontalHistogram.render();
 
-                break;
-
-            case "m-quality":
-                break;
-
-            case "cluster":
-                break;
-
-            default:
-                throw new RangeError("Invalid value for DissonanceChart's sort criterion chosen.");
-        }
+        this._verticalHistogram.group(dataset.sortGroup(
+            dataset._cf_groups["samplesInModels#" + this._dataset._supportedDRModelMeasure],
+            dataset._sortSettings.vertical,
+            orderCriterion.y
+        ));
+        this._verticalHistogram.render();
     }
 }

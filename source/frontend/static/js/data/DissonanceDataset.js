@@ -37,6 +37,7 @@ export default class DissonanceDataset extends Dataset
                 sortOrderToNaturalOrder: {}
             }
         };
+        this._allowedCriterions         = ["natural", "asc", "desc"];
 
         // Add DR model measure to records.
         this._complementModelMeasures();
