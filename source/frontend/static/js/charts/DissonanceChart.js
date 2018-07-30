@@ -235,19 +235,20 @@ export default class DissonanceChart extends Chart
         this._horizontalHistogram
             .height(40)
             .width(Math.floor($("#" + this._target).width() / dataset._binCounts.x) * dataset._binCounts.x)
+            .keyAccessor( function(d) { return d.key; } )
             .valueAccessor( function(d) { return d.value; } )
             .elasticY(false)
-            .x(d3.scale.linear().domain([0, extrema[xAttribute].max]))
+            .x(d3.scale.linear().domain([0, dataset._binCounts.x])) // extrema[xAttribute].max]
             .y(d3.scale.linear().domain([0, extrema[yAttribute].max]))
             .brushOn(true)
             .filterOnBrushEnd(true)
-            .dimension(dimensions[xAttribute])
+            .dimension(this._dataset._cf_dimensions["measure#sort"]) // dimensions[xAttribute]
             .group(dataset._cf_groups[yAttribute])
             .margins({top: 5, right: 5, bottom: 5, left: 40})
             .gap(0);
 
         // Set bar width.
-        this._horizontalHistogram.xUnits(dc.units.fp.precision(binWidth));
+        this._horizontalHistogram.xUnits(dc.units.fp.precision(1)); // dc.units.fp.precision(binWidth)
         // Set tick format on y-axis.
         this._horizontalHistogram.yAxis().tickFormat(d3.format('.3s'));
         // Set number of ticks.
