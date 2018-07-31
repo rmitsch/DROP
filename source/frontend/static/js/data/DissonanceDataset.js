@@ -25,18 +25,8 @@ export default class DissonanceDataset extends Dataset
         this._supportedDRModelMeasure   = supportedDRModelMeasure;
 
         // Store sort settings.
-        this._sortSettings              =  {
-            horizontal: {
-                criterion: "natural",
-                recordValueToNaturalBinIndex: {},
-                sortOrderToNaturalOrder: {}
-            },
-            vertical: {
-                criterion: "natural",
-                recordValueToNaturalBinIndex: {},
-                sortOrderToNaturalOrder: {}
-            }
-        };
+        this._sortSettings              =  this._initializeSortingSettings();
+        // Define supported sorting criterions.
         this._allowedCriterions         = ["natural", "asc", "desc"];
 
         // Add DR model measure to records.
@@ -51,6 +41,38 @@ export default class DissonanceDataset extends Dataset
         this._initBinaryDimensionsAndGroups();
     }
 
+    /**
+     * Initialize default sort settings.
+     */
+    _initializeSortingSettings()
+    {
+        let sortSettings = {
+            horizontal: {
+                criterion: "natural",
+                recordValueToNaturalBinIndex: {},
+                sortOrderToNaturalOrder: {},
+                naturalOrderToSortOrder: {}
+            },
+            vertical: {
+                criterion: "natural",
+                recordValueToNaturalBinIndex: {},
+                sortOrderToNaturalOrder: {},
+                naturalOrderToSortOrder: {}
+            }
+        };
+
+        // Set up initial values for order translations.
+        for (let i = 0; i < this._binCounts.x; i++) {
+           sortSettings.horizontal.naturalOrderToSortOrder[i] = i;
+           sortSettings.horizontal.sortOrderToNaturalOrder[i] = i;
+        }
+        for (let i = 0; i < this._binCounts.y; i++) {
+           sortSettings.vertical.naturalOrderToSortOrder[i] = i;
+           sortSettings.vertical.sortOrderToNaturalOrder[i] = i;
+        }
+
+        return sortSettings;
+    }
     /**
      * Complements records with the corresponding DR model's measure.
      * @private
@@ -124,6 +146,7 @@ export default class DissonanceDataset extends Dataset
 
     _initBinaryDimensionsAndGroups()
     {
+        let scope           = this;
         let attribute       = "samplesInModelsMeasure:sampleDRModelMeasure";
         let colAttribute    = "measure";
         let rowAttribute    = this._supportedDRModelMeasure;
@@ -171,7 +194,16 @@ export default class DissonanceDataset extends Dataset
 
         // 2. Define group as sum of intersection sample_id/model_id - since only one element per
         // group exists, sum works just fine.
-        this._cf_groups[attribute] = this._cf_dimensions[attribute].group().reduceCount();
+        console.log(scope._sortSettings.horizontal.naturalOrderToSortOrder)
+        this._cf_groups[attribute] = this._cf_dimensions[attribute]
+            .group(function(value) {
+                return [
+                    scope._sortSettings.horizontal.naturalOrderToSortOrder[value[0]],
+                    scope._sortSettings.vertical.naturalOrderToSortOrder[value[1]]
+                ]
+            })
+            .reduceCount();
+        CONTINUE HERE
 
         // 3. Find extrema.
         this._calculateHistogramExtremaForAttribute(attribute);
@@ -332,42 +364,45 @@ export default class DissonanceDataset extends Dataset
         // information.
         // ----------------------------------------------
 
-        let groupAll                        = group.all();
-        let sortedData                      = JSON.parse(JSON.stringify(groupAll));
-        settings.sortOrderToNaturalOrder    = {};
-        settings.criterion                  = sortCriterion;
-
-        // Sort data by number of entries in this attribute's histogram.
-        sortedData.sort(function(entryA, entryB) {
-            let countA = entryA.value;
-            let countB = entryB.value;
-
-            switch (sortCriterion) {
-                case "natural":
-                    return entryA.key > entryB.key ? 1 : (entryB.key > entryA.key ? -1 : 0);
-
-                case "asc":
-                    return countA > countB ? 1 : (countB > countA ? -1 : 0);
-
-                case "desc":
-                    return countA < countB ? 1 : (countB < countA ? -1 : 0);
-
-                default:
-                    throw new RangeError("Sorting criterion " + sortCriterion + " not supported.");
-            }
-        });
-
-        // Store association between natural and ordered bin index.
-        for (let i = 0; i < sortedData.length; i++) {
-            settings.sortOrderToNaturalOrder[groupAll[i].key] = sortedData[i].key;
-            sortedData[i].key = groupAll[i].key;
-        }
-
         return {
             all: function() {
+                let unsortedData                    = group.all();
+                let sortedData                      = JSON.parse(JSON.stringify(unsortedData));
+                settings.sortOrderToNaturalOrder    = {};
+                settings.naturalOrderToSortOrder    = {};
+                settings.criterion                  = sortCriterion;
+
+                // Sort data by number of entries in this attribute's histogram.
+                sortedData.sort(function(entryA, entryB) {
+                    let countA = entryA.value;
+                    let countB = entryB.value;
+
+                    switch (sortCriterion) {
+                        case "natural":
+                            return entryA.key > entryB.key ? 1 : (entryB.key > entryA.key ? -1 : 0);
+
+                        case "asc":
+                            return countA > countB ? 1 : (countB > countA ? -1 : 0);
+
+                        case "desc":
+                            return countA < countB ? 1 : (countB < countA ? -1 : 0);
+
+                        default:
+                            throw new RangeError("Sorting criterion " + sortCriterion + " not supported.");
+                    }
+                });
+
+                // Store association between natural and ordered bin index.
+                for (let i = 0; i < sortedData.length; i++) {
+                    settings.sortOrderToNaturalOrder[unsortedData[i].key]   = sortedData[i].key;
+                    settings.naturalOrderToSortOrder[sortedData[i].key]     = unsortedData[i].key;
+                    sortedData[i].key                                       = unsortedData[i].key;
+                }
+
                 return sortedData;
             }
         };
+
     }
 
     /**

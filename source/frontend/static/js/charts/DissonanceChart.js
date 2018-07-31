@@ -32,7 +32,7 @@ export default class DissonanceChart extends Chart
         // Generate div structure for child nodes.
         this._divStructure = this._createDivStructure();
 
-        // Construct graph.
+         // Construct graph.
         this.constructCFChart();
     }
 
@@ -161,7 +161,6 @@ export default class DissonanceChart extends Chart
         // Create shorthand references.
         let scope       = this;
         let dataset     = this._dataset;
-        let extrema     = dataset._cf_extrema;
         let dimensions  = dataset._cf_dimensions;
         let attribute   = "samplesInModelsMeasure:sampleDRModelMeasure";
 
@@ -170,28 +169,21 @@ export default class DissonanceChart extends Chart
             .height(300)
             .width(300)
             .dimension(dimensions[attribute])
+            // .group(dataset.sortHeatmapGroup(dataset._cf_groups[attribute]))
             .group(dataset._cf_groups[attribute])
-            .colorAccessor(function(d) {
-                return d.value;
-            })
+            .colorAccessor(function(d)  { return d.value; })
             .colors(
                 d3.scale
                     .linear()
                     .domain(this._colorDomain)
                     .range(this._colorScheme)
             )
-            .keyAccessor(function(d) {
-                return d.key[0];
-             })
-            .valueAccessor(function(d) {
-                return d.key[1];
-             })
-            .title(function(d) {
-                return "";
-            })
+            .keyAccessor(function(d)    { return d.key[0]; })
+            .valueAccessor(function(d)  { return d.key[1]; })
+            .title(function(d)          { return ""; })
             // Supress column/row label output.
-            .colsLabel(function(d) { return ""; })
-            .rowsLabel(function(d) { return ""; })
+            .colsLabel(function(d)      { return ""; })
+            .rowsLabel(function(d)      { return ""; })
             .margins({top: 0, right: 20, bottom: 0, left: 0})
             .transitionDuration(0)
             // Cut off superfluous SVG height (probably reserved for labels).
@@ -370,25 +362,36 @@ export default class DissonanceChart extends Chart
     {
         let dataset = this._dataset;
 
+        // Check for validity of specified sorting criterion.
         if (!dataset._allowedCriterions.includes(orderCriterion.x) ||
             !dataset._allowedCriterions.includes(orderCriterion.y)
         )
             throw new RangeError("Invalid value for DissonanceChart's sort criterion chosen.");
 
         // Update sorting of horizontal histogram.
-        // todo Don't update if setting did not change.
-        this._horizontalHistogram.group(dataset.sortGroup(
-            dataset._cf_groups["samplesInModels#measure"],
-            dataset._sortSettings.horizontal,
-            orderCriterion.x
-        ));
-        this._horizontalHistogram.render();
+        if (dataset._sortSettings.horizontal.criterion !== orderCriterion.x) {
+            this._horizontalHistogram.group(dataset.sortGroup(
+                dataset._cf_groups["samplesInModels#measure"],
+                dataset._sortSettings.horizontal,
+                orderCriterion.x
+            ));
+            // Rerender horizontal histogram and heatmap.
+            this._horizontalHistogram.render();
+            this._dissonanceHeatmap.render();
+            this._verticalHistogram.render();
+        }
 
-        this._verticalHistogram.group(dataset.sortGroup(
-            dataset._cf_groups["samplesInModels#" + this._dataset._supportedDRModelMeasure],
-            dataset._sortSettings.vertical,
-            orderCriterion.y
-        ));
-        this._verticalHistogram.render();
+        // Update sorting of verticalhistogram.
+        if (dataset._sortSettings.vertical.criterion !== orderCriterion.y) {
+            this._verticalHistogram.group(dataset.sortGroup(
+                dataset._cf_groups["samplesInModels#" + this._dataset._supportedDRModelMeasure],
+                dataset._sortSettings.vertical,
+                orderCriterion.y
+            ));
+            // Rerender vertical histogram and heatmap.
+            this._verticalHistogram.render();
+            this._dissonanceHeatmap.render();
+            this._horizontalHistogram.render();
+        }
     }
 }
