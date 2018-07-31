@@ -14,7 +14,7 @@ export default class Dataset
         this._cf_intervals  = {};
 
         // Defines how much padding (relative to the shown interval) any axis should have.
-        this._axisPaddingRatio  = 0.0;
+        this._axisPaddingRatio  = 0;
     }
 
     get name()
@@ -66,6 +66,7 @@ export default class Dataset
             min: this._cf_dimensions[attribute].bottom(1)[0][attribute],
             max: this._cf_dimensions[attribute].top(1)[0][attribute]
         };
+
         // Update extrema by padding values (hardcoded to 10%) for x-axis.
         this._cf_intervals[attribute]   = this._cf_extrema[attribute].max - this._cf_extrema[attribute].min;
 

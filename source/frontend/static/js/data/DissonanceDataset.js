@@ -62,7 +62,9 @@ export default class DissonanceDataset extends Dataset
             heatmap: {
                 recordValueToNaturalBinIndex: {},
                 sortOrderToNaturalOrder: {},
-                naturalOrderToSortOrder: {}
+                naturalOrderToSortOrder: {},
+                selectedNaturalCells: [],
+                selectedOrderedCells: []
             }
         };
 
@@ -146,6 +148,7 @@ export default class DissonanceDataset extends Dataset
 
             // Find extrema.
             this._calculateSingularExtremaByAttribute(attribute);
+
         }
     }
 
@@ -205,6 +208,9 @@ export default class DissonanceDataset extends Dataset
 
         // 3. Find extrema.
         this._calculateHistogramExtremaForAttribute(attribute);
+
+        // 4. Implement sorting mechanism in dc.js/crossfilter.js framework.
+        this._initHeatmapSortingMechanism(attribute);
     }
 
     /**
@@ -238,6 +244,9 @@ export default class DissonanceDataset extends Dataset
                     value = extrema.max - binWidth;
                 }
 
+                // Deduct minimum (in case our range does not start with zero).
+                value -= extrema.min;
+
                 // Store association of record value for this dimension to bin index.
                 sortSettings.recordValueToNaturalBinIndex[originalValue] = Math.floor(value / binWidth);
                 return sortSettings.recordValueToNaturalBinIndex[originalValue];
@@ -259,7 +268,7 @@ export default class DissonanceDataset extends Dataset
         this._calculateHistogramExtremaForAttribute(histogramAttribute);
 
         // Implement sorting mechanism in dc.js/crossfilter.js framework.
-        this._initSortingMechanism(yAttribute, this._sortSettings.horizontal);
+        this._initHistogramSortingMechanism(yAttribute, this._sortSettings.horizontal);
 
         // -----------------------------------------------------
         // 2. Create group for histogram on y-axis (number of
@@ -267,7 +276,7 @@ export default class DissonanceDataset extends Dataset
         // -----------------------------------------------------
 
         yAttribute                          = this._supportedDRModelMeasure;
-        extrema                             =  this._cf_extrema[yAttribute];
+        extrema                             = this._cf_extrema[yAttribute];
         histogramAttribute                  = "samplesInModels#" + yAttribute;
         this._binWidths[histogramAttribute] = (extrema.max - extrema.min) / this._binCounts.y;
         binWidth                            = this._binWidths[histogramAttribute];
@@ -283,6 +292,9 @@ export default class DissonanceDataset extends Dataset
                     value = extrema.max - binWidth;
                 }
 
+                // Deduct minimum (in case our range does not start with zero).
+                value -= extrema.min;
+
                 // Store association of record value for this dimension to bin index.
                 sortSettings.recordValueToNaturalBinIndex[originalValue] = Math.floor(value / binWidth);
                 return sortSettings.recordValueToNaturalBinIndex[originalValue];
@@ -304,17 +316,17 @@ export default class DissonanceDataset extends Dataset
         this._calculateHistogramExtremaForAttribute(histogramAttribute);
 
         // Implement sorting mechanism in dc.js/crossfilter.js framework.
-        this._initSortingMechanism(yAttribute, this._sortSettings.vertical);
+        this._initHistogramSortingMechanism(yAttribute, this._sortSettings.vertical);
     }
 
     /**
-     * Initializes sorting for dissonance data.
-     * Has to use a few workaround, hence some custom code.
+     * Initializes sorting for dissonance histogram data.
+     * Has to use a few workarounds; hencesome custom code.
      * @param attribute
      * @param settings Settings object to use.
      * @private
      */
-    _initSortingMechanism(attribute, settings)
+    _initHistogramSortingMechanism(attribute, settings)
     {
         let scope = this;
 
@@ -322,9 +334,10 @@ export default class DissonanceDataset extends Dataset
             // For reset: filter(null).
             filter: function(f) {
                 if (f !== null)
-                    throw new Error("DissonanceDataset._initSortingMechanism: filter(f) with f !== null called.");
+                    throw new Error("DissonanceDataset._initHistogramSortingMechanism: filter(f) with f !== null called.");
                 scope._cf_dimensions[attribute].filter(null);
             },
+
             // Filter selected range.
             filterRange: function(r) {
                 // 1. Get all bins corresponding with selected range.
@@ -336,6 +349,7 @@ export default class DissonanceDataset extends Dataset
                 }
 
                 // 2. Set filtering function for individual records.
+                console.log(scope._cf_dimensions[attribute].bottom(Infinity))
                 scope._cf_dimensions[attribute].filterFunction(function(value) {
                     // Check if this record's natural bin was selected.
                     return filteredNaturalBinIndices.indexOf(
@@ -344,7 +358,55 @@ export default class DissonanceDataset extends Dataset
                 });
             }
         };
+    }
 
+    /**
+     * Initializes sorting for dissonance heatmap data.
+     * Has to use a few workarounds; hencesome custom code.
+     * @param attribute
+     * @param settings Settings object to use.
+     * @private
+     */
+    _initHeatmapSortingMechanism(attribute, settings)
+    {
+        let scope = this;
+
+        this._cf_dimensions[attribute + "#sort"] = {
+            // For reset: filter(null).
+            filter: function(f) {
+                if (f !== null)
+                    throw new Error("DissonanceDataset._initHistogramSortingMechanism: filter(f) with f !== null called.");
+
+                // Reset filters.
+                scope._sortSettings.heatmap.selectedOrderedCells = [];
+                scope._sortSettings.heatmap.selectedNaturalCells = [];
+                scope._cf_dimensions[attribute].filter(null);
+            },
+
+            filterFunction: function(f) {
+                // Set filtering function for individual records.
+                scope._cf_dimensions[attribute].filterFunction(function(value) {
+                    return scope._sortSettings.heatmap.selectedNaturalCells.find(
+                        cellCoords => cellCoords[0] === value[0] && cellCoords[1] === value[1]
+                    ) !== undefined;
+                });
+            }
+        };
+    }
+
+    /**
+     * Stores selected cells in heatmap.
+     * @param key
+     */
+    addToHeatmapCellSelection(key)
+    {
+        // Store translated key.
+        this._sortSettings.heatmap.selectedNaturalCells.push([
+            this._sortSettings.horizontal.sortOrderToNaturalOrder[key[0]],
+            this._sortSettings.vertical.sortOrderToNaturalOrder[key[1]]
+        ]);
+        // Store natural key.
+        this._sortSettings.heatmap.selectedOrderedCells.push([key[0], key[1]]);
     }
 
     /**
@@ -362,10 +424,9 @@ export default class DissonanceDataset extends Dataset
         // information.
         // ----------------------------------------------
 
-        let unsortedData = JSON.parse(JSON.stringify(group.all()));
-
         return {
             all: function() {
+                let unsortedData                    = group.all();
                 let sortedData                      = JSON.parse(JSON.stringify(unsortedData));
                 settings.sortOrderToNaturalOrder    = {};
                 settings.naturalOrderToSortOrder    = {};
@@ -373,18 +434,18 @@ export default class DissonanceDataset extends Dataset
 
                 // Sort data by number of entries in this attribute's histogram.
                 sortedData.sort(function(entryA, entryB) {
-                    let countA = entryA.value;
-                    let countB = entryB.value;
+                    let countA = +entryA.value;
+                    let countB = +entryB.value;
 
                     switch (sortCriterion) {
                         case "natural":
-                            return entryA.key > entryB.key ? 1 : (entryB.key > entryA.key ? -1 : 0);
+                            return +entryA.key > +entryB.key ? 1 : (+entryB.key > +entryA.key ? -1 : 0);
 
                         case "asc":
-                            return countA > countB ? 1 : (countB > countA ? -1 : 0);
+                            return countA > +countB ? 1 : (countB > countA ? -1 : 0);
 
                         case "desc":
-                            return countA < countB ? 1 : (countB < countA ? -1 : 0);
+                            return countA < +countB ? 1 : (countB < countA ? -1 : 0);
 
                         default:
                             throw new RangeError("Sorting criterion " + sortCriterion + " not supported.");
@@ -418,15 +479,15 @@ export default class DissonanceDataset extends Dataset
         // information.
         // ----------------------------------------------
 
-        let sortSettings = {
-            x: this._sortSettings.horizontal,
-            y: this._sortSettings.vertical
-        };
-        let unsortedData = JSON.parse(JSON.stringify(group.all()));
+        let scope = this;
 
         return {
             all: function() {
-                let sortedData                      = JSON.parse(JSON.stringify(unsortedData));
+                let sortSettings                    = {
+                    x: scope._sortSettings.horizontal,
+                    y: scope._sortSettings.vertical
+                };
+                let sortedData                      = JSON.parse(JSON.stringify(group.all()));
                 settings.sortOrderToNaturalOrder    = {};
                 settings.naturalOrderToSortOrder    = {};
 
@@ -439,7 +500,6 @@ export default class DissonanceDataset extends Dataset
                 return sortedData;
             }
         };
-
     }
 
     /**

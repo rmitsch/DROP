@@ -168,7 +168,7 @@ export default class DissonanceChart extends Chart
         this._dissonanceHeatmap
             .height(300)
             .width(300)
-            .dimension(dimensions[attribute])
+            .dimension(dimensions[attribute + "#sort"])
             .group(dataset._cf_groups[attribute])
             .colorAccessor(function(d)  { return d.value; })
             .colors(
@@ -195,6 +195,15 @@ export default class DissonanceChart extends Chart
                 let svg = $("#" + scope._divStructure.heatmapDivID).find('svg')[0];
                 svg.setAttribute('width', (svg.width.baseVal.value - scope._heatmapCutoff) + "px");
             });
+
+        // Forward cell selection to filter mechanism in DissonanceDataset.
+        this._dissonanceHeatmap.boxOnClick(function (d) {
+            dc.events.trigger(function () {
+                dataset.addToHeatmapCellSelection(d.key)
+                scope._dissonanceHeatmap.filter(d.key);
+                scope._dissonanceHeatmap.redrawGroup();
+            });
+        });
 
         // No rounded corners.
         this._dissonanceHeatmap.xBorderRadius(0);
@@ -228,7 +237,7 @@ export default class DissonanceChart extends Chart
             .keyAccessor( function(d) { return d.key; } )
             .valueAccessor( function(d) { return d.value; } )
             .elasticY(false)
-            .x(d3.scale.linear().domain([0, dataset._binCounts.x])) // extrema[xAttribute].max]
+            .x(d3.scale.linear().domain([0, dataset._binCounts.x]))
             .y(d3.scale.linear().domain([0, extrema[yAttribute].max]))
             .brushOn(true)
             .filterOnBrushEnd(true)
@@ -276,8 +285,6 @@ export default class DissonanceChart extends Chart
             .y(d3.scale.linear().domain([0, extrema[yAttribute].max]))
             .brushOn(true)
             .filterOnBrushEnd(true)
-            // .dimension(dimensions[xAttribute])
-            // .group(dataset._cf_groups[yAttribute])
             .dimension(dimensions[xAttribute + "#sort"])
             .group(dataset._cf_groups[yAttribute])
             .margins({top: 5, right: 5, bottom: 5, left: 35})
@@ -382,6 +389,8 @@ export default class DissonanceChart extends Chart
                 dataset._sortSettings.horizontal,
                 orderCriterion.x
             ));
+            this._horizontalHistogram.render();
+            this._verticalHistogram.render();
         }
 
         // Update sorting of verticalhistogram.
@@ -391,6 +400,8 @@ export default class DissonanceChart extends Chart
                 dataset._sortSettings.vertical,
                 orderCriterion.y
             ));
+            this._verticalHistogram.render();
+            this._horizontalHistogram.render();
         }
 
         // In all cases: heatmap has to be re-ordered.
@@ -398,10 +409,6 @@ export default class DissonanceChart extends Chart
             dataset._cf_groups["samplesInModelsMeasure:sampleDRModelMeasure"],
             dataset._sortSettings.heatmap
         ));
-
-        // In all cases: Rerender group.
-        this._horizontalHistogram.render();
-        this._verticalHistogram.render();
         this._dissonanceHeatmap.render();
     }
 }
