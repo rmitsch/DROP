@@ -58,6 +58,11 @@ export default class DissonanceDataset extends Dataset
                 recordValueToNaturalBinIndex: {},
                 sortOrderToNaturalOrder: {},
                 naturalOrderToSortOrder: {}
+            },
+            heatmap: {
+                recordValueToNaturalBinIndex: {},
+                sortOrderToNaturalOrder: {},
+                naturalOrderToSortOrder: {}
             }
         };
 
@@ -194,16 +199,9 @@ export default class DissonanceDataset extends Dataset
 
         // 2. Define group as sum of intersection sample_id/model_id - since only one element per
         // group exists, sum works just fine.
-        console.log(scope._sortSettings.horizontal.naturalOrderToSortOrder)
         this._cf_groups[attribute] = this._cf_dimensions[attribute]
-            .group(function(value) {
-                return [
-                    scope._sortSettings.horizontal.naturalOrderToSortOrder[value[0]],
-                    scope._sortSettings.vertical.naturalOrderToSortOrder[value[1]]
-                ]
-            })
+            .group()
             .reduceCount();
-        CONTINUE HERE
 
         // 3. Find extrema.
         this._calculateHistogramExtremaForAttribute(attribute);
@@ -350,23 +348,24 @@ export default class DissonanceDataset extends Dataset
     }
 
     /**
-     * Sorts group by specified criterion (e. g. "asc", "desc" or "natural").
+     * Sorts histogram group by specified criterion (e. g. "asc", "desc" or "natural").
      * @param group
      * @param settings Corresponding settings object.
      * @param sortCriterion
      * @returns {{all: all}}
      * @private
      */
-    sortGroup(group, settings, sortCriterion)
+    sortHistogramGroup(group, settings, sortCriterion)
     {
         // ----------------------------------------------
         // Sort specified groups and update internal
         // information.
         // ----------------------------------------------
 
+        let unsortedData = JSON.parse(JSON.stringify(group.all()));
+
         return {
             all: function() {
-                let unsortedData                    = group.all();
                 let sortedData                      = JSON.parse(JSON.stringify(unsortedData));
                 settings.sortOrderToNaturalOrder    = {};
                 settings.naturalOrderToSortOrder    = {};
@@ -397,6 +396,44 @@ export default class DissonanceDataset extends Dataset
                     settings.sortOrderToNaturalOrder[unsortedData[i].key]   = sortedData[i].key;
                     settings.naturalOrderToSortOrder[sortedData[i].key]     = unsortedData[i].key;
                     sortedData[i].key                                       = unsortedData[i].key;
+                }
+
+                return sortedData;
+            }
+        };
+
+    }
+
+    /**
+     * Sorts heatmap/binary group by specified criterion (e. g. "asc", "desc" or "natural").
+     * @param group
+     * @param settings Corresponding settings object.
+     * @returns {{all: all}}
+     * @private
+     */
+    sortHeatmapGroup(group, settings)
+    {
+        // ----------------------------------------------
+        // Sort specified groups and update internal
+        // information.
+        // ----------------------------------------------
+
+        let sortSettings = {
+            x: this._sortSettings.horizontal,
+            y: this._sortSettings.vertical
+        };
+        let unsortedData = JSON.parse(JSON.stringify(group.all()));
+
+        return {
+            all: function() {
+                let sortedData                      = JSON.parse(JSON.stringify(unsortedData));
+                settings.sortOrderToNaturalOrder    = {};
+                settings.naturalOrderToSortOrder    = {};
+
+                // Swap rows in accordance with defined sort order.
+                for (let i = 0; i < sortedData.length; i++) {
+                    sortedData[i].key[0] = sortSettings.x.naturalOrderToSortOrder[sortedData[i].key[0]];
+                    sortedData[i].key[1] = sortSettings.y.naturalOrderToSortOrder[sortedData[i].key[1]];
                 }
 
                 return sortedData;

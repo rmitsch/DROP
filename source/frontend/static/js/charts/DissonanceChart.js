@@ -169,7 +169,6 @@ export default class DissonanceChart extends Chart
             .height(300)
             .width(300)
             .dimension(dimensions[attribute])
-            // .group(dataset.sortHeatmapGroup(dataset._cf_groups[attribute]))
             .group(dataset._cf_groups[attribute])
             .colorAccessor(function(d)  { return d.value; })
             .colors(
@@ -234,11 +233,7 @@ export default class DissonanceChart extends Chart
             .brushOn(true)
             .filterOnBrushEnd(true)
             .dimension(dimensions[xAttribute + "#sort"])
-            .group(dataset.sortGroup(
-                dataset._cf_groups[yAttribute],
-                dataset._sortSettings.horizontal,
-                "natural"
-            ))
+            .group(dataset._cf_groups[yAttribute])
             .margins({top: 5, right: 5, bottom: 5, left: 40})
             .gap(0);
 
@@ -284,11 +279,7 @@ export default class DissonanceChart extends Chart
             // .dimension(dimensions[xAttribute])
             // .group(dataset._cf_groups[yAttribute])
             .dimension(dimensions[xAttribute + "#sort"])
-            .group(dataset.sortGroup(
-                dataset._cf_groups[yAttribute],
-                dataset._sortSettings.vertical,
-                "natural"
-            ))
+            .group(dataset._cf_groups[yAttribute])
             .margins({top: 5, right: 5, bottom: 5, left: 35})
             .gap(0);
 
@@ -362,36 +353,55 @@ export default class DissonanceChart extends Chart
     {
         let dataset = this._dataset;
 
+        // -----------------------------------------------------------
+        // 1. Check if sort settings are valid and have changed.
+        //    If not, abort/exit.
+        // ----------------------------------------------------------
+
         // Check for validity of specified sorting criterion.
         if (!dataset._allowedCriterions.includes(orderCriterion.x) ||
             !dataset._allowedCriterions.includes(orderCriterion.y)
         )
             throw new RangeError("Invalid value for DissonanceChart's sort criterion chosen.");
 
+        // Check if settings have changed.
+        if (dataset._sortSettings.horizontal.criterion === orderCriterion.x &&
+            dataset._sortSettings.vertical.criterion === orderCriterion.y
+        )
+            return;
+
+        // -----------------------------------------------------------
+        // 2. If settings have changed: Update sorting and re-render.
+        // ----------------------------------------------------------
+
         // Update sorting of horizontal histogram.
         if (dataset._sortSettings.horizontal.criterion !== orderCriterion.x) {
-            this._horizontalHistogram.group(dataset.sortGroup(
+            // Set sort order for histogram.
+            this._horizontalHistogram.group(dataset.sortHistogramGroup(
                 dataset._cf_groups["samplesInModels#measure"],
                 dataset._sortSettings.horizontal,
                 orderCriterion.x
             ));
-            // Rerender horizontal histogram and heatmap.
-            this._horizontalHistogram.render();
-            this._dissonanceHeatmap.render();
-            this._verticalHistogram.render();
         }
 
         // Update sorting of verticalhistogram.
         if (dataset._sortSettings.vertical.criterion !== orderCriterion.y) {
-            this._verticalHistogram.group(dataset.sortGroup(
+            this._verticalHistogram.group(dataset.sortHistogramGroup(
                 dataset._cf_groups["samplesInModels#" + this._dataset._supportedDRModelMeasure],
                 dataset._sortSettings.vertical,
                 orderCriterion.y
             ));
-            // Rerender vertical histogram and heatmap.
-            this._verticalHistogram.render();
-            this._dissonanceHeatmap.render();
-            this._horizontalHistogram.render();
         }
+
+        // In all cases: heatmap has to be re-ordered.
+        this._dissonanceHeatmap.group(dataset.sortHeatmapGroup(
+            dataset._cf_groups["samplesInModelsMeasure:sampleDRModelMeasure"],
+            dataset._sortSettings.heatmap
+        ));
+
+        // In all cases: Rerender group.
+        this._horizontalHistogram.render();
+        this._verticalHistogram.render();
+        this._dissonanceHeatmap.render();
     }
 }
