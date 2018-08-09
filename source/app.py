@@ -206,7 +206,7 @@ def get_sample_dissonance():
 
         for model_pointwise_quality_leaf in h5file.walk_nodes("/pointwise_quality/", classname="CArray"):
             model_id = int(model_pointwise_quality_leaf._v_name[5:])
-
+            # Gather all pointwise qualities in file.
             pointwise_qualities[model_id] = model_pointwise_quality_leaf.read().flatten()
 
         # Close file.
@@ -219,6 +219,42 @@ def get_sample_dissonance():
 
         # Return jsonified version of model x sample quality matrix.
         return df.to_json(orient='records')
+
+    else:
+        return "File does not exist.", 400
+
+
+@app.route('/get_dr_model_details', methods=["GET"])
+def get_dr_model_details():
+    """
+    Fetches data for DR model with specifie ID.
+    GET parameters:
+        - "id" for ID of DR model.
+    :return: Jsonified structure of surrogate model for DR metadata.
+    """
+
+    file_name = app.config["FULL_FILE_NAME"]
+    model_id = int(request.args["id"])
+
+    if os.path.isfile(file_name):
+        h5file = open_file(filename=file_name, mode="r+")
+        # Transform node with this model into a dataframe so we can easily retain column names.
+        model_metadata = pandas.DataFrame.from_records(
+            h5file.root.metadata.read_where("(id == " + str(model_id) + ")")
+        )
+        # Fetch projection record by node name.
+        low_dim_projection = h5file.root.projection_coordinates._f_get_child("model" + str(model_id)).read()
+        # Get dissonances of this model's samples.
+        sample_dissonances = h5file.root.pointwise_quality._f_get_child("model" + str(model_id)).read()
+        # Get record labels from original dataset.
+
+        # todo Next:
+        #   - Record names from original dataset, if availale.
+        #   - Record classes.
+
+        h5file.close()
+
+        return "bla"
 
     else:
         return "File does not exist.", 400

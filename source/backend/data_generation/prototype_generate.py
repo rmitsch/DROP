@@ -19,13 +19,13 @@ logger = Utils.create_logger()
 ######################################################
 
 # Define name of dataset to use (appended to file name).
-dataset_name = sys.argv[1] if len(sys.argv) > 1 else "mnist"
+dataset_name = sys.argv[1] if len(sys.argv) > 1 else "wine"
 # Define DR method to use.
 dim_red_kernel_name = sys.argv[2] if len(sys.argv) > 2 else "TSNE"
 
 # Get all parameter configurations (to avoid duplicate model generations).
 parameter_sets = DimensionalityReductionKernel.generate_parameter_sets_for_testing(
-    data_file_path=os.getcwd() + "/../data/drop_" + dataset_name + "_" + dim_red_kernel_name + ".h5",
+    data_file_path=os.getcwd() + "/../data/drop_" + dataset_name + "_" + dim_red_kernel_name.lower() + ".h5",
     dim_red_kernel_name=dim_red_kernel_name
 )
 
@@ -45,6 +45,9 @@ elif dataset_name == "mnist":
     high_dim_dataset = MNISTDataset()
 elif dataset_name == "vis":
     high_dim_dataset = VISPaperDataset()
+
+# Persist dataset's records.
+high_dim_dataset.persist_records(directory=os.getcwd() + "/../data")
 
 # Scale attributes, fetch predictors.
 high_dim_features = high_dim_dataset.preprocessed_features()

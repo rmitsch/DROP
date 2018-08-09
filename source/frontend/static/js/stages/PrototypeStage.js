@@ -10,6 +10,7 @@ import SurrogateModelOperator from "../operators/SurrogateModelOperator.js";
 import DissonanceOperator from "../operators/DissonanceOperator.js";
 import Utils from "../Utils.js";
 import DissonanceDataset from "../data/DissonanceDataset.js";
+import ModelDetailOperator from "../operators/ModelDetailOperator.js";
 
 /**
  * Stage for prototype (2018-02).
@@ -101,9 +102,20 @@ export default class PrototypeStage extends Stage
                 // ---------------------------------------------------------
 
                 scope._operators["Dissonance"] = new DissonanceOperator(
-                    "GlobalSurrogateModel:DecisionTree",
+                    "Dissonance:DecisionTree",
                     scope,
                     scope._datasets["dissonance"],
+                    splitBottomDiv.id
+                );
+
+                // ---------------------------------------------------------
+                // 4. Operator for model (+ sample) detail view.
+                // ---------------------------------------------------------
+
+                scope._operators["ModelDetail"] = new ModelDetailOperator(
+                    "Detail:DRModel",
+                    scope,
+                    // Note that MD view is a modal, hence it doesn't matter which parent div is used.
                     splitBottomDiv.id
                 );
 

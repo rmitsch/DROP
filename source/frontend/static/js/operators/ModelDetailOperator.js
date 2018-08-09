@@ -1,4 +1,5 @@
 import Operator from "./Operator.js";
+import ModelDetailPanel from "../panels/ModelDetailPanel.js";
 
 /**
  * Class for ModelDetailOperator.
@@ -16,7 +17,7 @@ export default class ModelDetailOperator extends Operator
      */
     constructor(name, stage, parentDivID)
     {
-        super(name, stage, "1", "n", null, parentDivID);
+        super(name, stage, "1", "1", null, parentDivID);
 
         // Update involved CSS classes.
         $("#" + this._target).addClass("model-detail-operator");
@@ -30,29 +31,18 @@ export default class ModelDetailOperator extends Operator
      */
     constructPanels()
     {
-    //     // ----------------------------------------------
-    //     // Generate panels.
-    //     // ----------------------------------------------
-    //
-    //     // 1. Construct panels for charts.
-    //     let frcPanel = new FilterReduceChartsPanel(
-    //         "Hyperparameters & Objectives",
-    //         this
-    //     );
-    //     this._panels[frcPanel.name] = frcPanel;
-    //
-    //     // 2. Construct panel for selection table.
-    //     let tablePanel = new FilterReduceTablePanel(
-    //         "Model Selection",
-    //         this
-    //     );
-    //     this._panels[tablePanel.name] = tablePanel;
-    //
-    //     // 3. Construct panel for settings.
-    //     let settingsPanel = new FilterReduceSettingsPanel(
-    //         "Hyperparameters & Objectives: Settings", this, null, "filter-reduce-info-settings-icon"
-    //     );
-    //     this._panels[settingsPanel.name] = settingsPanel;
+        // ----------------------------------------------
+        // Generate panels.
+        // ----------------------------------------------
+
+        // Construct panels for charts.
+        let frcPanel = new ModelDetailPanel(
+            "Model Details",
+            this
+        );
+        this._panels[frcPanel.name] = frcPanel;
+
+
     //
     //     // ----------------------------------------------
     //     // Configure modals.

@@ -19,8 +19,8 @@ class DimensionalityReductionKernel:
     DIM_RED_KERNELS = {
         "TSNE": {
             "parameters": [
-                {"name": "n_components", "type": "numeric", "values": [1, 2]},
-                {"name": "perplexity", "type": "numeric", "values": [10, 25]},
+                {"name": "n_components", "type": "numeric", "values": [2]}, # 1
+                {"name": "perplexity", "type": "numeric", "values": [25]}, # 10
                 {"name": "early_exaggeration", "type": "numeric", "values": [5, 10]},
                 {"name": "learning_rate", "type": "numeric", "values": [10, 250]},
                 {"name": "n_iter", "type": "numeric", "values": [100, 250, 500]},

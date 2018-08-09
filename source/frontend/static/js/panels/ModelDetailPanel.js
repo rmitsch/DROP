@@ -1,7 +1,5 @@
 import Panel from "./Panel.js";
 import Utils from "../Utils.js";
-import Table from "../charts/Table.js"
-import DissonanceChart from "../charts/DissonanceChart";
 
 /**
  * Panel for model detail view.

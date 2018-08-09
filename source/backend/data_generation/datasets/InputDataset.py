@@ -92,6 +92,15 @@ class InputDataset:
         """
         return self._data
 
+    @abc.abstractmethod
+    def persist_records(self, directory: str):
+        """
+        Persists manifest properties of all of this dataset's records as .csv.
+        Schema: [name, label, [features]].
+        :param directory: Path to directory in which to store the file.
+        """
+        pass
+
     def calculate_classification_accuracy(self, features: numpy.ndarray = None):
         """
         Calculates classification accuracy with original dataset.

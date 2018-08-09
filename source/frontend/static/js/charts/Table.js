@@ -102,10 +102,19 @@ export default class Table extends Chart
         //         null, instance._target
         //     );
         // }, 0));
+
         // On (double-)click: Open detail view.
         $("#" + tableID + " tbody").on('dblclick', 'td', function (e) {
             var data = instance._cf_chart.row(this).data();
-            let modelID = data[0];
+
+            // Fetch model data.
+            let modelDetailData = fetch(
+                "/get_dr_model_details?id=" + data[0],
+                {
+                    headers: { "Content-Type": "application/json; charset=utf-8"},
+                    method: "GET"
+                }
+            ).then(res => res.json());
         });
     }
 
@@ -169,7 +178,6 @@ export default class Table extends Chart
             instance._cf_chart.draw();
         };
 
-        //
         this._cf_chart.filterAll    = function() {
             // Reset brush.
             instance._cf_chart.draw();
