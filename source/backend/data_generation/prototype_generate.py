@@ -11,6 +11,25 @@ from backend.data_generation.dimensionality_reduction import DimensionalityReduc
 from backend.data_generation.dimensionality_reduction.DimensionalityReductionThread import DimensionalityReductionThread
 from backend.utils import Utils
 
+
+def generate_instance(instance_dataset_name: str):
+    """
+    Generates and returns dataset instance of specified type.
+    :param instance_dataset_name:
+    :return:
+    """
+    if instance_dataset_name not in ("wine", "swiss_roll", "mnist", "vis"):
+        raise ValueError('Dataset ' + instance_dataset_name + ' not supported.')
+
+    if instance_dataset_name == "wine":
+        return WineDataset()
+    elif instance_dataset_name == "swiss_roll":
+        return SwissRollDataset()
+    elif instance_dataset_name == "mnist":
+        return MNISTDataset()
+    elif instance_dataset_name == "vis":
+        return VISPaperDataset()
+
 # Create logger.
 logger = Utils.create_logger()
 
@@ -19,7 +38,7 @@ logger = Utils.create_logger()
 ######################################################
 
 # Define name of dataset to use (appended to file name).
-dataset_name = sys.argv[1] if len(sys.argv) > 1 else "wine"
+dataset_name = sys.argv[1] if len(sys.argv) > 1 else "vis"
 # Define DR method to use.
 dim_red_kernel_name = sys.argv[2] if len(sys.argv) > 2 else "TSNE"
 
@@ -36,16 +55,7 @@ parameter_sets = DimensionalityReductionKernel.generate_parameter_sets_for_testi
 logger.info("Creating dataset.")
 
 # Load dataset.
-high_dim_dataset = None
-if dataset_name == "wine":
-    high_dim_dataset = WineDataset()
-elif dataset_name == "swiss_roll":
-    high_dim_dataset = SwissRollDataset()
-elif dataset_name == "mnist":
-    high_dim_dataset = MNISTDataset()
-elif dataset_name == "vis":
-    high_dim_dataset = VISPaperDataset()
-
+high_dim_dataset = generate_instance(instance_dataset_name=dataset_name)
 # Persist dataset's records.
 high_dim_dataset.persist_records(directory=os.getcwd() + "/../data")
 

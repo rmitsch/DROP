@@ -41,9 +41,11 @@ class WineDataset(InputDataset):
             csv_writer.writerow(header_line)
 
             # Append records to .csv.
-            for record in self.features():
-                print(record)
-                # todo Here: Write persist_records() for all dataset sub-classes.
+            for i, features in enumerate(self.features()):
+                # Use index as record name, since records are anonymous.
+                line = [i, self._data.target[i]]
+                line.extend(features)
+                csv_writer.writerow(line)
 
 
 

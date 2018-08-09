@@ -346,3 +346,25 @@ class VISPaperDataset(InputDataset):
 
         # Normalize to 0 <= x <= 1.
         return (silhouette_score + 1) / 2.0
+
+    def persist_records(self, directory: str):
+        print(self._data.head(1))
+        # todo: Continue with writing out VIS dataset here.
+        # After that: Load dataset into frontend via get_model_details(); continue with detail view.
+
+        # with open(directory + '/swiss_roll_records.csv', mode='a') as csv_file:
+        #     # Append as not to overwrite needed data. .csv won't be usable w/o rectification after appending, but we
+        #     # assume some manual postprocessing to be preferrable to data loss due to carelessness.
+        #     csv_writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        #
+        #     # Write header line.
+        #     header_line = ["record_name", "target_label"]
+        #     header_line.extend([i for i in range(0, len(self._data["features"][0]))])
+        #     csv_writer.writerow(header_line)
+        #
+        #     # Append records to .csv.
+        #     for i, features in enumerate(self._data["features"]):
+        #         # Use index as record name, since records are anonymous.
+        #         line = [i, self._data["labels"][i]]
+        #         line.extend(features)
+        #         csv_writer.writerow(line)

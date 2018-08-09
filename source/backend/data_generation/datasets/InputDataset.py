@@ -1,14 +1,15 @@
 import abc
-import sklearn.ensemble
-from sklearn.model_selection import StratifiedShuffleSplit
-import psutil
+import copy
+import csv
 import numpy
 from scipy.spatial.distance import cdist
-import hdbscan
+import sklearn.ensemble
+from sklearn.model_selection import StratifiedShuffleSplit
 import sklearn.metrics
+import hdbscan
+
 from backend.utils import Utils
-import copy
-import threading
+
 
 class InputDataset:
     """
@@ -97,6 +98,9 @@ class InputDataset:
         """
         Persists manifest properties of all of this dataset's records as .csv.
         Schema: [name, label, [features]].
+        Note: Baseline code only works for datasets sticking exactly to the sklearn dataset pattern (i. e. self._data
+        is a dictionary with one entry for "features" and one for "labels"); records are named by their index as they
+        appear after being loaded.
         :param directory: Path to directory in which to store the file.
         """
         pass
