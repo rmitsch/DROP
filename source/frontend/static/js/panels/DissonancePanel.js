@@ -75,7 +75,7 @@ export default class DissonancePanel extends Panel
             "<a id='dissonance-info-table-icon' href='#'>" +
             "    <img src='./static/img/icon_table.png' class='info-icon' alt='View in table' width='20px'>" +
             "</a>"
-        )
+        );
 
         return {
             chartsContainerDivID: chartsContainerDiv.id

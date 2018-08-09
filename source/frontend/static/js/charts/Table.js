@@ -23,7 +23,7 @@ export default class Table extends Chart
         // Update involved CSS classes.
         $("#" + this._target).addClass("filter-reduce-table");
 
-        // Create chart handler (too lazy to write a new class just for that)..
+        // Initialize chart handler (too lazy to write a new class just for that).
         this._cf_chart = {};
 
         // Create div structure.
@@ -90,18 +90,23 @@ export default class Table extends Chart
 
         // Highlight data point on hover in scatterplots & histograms.
         let instance = this;
-        $("#" + tableID + " tbody").on('mouseenter', 'td', Utils.debounce(function () {
-            if (instance._cf_chart.row(this).data() !== null)
-                instance._panel._operator.highlight(
-                        instance._cf_chart.row(this).data()[0], instance._target
-                );
-        }, 0));
-        $("#" + tableID + " tbody").on('mouseout', 'td', Utils.debounce(function () {
-            // Clear highlighting.
-            instance._panel._operator.highlight(
-                null, instance._target
-            );
-        }, 0));
+        // $("#" + tableID + " tbody").on('mouseenter', 'td', Utils.debounce(function () {
+        //     if (instance._cf_chart.row(this).data() !== null)
+        //         instance._panel._operator.highlight(
+        //                 instance._cf_chart.row(this).data()[0], instance._target
+        //         );
+        // }, 0));
+        // $("#" + tableID + " tbody").on('mouseout', 'td', Utils.debounce(function () {
+        //     // Clear highlighting.
+        //     instance._panel._operator.highlight(
+        //         null, instance._target
+        //     );
+        // }, 0));
+        // On (double-)click: Open detail view.
+        $("#" + tableID + " tbody").on('dblclick', 'td', function (e) {
+            var data = instance._cf_chart.row(this).data();
+            let modelID = data[0];
+        });
     }
 
     _createDivStructure()

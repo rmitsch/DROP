@@ -4,12 +4,7 @@ import Dataset from "./Dataset.js";
 
 /**
  * Wrapper class providing the specified dataset itself plus the corresponding crossfilter context and various utility
- * methods.
- * Note that this class includes a few custom tweaks regarding which dimensions and groups to generate.
- * This class might be split and only used as abstract base class, once the prototype is extended to other operators -
- * typically, operators have different requirements regarding their datasets and their capabilities. This could be
- * reflected by a diverging DRMetaDataset class hierarchy.
- */
+ * methods. */
 export default class DRMetaDataset extends Dataset
 {
     /**
