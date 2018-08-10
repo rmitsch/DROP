@@ -42,34 +42,81 @@ export default class ModelDetailPanel extends Panel
      */
     _createDivStructure()
     {
-        let scope = this;
+        // -----------------------------------
+        // 1. Create panes.
+        // -----------------------------------
+
+        // Left pane.
+        let parameterPane = Utils.spawnChildDiv(this._target, "model-detail-parameter-pane", "split split-horizontal");
+        // Right pane.
+        let samplePane = Utils.spawnChildDiv(this._target, "model-detail-sample-pane", "split split-horizontal");
+
+        // Upper-left pane - hyperparameters and objectives for current DR model.
+        let attributePane = Utils.spawnChildDiv(
+            parameterPane.id, null, "model-detail-pane split split-vertical",
+            `<div class='model-details-block reduced-padding'>
+                <div class='model-details-title'>Hyperparameters</div>
+                <hr>
+                <div class='model-details-title'>Objectives</span>
+            </div>`
+        );
+        // Bottom-left pane - explanation of hyperparameter importance for this DR model utilizing LIME.
+        let limePane = Utils.spawnChildDiv(
+            parameterPane.id, null, "model-detail-pane split-vertical",
+            `<div class='model-details-block'>
+                <div class='model-details-title'>Local Hyperparameter Relevance</div>
+            </div>`
+        );
+
+        // Upper-right pane - all records in scatterplot (SPLOM? -> What to do with higher-dim. projections?).
+        let scatterplotPane = Utils.spawnChildDiv(
+            samplePane.id, null, "model-detail-pane split-vertical",
+            `<div class='model-details-block reduced-padding'>
+                <div class='model-details-title'>All Records</div>
+            </div>`
+        );
+        // Bottom-right pane - detailed information to currently selected record.
+        let recordPane = Utils.spawnChildDiv(
+            samplePane.id, null, "model-detail-pane split-vertical",
+            `<div class='model-details-block'>
+                <div class='model-details-title'>Selected Sample(s)</span>
+            </div>`
+        );
 
         // -----------------------------------
-        // 1. Create charts container.
+        // 2. Configure splitting.
         // -----------------------------------
-        //
-        // let chartsContainerDiv  = Utils.spawnChildDiv(this._target, null, "dissonance-charts-container");
-        //
-        // // -----------------------------------
-        // // 2. Create title and options container.
-        // // -----------------------------------
-        //
-        // // Note: Listener for table icon is added by FilterReduceOperator, since it requires information about the table
-        // // panel.
-        // let infoDiv = Utils.spawnChildDiv(this._target, null, "dissonance-info");
-        // $("#" + infoDiv.id).html(
-        //     "<span class='title'>" + scope._name + "</span>" +
-        //     "<a id='dissonance-info-settings-icon' href='#'>" +
-        //     "    <img src='./static/img/icon_settings.png' class='info-icon' alt='Settings' width='20px'>" +
-        //     "</a>" +
-        //     "<a id='dissonance-info-table-icon' href='#'>" +
-        //     "    <img src='./static/img/icon_table.png' class='info-icon' alt='View in table' width='20px'>" +
-        //     "</a>"
-        // )
-        //
-        // return {
-        //     chartsContainerDivID: chartsContainerDiv.id
-        // };
+
+        // Split left and right pane.
+        Split(["#" + parameterPane.id, "#" + samplePane.id], {
+            direction: "horizontal",
+            sizes: [25, 75],
+            onDragEnd: function() {}
+        });
+
+        // Split upper-left and bottom-left pane.
+        Split(["#" + attributePane.id, "#" + limePane.id], {
+            direction: "vertical",
+            sizes: [50, 50],
+            onDragEnd: function() {}
+        });
+
+        // Split upper-right and bottom-right pane.
+        Split(["#" + scatterplotPane.id, "#" + recordPane.id], {
+            direction: "vertical",
+            sizes: [50, 50],
+            onDragEnd: function() {}
+        });
+
+        // Return all panes' IDs.
+        return {
+            parameterPane: parameterPane.id,
+            samplePane: samplePane.id,
+            attributePane: attributePane.id,
+            limePane: limePane.id,
+            scatterplotPane: scatterplotPane.id,
+            recordPane: recordPane.id
+        };
     }
 
     render()

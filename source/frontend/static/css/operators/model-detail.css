@@ -1,0 +1,24 @@
+.model-detail-operator {
+    display: none;
+    position: absolute;
+}
+
+#model-detail-parameter-pane {
+    height: calc(100% - 10px);
+}
+
+.model-detail-pane {
+    text-align: center;
+}
+
+.model-details-block {
+    height: calc(100% - 10px);
+    padding-top: 10px;
+}
+
+.model-details-title {
+}
+
+.reduced-padding {
+    padding-top: 0px;
+}

@@ -116,7 +116,7 @@ export default class PrototypeStage extends Stage
                     "Detail:DRModel",
                     scope,
                     // Note that MD view is a modal, hence it doesn't matter which parent div is used.
-                    splitBottomDiv.id
+                    scope._target
                 );
 
                 // ---------------------------------------------------------
@@ -131,9 +131,7 @@ export default class PrototypeStage extends Stage
                 Split(["#" + surrTarget, "#" + dissTarget], {
                     direction: "horizontal",
                     sizes: [50, 50],
-                    onDragEnd: function() {
-
-                    }
+                    onDragEnd: function() {}
                 });
 
                 // Vertical split.

@@ -41,23 +41,6 @@ export default class ModelDetailOperator extends Operator
             this
         );
         this._panels[mdPanel.name] = mdPanel;
-
-
-    //
-    //     // ----------------------------------------------
-    //     // Configure modals.
-    //     // ----------------------------------------------
-    //
-    //     let scope = this;
-    //
-    //     // 4. Set click listener for FRC panel's table modal.
-    //     $("#filter-reduce-info-table-icon").click(function() {
-    //         $("#" + scope._panels[tablePanel.name]._target).dialog({
-    //             title: "All models",
-    //             width: $("#" + scope._stage._target).width() / 2,
-    //             height: $("#" + scope._stage._target).height() / 2
-    //         });
-    //     });
     }
 
     /**
@@ -81,15 +64,17 @@ export default class ModelDetailOperator extends Operator
             // Parse substructures.
             modelDetailData.model_metadata = JSON.parse(modelDetailData.model_metadata);
             modelDetailData.original_dataset = JSON.parse(modelDetailData.original_dataset);
-
-            // Propagate information to operator.
-            console.log(modelDetailData);
+            // Store dataset.
+            scope._dataset = {
+                primitiveData: modelDetailData,
+                crossfilter: null
+            };
 
             // Show modal.
             $("#" + scope._panels["Model Details"]._target).dialog({
-                title: "Model Details View for #" + modelID,
-                width: $("#" + scope._stage._target).width() / 2,
-                height: $("#" + scope._stage._target).height() / 2
+                title: "Model Details for Model with ID #" + modelID,
+                width: $("#" + scope._stage._target).width() / 1.5,
+                height: $("#" + scope._stage._target).height() / 1.5
             });
         });
     }
