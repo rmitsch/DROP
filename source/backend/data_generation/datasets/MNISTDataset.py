@@ -1,7 +1,8 @@
+import csv
+import os
 from sklearn.datasets import fetch_mldata
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.preprocessing import StandardScaler
-import csv
 
 from backend.data_generation.datasets import InputDataset
 
@@ -45,19 +46,20 @@ class MNISTDataset(InputDataset):
         return StandardScaler().fit_transform(self._data["features"])
 
     def persist_records(self, directory: str):
-        with open(directory + '/mnist_records.csv', mode='a') as csv_file:
-            # Append as not to overwrite needed data. .csv won't be usable w/o rectification after appending, but we
-            # assume some manual postprocessing to be preferrable to data loss due to carelessness.
-            csv_writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        filepath = directory + '/mnist_records.csv'
 
-            # Write header line.
-            header_line = ["record_name", "target_label"]
-            header_line.extend([i for i in range(0, len(self._data["features"][0]))])
-            csv_writer.writerow(header_line)
+        if not os.path.isfile(filepath):
+            with open(filepath, mode='w') as csv_file:
+                csv_writer = csv.writer(csv_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
-            # Append records to .csv.
-            for i, features in enumerate(self._data["features"]):
-                # Use index as record name, since records are anonymous.
-                line = [i, self._data["labels"][i]]
-                line.extend(features)
-                csv_writer.writerow(line)
+                # Write header line.
+                header_line = ["record_name", "target_label"]
+                header_line.extend([i for i in range(0, len(self._data["features"][0]))])
+                csv_writer.writerow(header_line)
+
+                # Append records to .csv.
+                for i, features in enumerate(self._data["features"]):
+                    # Use index as record name, since records are anonymous.
+                    line = [i, self._data["labels"][i]]
+                    line.extend(features)
+                    csv_writer.writerow(line)

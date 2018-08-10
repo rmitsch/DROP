@@ -233,31 +233,53 @@ def get_dr_model_details():
     :return: Jsonified structure of surrogate model for DR metadata.
     """
 
-    file_name = app.config["FULL_FILE_NAME"]
     model_id = int(request.args["id"])
+    file_name = app.config["FULL_FILE_NAME"]
+    high_dim_file_name = os.getcwd() + "/../data/" + app.config["DATASET_NAME"] + "_records.csv"
 
-    if os.path.isfile(file_name):
-        h5file = open_file(filename=file_name, mode="r+")
+    if not os.path.isfile(file_name):
+        return "File " + file_name + "does not exist.", 400
+    if not os.path.isfile(high_dim_file_name):
+        return "File " + high_dim_file_name + "does not exist.", 400
+
+    # Open file containing information on low-dimensional projections.
+    h5file = open_file(filename=file_name, mode="r+")
+
+    # Assemble result object.
+    result = {
+        # --------------------------------------------------------
+        # Retrieve data from low-dim. dataset.
+        # --------------------------------------------------------
+
         # Transform node with this model into a dataframe so we can easily retain column names.
-        model_metadata = pandas.DataFrame.from_records(
+        "model_metadata": pandas.DataFrame.from_records(
             h5file.root.metadata.read_where("(id == " + str(model_id) + ")")
-        )
+        ).set_index("id").to_json(orient='index'),
         # Fetch projection record by node name.
-        low_dim_projection = h5file.root.projection_coordinates._f_get_child("model" + str(model_id)).read()
+        "low_dim_projection": #jsonify(
+            h5file.root.projection_coordinates._f_get_child("model" + str(model_id)).read().tolist(),
+        #),
         # Get dissonances of this model's samples.
-        sample_dissonances = h5file.root.pointwise_quality._f_get_child("model" + str(model_id)).read()
-        # Get record labels from original dataset.
+        "sample_dissonances": #jsonify(
+            h5file.root.pointwise_quality._f_get_child("model" + str(model_id)).read().tolist(),
+        #),
 
-        # todo Next:
-        #   - Record names from original dataset, if availale.
-        #   - Record classes.
+        # --------------------------------------------------------
+        # Retrieve data from original, high-dim. dataset.
+        # --------------------------------------------------------
 
-        h5file.close()
+        # Fetch record names/titles, labels, original features.
+        "original_dataset": pandas.read_csv(
+            filepath_or_buffer=os.getcwd() + "/../data/" + app.config["DATASET_NAME"] + "_records.csv",
+            delimiter=';',
+            quotechar='"'
+        ).to_json(orient='index')
+    }
 
-        return "bla"
+    # Close file with low-dim. data.
+    h5file.close()
 
-    else:
-        return "File does not exist.", 400
+    return jsonify(result)
 
 # Launch on :2483.
 if __name__ == "__main__":

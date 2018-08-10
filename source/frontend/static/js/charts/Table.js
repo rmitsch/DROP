@@ -114,7 +114,15 @@ export default class Table extends Chart
                     headers: { "Content-Type": "application/json; charset=utf-8"},
                     method: "GET"
                 }
-            ).then(res => res.json());
+            )
+            .then(res => res.json())
+            .then(resJSON => {
+                resJSON.model_metadata = JSON.parse(resJSON.model_metadata);
+                resJSON.original_dataset = JSON.parse(resJSON.original_dataset);
+                console.log(resJSON);
+            });
+
+
         });
     }
 

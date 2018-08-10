@@ -38,7 +38,7 @@ logger = Utils.create_logger()
 ######################################################
 
 # Define name of dataset to use (appended to file name).
-dataset_name = sys.argv[1] if len(sys.argv) > 1 else "vis"
+dataset_name = sys.argv[1] if len(sys.argv) > 1 else "wine"
 # Define DR method to use.
 dim_red_kernel_name = sys.argv[2] if len(sys.argv) > 2 else "TSNE"
 

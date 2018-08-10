@@ -1,16 +1,18 @@
+import os
+import tempfile
+import re
+import csv
+import numpy
 import pandas
 import nltk
 from pattern3 import vector as pattern_vector
-import tempfile
-import re
-import numpy
-import fastText
 from sklearn.model_selection import train_test_split
 from scipy.spatial.distance import cdist
 import sklearn.ensemble
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.metrics import f1_score
 import hdbscan
+import fastText
 
 from backend.data_generation.datasets import InputDataset
 
@@ -42,6 +44,12 @@ class VISPaperDataset(InputDataset):
             ),
             "labels": None
         }
+        # Store original text state.
+        data["features"]["original_title"] = data["features"]["title"]
+        data["features"]["original_abstract"] = data["features"]["abstract"]
+
+        # todo remove after tests
+        data["features"] = data["features"][:100]
 
         # Preprocess data.
         data["labels"] = data["features"]["keywords"].str.split(",")
@@ -171,17 +179,18 @@ class VISPaperDataset(InputDataset):
             for label in self._data["labels"][i]:
                 keyword_label_string += \
                     "__label__" + \
-                    label.replace(" ", "_") + \
-                    label.replace("/", "_") + \
-                    label.replace("&", "_") + \
+                    label.replace(" ", "_").\
+                    replace("/", "_").\
+                    replace("&", "_") + \
                     " "
 
             # Assemble preprocessed abstract, title and labels.
             # "__label__" + data.ix[i, 'cluster_title'] + " " + \
             data.ix[i, 'assembled_text'] = \
-                keyword_label_string.strip() + \
+                keyword_label_string.strip() + " " + \
                 data.ix[i, 'title'] + " " + \
                 data.ix[i, 'abstract']
+
             # Assemble preprocessed abstract, title and labels w/o cluster title.
             data.ix[i, 'assembled_text_wo_labels'] = \
                 str(self._data["labels"][i]) + " " + \
@@ -335,6 +344,8 @@ class VISPaperDataset(InputDataset):
         # 2. Compute Silhouette score.
         ########################################################################
 
+        # Note that comparison can also be done based on records' "cluster_title" (which is the manually assigned
+        # topic).
         silhouette_score = sklearn.metrics.silhouette_score(
             # Use binarized form of textual labels.
             X=MultiLabelBinarizer().fit_transform(
@@ -348,23 +359,29 @@ class VISPaperDataset(InputDataset):
         return (silhouette_score + 1) / 2.0
 
     def persist_records(self, directory: str):
-        print(self._data.head(1))
-        # todo: Continue with writing out VIS dataset here.
-        # After that: Load dataset into frontend via get_model_details(); continue with detail view.
+        filepath = directory + '/vis_records.csv'
 
-        # with open(directory + '/swiss_roll_records.csv', mode='a') as csv_file:
-        #     # Append as not to overwrite needed data. .csv won't be usable w/o rectification after appending, but we
-        #     # assume some manual postprocessing to be preferrable to data loss due to carelessness.
-        #     csv_writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        #
-        #     # Write header line.
-        #     header_line = ["record_name", "target_label"]
-        #     header_line.extend([i for i in range(0, len(self._data["features"][0]))])
-        #     csv_writer.writerow(header_line)
-        #
-        #     # Append records to .csv.
-        #     for i, features in enumerate(self._data["features"]):
-        #         # Use index as record name, since records are anonymous.
-        #         line = [i, self._data["labels"][i]]
-        #         line.extend(features)
-        #         csv_writer.writerow(line)
+        if not os.path.isfile(filepath):
+            with open(filepath, mode='w') as csv_file:
+                # Append as not to overwrite needed data. .csv won't be usable w/o rectification after appending, but we
+                # assume some manual postprocessing to be preferrable to data loss due to carelessness.
+                csv_writer = csv.writer(csv_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+
+                # Write header line.
+                header_line = ["record_name", "target_label", "original_abstract", "year", "url", "processed_title",
+                               "processed_abstract"]
+                csv_writer.writerow(header_line)
+
+                # Append records to .csv.
+                for i, row in self._data["features"].iterrows():
+                    # Use index as record name, since records are anonymous.
+                    line = [
+                        row["original_title"],
+                        self._data["labels"][i],
+                        row["original_abstract"],
+                        row["year"],
+                        row["url"],
+                        row["title"],
+                        row["abstract"]
+                    ]
+                    csv_writer.writerow(line)
