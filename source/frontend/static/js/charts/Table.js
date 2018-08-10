@@ -105,24 +105,11 @@ export default class Table extends Chart
 
         // On (double-)click: Open detail view.
         $("#" + tableID + " tbody").on('dblclick', 'td', function (e) {
-            var data = instance._cf_chart.row(this).data();
-
-            // Fetch model data.
-            let modelDetailData = fetch(
-                "/get_dr_model_details?id=" + data[0],
-                {
-                    headers: { "Content-Type": "application/json; charset=utf-8"},
-                    method: "GET"
-                }
-            )
-            .then(res => res.json())
-            .then(resJSON => {
-                resJSON.model_metadata = JSON.parse(resJSON.model_metadata);
-                resJSON.original_dataset = JSON.parse(resJSON.original_dataset);
-                console.log(resJSON);
-            });
-
-
+            // Instruct model detail operator to load data for the selected model.
+            instance._panel._operator._stage._operators["ModelDetail"].loadData(
+                // Fetch model ID from first field in selected table row.
+                instance._cf_chart.row(this).data()[0]
+            );
         });
     }
 

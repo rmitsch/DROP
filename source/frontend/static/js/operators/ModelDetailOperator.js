@@ -36,11 +36,11 @@ export default class ModelDetailOperator extends Operator
         // ----------------------------------------------
 
         // Construct panels for charts.
-        let frcPanel = new ModelDetailPanel(
+        let mdPanel = new ModelDetailPanel(
             "Model Details",
             this
         );
-        this._panels[frcPanel.name] = frcPanel;
+        this._panels[mdPanel.name] = mdPanel;
 
 
     //
@@ -58,5 +58,39 @@ export default class ModelDetailOperator extends Operator
     //             height: $("#" + scope._stage._target).height() / 2
     //         });
     //     });
+    }
+
+    /**
+     * Loads data and constructs dataset from specified DR model ID.
+     * @param modelID
+     */
+    loadData(modelID)
+    {
+        let scope = this;
+
+        // Fetch model data.
+        fetch(
+            "/get_dr_model_details?id=" + modelID,
+            {
+                headers: { "Content-Type": "application/json; charset=utf-8"},
+                method: "GET"
+            }
+        )
+        .then(res => res.json())
+        .then(modelDetailData => {
+            // Parse substructures.
+            modelDetailData.model_metadata = JSON.parse(modelDetailData.model_metadata);
+            modelDetailData.original_dataset = JSON.parse(modelDetailData.original_dataset);
+
+            // Propagate information to operator.
+            console.log(modelDetailData);
+
+            // Show modal.
+            $("#" + scope._panels["Model Details"]._target).dialog({
+                title: "Model Details View for #" + modelID,
+                width: $("#" + scope._stage._target).width() / 2,
+                height: $("#" + scope._stage._target).height() / 2
+            });
+        });
     }
 }
