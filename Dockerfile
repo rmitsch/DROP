@@ -9,6 +9,8 @@ FROM python:3.5
 COPY setup/requirements.txt /tmp/requirements.txt
 # Copy setup file.
 COPY setup/setup.sh /tmp/setup.sh
+# Copy corrected base.py file.
+COPY setup/base.py /tmp/base.py
 # Copy source code.
 COPY source /source
 # Don't copy data, since we link it as a volume anyway.
