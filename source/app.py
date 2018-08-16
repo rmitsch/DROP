@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from flask import render_template
 from flask import request
@@ -26,15 +27,16 @@ def init_flask_app():
     )
 
     # Define version.
-    flask_app.config["VERSION"] = "0.5.1"
+    flask_app.config["VERSION"] = "0.5.2"
 
     # Store metadata template. Is assembled once in /get_metadata.
     flask_app.config["METADATA_TEMPLATE"] = None
 
     # Store name of current dataset and kernel. Note that these values is only changed at call of /get_metadata.
+    # Use t-SNE on wine dataset as default.
     flask_app.config["DATASET_NAME"] = None
-    flask_app.config["DR_KERNEL_NAME"] = None
-    flask_app.config["FULL_FILE_NAME"] = None
+    flask_app.config["DR_KERNEL_NAME"] = "tsne"
+    flask_app.config["FULL_FILE_NAME"] = "wine"
 
     return flask_app
 

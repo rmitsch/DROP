@@ -349,7 +349,6 @@ export default class DissonanceDataset extends Dataset
                 }
 
                 // 2. Set filtering function for individual records.
-                console.log(scope._cf_dimensions[attribute].bottom(Infinity))
                 scope._cf_dimensions[attribute].filterFunction(function(value) {
                     // Check if this record's natural bin was selected.
                     return filteredNaturalBinIndices.indexOf(
