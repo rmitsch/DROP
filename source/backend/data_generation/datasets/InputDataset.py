@@ -191,7 +191,7 @@ class InputDataset:
             silhouette_score = -1 if numpy.isnan(silhouette_score) else silhouette_score
         # Silhouette score fails with only one label. Workaround: Set silhouette score to worst possible value in this
         # case. Actual solution: Force at least two clusters - diff. clustering algorithm?
-        # See
+        # See https://github.com/rmitsch/DROP/issues/49.
         except ValueError as e:
             silhouette_score = -1
         # Normalize to 0 <= x <= 1.

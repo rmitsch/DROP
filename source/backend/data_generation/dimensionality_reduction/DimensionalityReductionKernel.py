@@ -19,12 +19,12 @@ class DimensionalityReductionKernel:
     DIM_RED_KERNELS = {
         "TSNE": {
             "parameters": [
-                {"name": "n_components", "type": "numeric", "values": [2]}, # 1
-                {"name": "perplexity", "type": "numeric", "values": [25]}, # 10
-                {"name": "early_exaggeration", "type": "numeric", "values": [5, 10]},
-                {"name": "learning_rate", "type": "numeric", "values": [10, 250]},
-                {"name": "n_iter", "type": "numeric", "values": [100, 250, 500]},
-                {"name": "angle", "type": "numeric", "values": [0.1, 0.35]},
+                {"name": "n_components", "type": "numeric", "values": [2]}, # [1, 2, 3, 4]},
+                {"name": "perplexity", "type": "numeric", "values": [25]}, # [10, 25, 50, 100]},
+                {"name": "early_exaggeration", "type": "numeric", "values": [5, 10]}, # [5, 10, 15, 20]},
+                {"name": "learning_rate", "type": "numeric", "values": [10, 250]}, # [10, 50, 100, 250, 500]},
+                {"name": "n_iter", "type": "numeric", "values": [100, 250, 500]}, # [100, 250, 500, 1000]},
+                {"name": "angle", "type": "numeric", "values": [0.1, 0.35]}, # [0.1, 0,35, 0.5, 0.75, 0.9]},
                 {"name": "metric", "type": "categorical", "values": ['cosine', 'euclidean']}
             ],
             "hdf5_description": hdf5_descriptions.TSNEDescription
