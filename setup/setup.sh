@@ -6,6 +6,12 @@
 # Otherwise external thread-level parallelism leads to deadlocking threads due to Numba parallelization.
 sed -i 's/numba.njit(parallel=True/numba.njit(parallel=False/g' /usr/local/lib/python3.5/site-packages/umap/umap_.py 
 
+# Replace sklearn's base.py to avoid error for popping non-existent indices when computing random forests.
+# Fixed by manually applying
+# https://github.com/amueller/scikit-learn/blob/8d640b9a7cab93cde925431948297814d32b31f4/sklearn/base.py.
+# Path in docker container is /usr/local/lib/python3.5/site-packages/sklearn/base.py.
+cp -f base.py /usr/local/lib/python3.5/site-packages/sklearn/base.py
+
 # Download repository and install package for multi-threaded t-SNE.
 pip install --no-cache-dir git+https://github.com/DmitryUlyanov/Multicore-TSNE.git
 pip install --no-cache-dir git+https://github.com/samueljackson92/coranking.git

@@ -123,8 +123,6 @@ class InputDataset:
         n_splits = 3
 
         # Apply random forest w/o further preprocessing to predict class labels.
-        # NOTE: Fixed by manually applying
-        # https://github.com/amueller/scikit-learn/blob/8d640b9a7cab93cde925431948297814d32b31f4/sklearn/base.py.
         clf = sklearn.ensemble.RandomForestClassifier(
             n_estimators=100,
             max_depth=3,
