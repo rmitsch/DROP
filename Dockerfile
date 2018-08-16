@@ -1,4 +1,4 @@
-# Note: Container size can be reduced later.
+# Note: Container size not optimized. Clocks in at ~3.5 GB.
 FROM python:3.5
 
 ##########################################
@@ -11,8 +11,8 @@ COPY setup/requirements.txt /tmp/requirements.txt
 COPY setup/setup.sh /tmp/setup.sh
 # Copy source code.
 COPY source /source
-# Copy data.
-COPY data /data
+# Don't copy data, since we link it as a volume anyway.
+# COPY data /data
 
 # Set python path.
 ENV PYTHONPATH /source

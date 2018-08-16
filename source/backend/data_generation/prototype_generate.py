@@ -95,7 +95,7 @@ threads = []
 results = []
 
 # Split parameter sets amongst workers.
-logger.info("Generating dimensionality reduction models.")
+logger.info("Generating dimensionality reduction models with " + str(n_jobs) + " threads.")
 num_parameter_sets = int(len(parameter_sets) / n_jobs)
 for i in range(0, n_jobs):
     first_index = num_parameter_sets * i

@@ -181,14 +181,19 @@ class InputDataset:
 
         # 2. Calculate Silhouette score based on true labels.
         # Distance matrix: 1 if labels are equal, 0 otherwise -> Hamming distance.
-        silhouette_score = sklearn.metrics.silhouette_score(
-            X=self.labels().reshape(-1, 1),
-            metric='hamming',
-            labels=clusterer.labels_
-        )
-        # Workaround: Use worst value if number is NaN - why does this happen?
-        silhouette_score = -1 if numpy.isnan(silhouette_score) else silhouette_score
-
+        try:
+            silhouette_score = sklearn.metrics.silhouette_score(
+                X=self.labels().reshape(-1, 1),
+                metric='hamming',
+                labels=clusterer.labels_
+            )
+            # Workaround: Use worst value if number is NaN - why does this happen?
+            silhouette_score = -1 if numpy.isnan(silhouette_score) else silhouette_score
+        # Silhouette score fails with only one label. Workaround: Set silhouette score to worst possible value in this
+        # case. Actual solution: Force at least two clusters - diff. clustering algorithm?
+        # See
+        except ValueError as e:
+            silhouette_score = -1
         # Normalize to 0 <= x <= 1.
         return (silhouette_score + 1) / 2.0
 

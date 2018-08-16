@@ -57,7 +57,7 @@ export default class ModelDetailOperator extends Operator
             {
                 headers: { "Content-Type": "application/json; charset=utf-8"},
                 method: "GET"
-            } 
+            }
         )
         .then(res => res.json())
         .then(modelDetailData => {

@@ -123,3 +123,6 @@ data/*
 # Ignore external dependencies.
 source/external_depencies
 source/external_depencies/
+
+# Ignore os files.
+os
