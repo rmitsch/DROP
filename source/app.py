@@ -2,8 +2,6 @@ from flask import Flask
 from flask import render_template
 from flask import request
 from flask import jsonify
-from flask import json
-import os
 import tables
 import pandas
 from sklearn.tree import DecisionTreeRegressor
@@ -28,7 +26,7 @@ def init_flask_app():
     )
 
     # Define version.
-    flask_app.config["VERSION"] = "0.5.0"
+    flask_app.config["VERSION"] = "0.5.1"
 
     # Store metadata template. Is assembled once in /get_metadata.
     flask_app.config["METADATA_TEMPLATE"] = None
@@ -256,13 +254,9 @@ def get_dr_model_details():
             h5file.root.metadata.read_where("(id == " + str(model_id) + ")")
         ).set_index("id").to_json(orient='index'),
         # Fetch projection record by node name.
-        "low_dim_projection": #jsonify(
-            h5file.root.projection_coordinates._f_get_child("model" + str(model_id)).read().tolist(),
-        #),
+        "low_dim_projection": h5file.root.projection_coordinates._f_get_child("model" + str(model_id)).read().tolist(),
         # Get dissonances of this model's samples.
-        "sample_dissonances": #jsonify(
-            h5file.root.pointwise_quality._f_get_child("model" + str(model_id)).read().tolist(),
-        #),
+        "sample_dissonances": h5file.root.pointwise_quality._f_get_child("model" + str(model_id)).read().tolist(),
 
         # --------------------------------------------------------
         # Retrieve data from original, high-dim. dataset.
