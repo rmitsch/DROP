@@ -9,7 +9,7 @@ nltk==3.2.5
 spacy==2.0.11
 numba==0.39.0
 hdbscan==0.8.12
-umap-learn==0.3.0
+umap-learn==0.3.2
 scrapely==0.13.4
 html2text==2018.1.9
 urllib3==1.22
