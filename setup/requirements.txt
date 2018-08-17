@@ -18,3 +18,4 @@ psutil==5.4.3
 tables==3.4.2
 networkx==2.1
 pattern3==3.0.0
+tqdm==4.20.0

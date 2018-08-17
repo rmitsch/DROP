@@ -3,6 +3,7 @@ from random import shuffle
 import psutil
 import os
 from tables import *
+from tqdm import tqdm
 
 import backend.objectives.topology_preservation_objectives.CorankingMatrix as CorankingMatrix
 from backend.data_generation.PersistenceThread import PersistenceThread
@@ -120,7 +121,8 @@ threads.append(
         results=results,
         expected_number_of_results=len(parameter_sets),
         dataset_name=dataset_name,
-        dim_red_kernel_name=dim_red_kernel_name
+        dim_red_kernel_name=dim_red_kernel_name,
+        checking_interval=10
     )
 )
 

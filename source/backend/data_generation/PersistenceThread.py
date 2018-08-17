@@ -5,6 +5,8 @@ from tables import *
 
 import os
 
+from tqdm import tqdm
+
 from backend.data_generation.dimensionality_reduction import DimensionalityReductionKernel
 from backend.data_generation.dimensionality_reduction.hdf5_descriptions import TSNEDescription
 from backend.utils import Utils
@@ -41,6 +43,9 @@ class PersistenceThread(threading.Thread):
         # Fetch .h5 file handle.
         self._h5file = self._open_pytables_file()
 
+        # Display progress bar.
+        self._progress_bar = tqdm(total=expected_number_of_results)
+
     def run(self):
         """
         Persistence thread starts to monitor shared list object holding results. If new elements are added, changes are
@@ -59,10 +64,12 @@ class PersistenceThread(threading.Thread):
         while num_of_results_so_far < self._expected_number_of_results:
             # Check how many results are available so far.
             num_of_results_so_far = len(self._results)
-            Utils.logger.info(num_of_results_so_far / float(self._expected_number_of_results))
 
             # If number of records has changed: Add to file.
             if num_of_results_so_far > last_processed_index + 1:
+                # If new records are available since last loop iteration: Update progress bar.
+                self._progress_bar.update(num_of_results_so_far - last_processed_index - 1)
+
                 # Loop through all entries.
                 for result in self._results[last_processed_index + 1:num_of_results_so_far]:
                     ######################################################
@@ -128,6 +135,9 @@ class PersistenceThread(threading.Thread):
 
             # Wait a few seconds before checking whether any new elements have been added.
             time.sleep(self._checking_interval)
+
+        # Wrap up progress bar display.
+        self._progress_bar.close()
 
         # Close file.
         print(self._h5file)
