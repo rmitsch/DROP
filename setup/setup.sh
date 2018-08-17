@@ -10,7 +10,7 @@ sed -i 's/numba.njit(parallel=True/numba.njit(parallel=False/g' /usr/local/lib/p
 # Fixed by manually applying
 # https://github.com/amueller/scikit-learn/blob/8d640b9a7cab93cde925431948297814d32b31f4/sklearn/base.py.
 # Path in docker container is /usr/local/lib/python3.5/site-packages/sklearn/base.py.
-cp -f base.py /usr/local/lib/python3.5/site-packages/sklearn/base.py
+cp -f /tmp/base.py /usr/local/lib/python3.5/site-packages/sklearn/base.py
 
 # Download repository and install package for multi-threaded t-SNE.
 pip install --no-cache-dir git+https://github.com/DmitryUlyanov/Multicore-TSNE.git
