@@ -20,7 +20,7 @@ body {
     top: 0;
     left: 0;
     width: 100%;
-    z-index: 1000;
+    z-index: 3;
 }
 
 div.header {
@@ -68,6 +68,7 @@ li.pure-menu-item.pure-menu-selected {
 .stage {
     margin-top: 50px;
     height: 100%;
+    opacity: 0;
 }
 
 .panel {

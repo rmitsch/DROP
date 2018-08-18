@@ -147,6 +147,15 @@ export default class PrototypeStage extends Stage
                 // After split: Render (resize-sensitive) charts.
                 scope._operators["SurrogateModel"].render();
                 scope._operators["Dissonance"].render();
+
+                // ---------------------------------------------------------
+                // 5. Fade out splash screen, fade in stage.
+                // ---------------------------------------------------------
+
+                  $("#stage").fadeTo(2000, 1.0);
+                  $("#splashscreen").fadeTo(1500, 0, function() {
+                      $("#splashscreen").css("display", "none");
+                  });
             });
     }
 

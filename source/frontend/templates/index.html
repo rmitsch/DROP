@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="./static/css/operators/dissonance.css">
     <link rel="stylesheet" href="./static/css/operators/model-detail.css">
     <link rel="stylesheet" href="./static/css/settings.css">
+    <link rel="stylesheet" href="./static/css/splashscreen.css">
 
     <!-- Load icon. -->
     <link rel="icon" type="image/png" href="./static/img/icon.png">
@@ -38,9 +39,17 @@
     <!-- Base HTML template. Will be initialized with JS. -->
     <!------------------------------------------------------>
 
+    <!-- Splashscreen only visible while loading/processing dataset. -->
+    <div class="splashscreen" id="splashscreen">
+        <div class="verticallyCentered">
+            <!--From https://loading.io/.-->
+            <img src="./static/img/loading-icon-ripple.gif" />
+        </div>
+    </div>
+
     <div class="header">
         <div class="pure-menu pure-menu-horizontal custom-restricted-width">
-            <a class="pure-menu-heading" id='icon-link' href="/"> <img src="./static/img/icon_white.png" class="navIconImage" alt="DROP" width="20px">DROP ({{version}})</a>
+            <a class="pure-menu-heading" id='icon-link' href="/"> <img src="./static/img/icon_white.png" class="navIconImage" alt="DROP" width="20px">DROP {{version}}</a>
 
             <ul class="pure-menu-list">
                 <li class="pure-menu-item" id="menu_prototype" onclick="#">

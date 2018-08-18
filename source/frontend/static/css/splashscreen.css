@@ -1,0 +1,15 @@
+.splashscreen {
+    width: 100%;
+    height: calc(100% - 36px);
+    position: absolute;
+    top: 36px;
+    left: 0px;
+    z-index: 2;
+    text-align: center;
+}
+
+.verticallyCentered {
+    position: relative;
+    top: 50%;
+    transform: translateY(-60%);
+}

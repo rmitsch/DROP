@@ -130,7 +130,6 @@ threads.append(
 # 3. Calculate low-dim. represenatations.
 ######################################################
 
-logger.info("Generating models.")
 for thread in threads:
     thread.start()
 for thread in threads:
