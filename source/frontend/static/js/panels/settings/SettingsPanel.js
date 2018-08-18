@@ -23,7 +23,10 @@ export default class SettingsPanel extends Panel
             .replace("&", "-")
             .replace(" ", "-")
             .replace(":", "-")
-            .replace("- ", "-") + "-apply-changes-btn";
+            .replace("--", "-")
+            .replace("- ", "-").replace("- ", "-")
+            .replace(" ", "-") +
+            "-apply-changes-btn";
 
         // Update involved CSS classes.
         $("#" + this._target).addClass("settings-panel");

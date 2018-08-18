@@ -49,14 +49,14 @@ export default class SurrogateModelOperator extends Operator
 
         // 1. Construct panel for surrogate model visualization.
         let surrModelPanel = new SurrogateModelPanel(
-            "Surrogate Model",
+            "Global Surrogate Model",
             this
         );
         this._panels[surrModelPanel.name] = surrModelPanel;
 
         // 2. Construct panel for settings.
         let settingsPanel = new SurrogateModelSettingsPanel(
-            "Surrogate Model: Settings", this, null, "surrogate-info-settings-icon"
+            "Global Surrogate Model: Settings", this, null, "surrogate-info-settings-icon"
         );
         this._panels[settingsPanel.name] = settingsPanel;
     }

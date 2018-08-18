@@ -336,6 +336,15 @@ export default class DissonanceChart extends Chart
             }
         }
 
+        // Create axis labels.
+        let xAxisLabel = Utils.spawnChildDiv(
+            this._target, null, "dissonance-chart-x-axis-label", "Sample-in-embedding quality"
+        );
+        let yAxisLabel = Utils.spawnChildDiv(
+            this._target, null, "dissonance-chart-y-axis-label", "Embedding quality"
+        );
+
+
         return {
             horizontalHistogramDivID: sampleHistogramDiv.id,
             heatmapDivID: heatmapDiv.id,

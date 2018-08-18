@@ -86,6 +86,8 @@ export default class SurrogateModelSettingsPanel extends SettingsPanel
         let treeDepth   = $("#surrogate-settings-tree-depth-range")[0].value;
         let objectives  = $("#surrogate-settings-target-objective-select").val();
 
+        console.log("wtf")
+
         // Make sure at least one objective has been chosen.
         if (objectives.length === 0)
             throw new RangeError("SurrogateModelSettingsPanel._applyOptionChanges(): No objective has been chosen.");

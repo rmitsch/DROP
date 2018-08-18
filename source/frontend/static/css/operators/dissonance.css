@@ -90,3 +90,16 @@
 }
 
 /* /Color palette. */
+
+.dissonance-chart-x-axis-label {
+    position: relative;
+    bottom: 18px;
+    margin-left: calc(50% - 90px);
+}
+
+.dissonance-chart-y-axis-label {
+    position: absolute;
+    top: calc(50% - 25px);
+    left: -90px;
+    transform: rotate(270deg);
+}
