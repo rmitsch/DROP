@@ -33,7 +33,37 @@ export default class ModelDetailPanel extends Panel
     {
         console.log("Generating ModelDetailPanel...");
 
-
+        console.log(this._operator)
+        // var values = [500, 400, 700, 900, 1200, 300, 550];
+        // var dates = {};
+        //
+        // var counter = 0;
+        // for (var i = values.length - 1; i >= 0; i--) {
+        //     var d = Math.random();
+        //     dates[counter] = d;
+        //     counter++;
+        // }
+        // console.log(dates)
+        //
+        // $("#sparklinetest").sparkline(values, {
+        //     type: "bar",
+        //     barWidth: 20,
+        //     barSpacing: 3,
+        //     height: 100,
+        //     tooltipValueLookups: {
+        //         names: {
+        //             0: 'Squirrel',
+        //             1: 'Kitty',
+        //             2: 'Bird',
+        //             3: 'Three',
+        //             4: 'Four',
+        //             5: 'Five',
+        //             6: 'Six',
+        //             7: 'Seven'
+        //             // Add more here
+        //         }},
+        //     colorMap: ["green", "blue", "blue", "blue", "blue", "blue", "red"]
+        // });
     }
 
     /**

@@ -77,5 +77,7 @@ export default class ModelDetailOperator extends Operator
                 height: $("#" + scope._stage._target).height() / 1.5
             });
         });
+
+        // todo Pass data on to model detail panel, then to chart(s). (Re-)render.
     }
 }
