@@ -1,5 +1,6 @@
 import Panel from "./Panel.js";
 import Utils from "../Utils.js";
+import DRMetaDataset from "../data/DRMetaDataset.js";
 
 /**
  * Panel for model detail view.
@@ -110,16 +111,16 @@ export default class ModelDetailPanel extends Panel
 
         // Return all panes' IDs.
         return {
-            parameterPane: parameterPane.id,
-            samplePane: samplePane.id,
+            parameterPaneID: parameterPane.id,
+            samplePaneID: samplePane.id,
             attributePane: {
                 id: attributePane.id,
-                hyperparameterContent: "model-details-block-hyperparameter-content",
-                objectiveContent: "model-details-block-objective-content",
+                hyperparameterContentID: "model-details-block-hyperparameter-content",
+                objectiveContentID: "model-details-block-objective-content",
             },
-            limePane: limePane.id,
-            scatterplotPane: scatterplotPane.id,
-            recordPane: recordPane.id
+            limePaneID: limePane.id,
+            scatterplotPaneID: scatterplotPane.id,
+            recordPaneID: recordPane.id
         };
     }
 
@@ -128,6 +129,11 @@ export default class ModelDetailPanel extends Panel
         let drMetaDataset       = this._operator._drMetaDataset;
         // Fetch metadata structure (i. e. attribute names and types).
         let metadataStructure   = drMetaDataset._metadata;
+        // Reset container div.
+        let hyperparameterContentDiv    = $("#" + this._divStructure.attributePane.hyperparameterContentID);
+        let objectiveContentDiv         = $("#" + this._divStructure.attributePane.objectiveContentID);
+        hyperparameterContentDiv.html("");
+        objectiveContentDiv.html("");
 
         // 3. Draw chart for this attribute.
         // 4. Highlight this embedding's value.
@@ -159,29 +165,38 @@ export default class ModelDetailPanel extends Panel
         // -------------------------------------------------------
 
         for (let attribute in values.hyperparameters) {
-            // todo draw charts for each hyperparamter. arrange properly. continue with objectives. evaluate.
-            console.log(values.hyperparameters[attribute].data)
-            // var values = [500, 400, 700, 900, 1200, 300, 550];
-            //
-            // $("#sparklinetest").sparkline(values, {
-            //     type: "bar",
-            //     barWidth: 20,
-            //     barSpacing: 3,
-            //     height: 100,
-            //     tooltipValueLookups: {
-            //         names: {
-            //             0: 'Squirrel',
-            //             1: 'Kitty',
-            //             2: 'Bird',
-            //             3: 'Three',
-            //             4: 'Four',
-            //             5: 'Five',
-            //             6: 'Six',
-            //             7: 'Seven'
-            //             // Add more here
-            //         }},
-            //     colorMap: ["green", "blue", "blue", "blue", "blue", "blue", "red"]
-            // });
+            // todo highlight current embedding's value. continue with objectives. evaluate.
+            // Append new div for attribute.
+            let chartContainerDiv   = Utils.spawnChildDiv(
+                hyperparameterContentDiv[0].id, null, "model-detail-sparkline-container", DRMetaDataset.translateAttributeNames()[attribute]
+            );
+            let chartDiv            = Utils.spawnChildDiv(chartContainerDiv.id, null, "model-detail-sparkline");
+
+
+            console.log(values.hyperparameters[attribute].data);
+            $("#" + chartDiv.id).sparkline(
+                values.hyperparameters[attribute].data,
+                {
+                    type: "bar",
+                    barWidth: 10,
+                    barSpacing: 1,
+                    chartRangeMin: 0,
+                    height: 20,
+                    // tooltipValueLookups: {
+                    //     names: {
+                    //         0: 'Squirrel',
+                    //         1: 'Kitty',
+                    //         2: 'Bird',
+                    //         3: 'Three',
+                    //         4: 'Four',
+                    //         5: 'Five',
+                    //         6: 'Six',
+                    //         7: 'Seven'
+                    //     }
+                    // },
+                    colorMap: ["green", "blue", "red"]
+                }
+            );
         }
     }
 

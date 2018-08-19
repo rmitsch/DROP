@@ -19,6 +19,10 @@
 .model-details-title {
 }
 
+.model-detail-sparkline-container {
+    font-size: 11px;
+}
+
 .reduced-padding {
     padding-top: 0px;
 }
@@ -26,4 +30,13 @@
 .jqstooltip {
     border:none !important;
     box-sizing:content-box;
+}
+
+.model-detail-sparkline-container {
+    display: inline-block;
+    margin-left: 10px;
+}
+
+.model-detail-sparkline {
+
 }
