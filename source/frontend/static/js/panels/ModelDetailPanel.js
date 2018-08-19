@@ -32,38 +32,6 @@ export default class ModelDetailPanel extends Panel
     _generateCharts()
     {
         console.log("Generating ModelDetailPanel...");
-
-        console.log(this._operator)
-        // var values = [500, 400, 700, 900, 1200, 300, 550];
-        // var dates = {};
-        //
-        // var counter = 0;
-        // for (var i = values.length - 1; i >= 0; i--) {
-        //     var d = Math.random();
-        //     dates[counter] = d;
-        //     counter++;
-        // }
-        // console.log(dates)
-        //
-        // $("#sparklinetest").sparkline(values, {
-        //     type: "bar",
-        //     barWidth: 20,
-        //     barSpacing: 3,
-        //     height: 100,
-        //     tooltipValueLookups: {
-        //         names: {
-        //             0: 'Squirrel',
-        //             1: 'Kitty',
-        //             2: 'Bird',
-        //             3: 'Three',
-        //             4: 'Four',
-        //             5: 'Five',
-        //             6: 'Six',
-        //             7: 'Seven'
-        //             // Add more here
-        //         }},
-        //     colorMap: ["green", "blue", "blue", "blue", "blue", "blue", "red"]
-        // });
     }
 
     /**
@@ -86,8 +54,10 @@ export default class ModelDetailPanel extends Panel
             parameterPane.id, null, "model-detail-pane split split-vertical",
             `<div class='model-details-block reduced-padding'>
                 <div class='model-details-title'>Hyperparameters</div>
+                <div id="model-details-block-hyperparameter-content"></div>
                 <hr>
-                <div class='model-details-title'>Objectives</span>
+                <div class='model-details-title'>Objectives</div>
+                <div id="model-details-block-objective-content"></div>
             </div>`
         );
         // Bottom-left pane - explanation of hyperparameter importance for this DR model utilizing LIME.
@@ -142,7 +112,11 @@ export default class ModelDetailPanel extends Panel
         return {
             parameterPane: parameterPane.id,
             samplePane: samplePane.id,
-            attributePane: attributePane.id,
+            attributePane: {
+                id: attributePane.id,
+                hyperparameterContent: "model-details-block-hyperparameter-content",
+                objectiveContent: "model-details-block-objective-content",
+            },
             limePane: limePane.id,
             scatterplotPane: scatterplotPane.id,
             recordPane: recordPane.id
@@ -151,11 +125,87 @@ export default class ModelDetailPanel extends Panel
 
     render()
     {
-        // this._chart.render();
+        let drMetaDataset       = this._operator._drMetaDataset;
+        // Fetch metadata structure (i. e. attribute names and types).
+        let metadataStructure   = drMetaDataset._metadata;
+
+        // 3. Draw chart for this attribute.
+        // 4. Highlight this embedding's value.
+        // 5. Repeat until all attributes are covered.
+        // 6. Eval. vis.
+
+        // -------------------------------------------------------
+        // 1. Gather/transform data.
+        // -------------------------------------------------------
+
+        // Gather values for bins from DRMetaDataset instance.
+        let values = { hyperparameters: {}, objectives: {} };
+
+        for (let valueType in values) {
+            for (let attribute of metadataStructure[valueType]) {
+                let key                 = valueType === "hyperparameters" ? attribute.name : attribute;
+                let bins                = drMetaDataset._cf_groups[key + "#histogram"].all();
+                // Build dict for this attribute.
+                values[valueType][key]  = {data: [], extrema: drMetaDataset._cf_extrema[key]};
+
+                // Iterate over bins in this group.
+                let isCategorical           = valueType === "hyperparameters" && attribute.type === "categorical";
+                values[valueType][key].data = bins.map(bin => isCategorical ? bin.value : bin.value.count);
+            }
+        }
+
+        // -------------------------------------------------------
+        // 2. Draw charts.
+        // -------------------------------------------------------
+
+        for (let attribute in values.hyperparameters) {
+            // todo draw charts for each hyperparamter. arrange properly. continue with objectives. evaluate.
+            console.log(values.hyperparameters[attribute].data)
+            // var values = [500, 400, 700, 900, 1200, 300, 550];
+            //
+            // $("#sparklinetest").sparkline(values, {
+            //     type: "bar",
+            //     barWidth: 20,
+            //     barSpacing: 3,
+            //     height: 100,
+            //     tooltipValueLookups: {
+            //         names: {
+            //             0: 'Squirrel',
+            //             1: 'Kitty',
+            //             2: 'Bird',
+            //             3: 'Three',
+            //             4: 'Four',
+            //             5: 'Five',
+            //             6: 'Six',
+            //             7: 'Seven'
+            //             // Add more here
+            //         }},
+            //     colorMap: ["green", "blue", "blue", "blue", "blue", "blue", "red"]
+            // });
+        }
     }
 
     processSettingsChange(delta)
     {
-        // this._chart.orderBy(delta);
+    }
+
+    /**
+     * Updates dataset; re-renders charts.
+     */
+    update()
+    {
+        this._data      = this._operator._dataset;
+        let data        = this._data;
+        let stageDiv    = $("#" + this._operator._stage._target);
+
+        // Show modal.
+        $("#" + this._target).dialog({
+            title: "Model Details for Model with ID #" + data.modelID,
+            width: stageDiv.width() / 1.5,
+            height: stageDiv.height() / 1.5
+        });
+
+        // Render charts.
+        this.render();
     }
 }

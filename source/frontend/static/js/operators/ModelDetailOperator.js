@@ -13,11 +13,14 @@ export default class ModelDetailOperator extends Operator
      * Note that at initialization time no dataset is required.
      * @param name
      * @param stage
+     * @param drMetaDataset Instance of DRMetaDataset used for FilterReduce operator.
      * @param parentDivID
      */
-    constructor(name, stage, parentDivID)
+    constructor(name, stage, drMetaDataset, parentDivID)
     {
         super(name, stage, "1", "1", null, parentDivID);
+        this._modelID       = null;
+        this._drMetaDataset = drMetaDataset;
 
         // Update involved CSS classes.
         $("#" + this._target).addClass("model-detail-operator");
@@ -49,7 +52,8 @@ export default class ModelDetailOperator extends Operator
      */
     loadData(modelID)
     {
-        let scope = this;
+        this._modelID   = modelID;
+        let scope       = this;
 
         // Fetch model data.
         fetch(
@@ -66,18 +70,13 @@ export default class ModelDetailOperator extends Operator
             modelDetailData.original_dataset = JSON.parse(modelDetailData.original_dataset);
             // Store dataset.
             scope._dataset = {
+                modelID: modelID,
                 primitiveData: modelDetailData,
                 crossfilter: null
             };
 
-            // Show modal.
-            $("#" + scope._panels["Model Details"]._target).dialog({
-                title: "Model Details for Model with ID #" + modelID,
-                width: $("#" + scope._stage._target).width() / 1.5,
-                height: $("#" + scope._stage._target).height() / 1.5
-            });
+            // Prompt panel to update data and to re-render.
+            scope._panels["Model Details"].update();
         });
-
-        // todo Pass data on to model detail panel, then to chart(s). (Re-)render.
     }
 }

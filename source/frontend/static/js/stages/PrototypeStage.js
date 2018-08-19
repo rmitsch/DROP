@@ -115,7 +115,8 @@ export default class PrototypeStage extends Stage
                 scope._operators["ModelDetail"] = new ModelDetailOperator(
                     "Detail:DRModel",
                     scope,
-                    // Note that MD view is a modal, hence it doesn't matter which parent div is used.
+                    scope._datasets["modelMetadata"],
+                    // Note that MD view is currently a modal, hence it doesn't matter which parent div is used.
                     scope._target
                 );
 
