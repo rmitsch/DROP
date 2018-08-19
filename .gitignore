@@ -116,9 +116,11 @@ logs
 # Dolphin files.
 .directory
 
-# Ignore everything in data directory except vis. papers.
+# Ignore everything in data directory except vis. papers and other basic datasets.
 data/*
 !data/vis_papers/
+!data/mldata/
+!*_records.csv
 
 # Ignore external dependencies.
 source/external_depencies
