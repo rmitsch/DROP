@@ -35,8 +35,17 @@
 .model-detail-sparkline-container {
     display: inline-block;
     margin-left: 10px;
+    margin-bottom: 5px;
+    width: 150px;
+}
+
+.model-detail-sparkline-container .attr-label {
+    display: inline-block;
+    width: 50px;
 }
 
 .model-detail-sparkline {
-
+    display: inline-block;
+    width: 100px;
 }
+

@@ -154,7 +154,7 @@ export default class PrototypeStage extends Stage
                 // ---------------------------------------------------------
 
                   $("#stage").fadeTo(2000, 1.0);
-                  $("#splashscreen").fadeTo(1500, 0, function() {
+                  $("#splashscreen").fadeTo(1000, 0, function() {
                       $("#splashscreen").css("display", "none");
                   });
             });

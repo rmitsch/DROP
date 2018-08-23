@@ -126,18 +126,19 @@ export default class ModelDetailPanel extends Panel
 
     render()
     {
+        let scope               = this;
         let drMetaDataset       = this._operator._drMetaDataset;
         // Fetch metadata structure (i. e. attribute names and types).
         let metadataStructure   = drMetaDataset._metadata;
+        let currModelID         = this._data.modelID;
+
         // Reset container div.
         let hyperparameterContentDiv    = $("#" + this._divStructure.attributePane.hyperparameterContentID);
         let objectiveContentDiv         = $("#" + this._divStructure.attributePane.objectiveContentID);
         hyperparameterContentDiv.html("");
         objectiveContentDiv.html("");
 
-        // 3. Draw chart for this attribute.
-        // 4. Highlight this embedding's value.
-        // 5. Repeat until all attributes are covered.
+        // 5. todo Repeat until all attributes are covered.
         // 6. Eval. vis.
 
         // -------------------------------------------------------
@@ -149,14 +150,35 @@ export default class ModelDetailPanel extends Panel
 
         for (let valueType in values) {
             for (let attribute of metadataStructure[valueType]) {
-                let key                 = valueType === "hyperparameters" ? attribute.name : attribute;
-                let bins                = drMetaDataset._cf_groups[key + "#histogram"].all();
-                // Build dict for this attribute.
-                values[valueType][key]  = {data: [], extrema: drMetaDataset._cf_extrema[key]};
+                let key             = valueType === "hyperparameters" ? attribute.name : attribute;
+                let bins            = drMetaDataset._cf_groups[key + "#histogram"].all();
+                let binWidth        = drMetaDataset._cf_intervals[key] / drMetaDataset._binCount;
 
                 // Iterate over bins in this group.
-                let isCategorical           = valueType === "hyperparameters" && attribute.type === "categorical";
-                values[valueType][key].data = bins.map(bin => isCategorical ? bin.value : bin.value.count);
+                let isCategorical   = valueType === "hyperparameters" && attribute.type === "categorical";
+
+                // Build dict for this attribute.
+                values[valueType][key]  = {data: [], extrema: drMetaDataset._cf_extrema[key], colors: null, tooltips: null};
+
+
+                // Compile data list.
+                values[valueType][key].data     = bins.map(bin => isCategorical ? bin.value : bin.value.count);
+
+                // Compile color map.
+                values[valueType][key].colors = bins.map(
+                    bin => isCategorical ?
+                    // If attribute is categorical: Check if bin key/title is equal to current model's attribute value.
+                    (bin.key === scope._data.primitiveData.model_metadata[currModelID][key] ? "red" : "blue") :
+                    // If attribute is numerical: Check if list of items in bin contains current model with this ID.
+                    bin.value.items.some(item => item.id === scope._data.modelID) ? "red" : "blue"
+                );
+
+                // Compile tooltip map.
+                values[valueType][key].tooltips = {};
+                for (let i = 0; i < bins.length; i++) {
+                    values[valueType][key].tooltips[i] = isCategorical ?
+                        bins[i].key : bins[i].key.toFixed(4) + " - " + (bins[i].key + binWidth).toFixed(4);
+                }
             }
         }
 
@@ -164,40 +186,38 @@ export default class ModelDetailPanel extends Panel
         // 2. Draw charts.
         // -------------------------------------------------------
 
-        for (let attribute in values.hyperparameters) {
-            // todo highlight current embedding's value. continue with objectives. evaluate.
-            // Append new div for attribute.
-            let chartContainerDiv   = Utils.spawnChildDiv(
-                hyperparameterContentDiv[0].id, null, "model-detail-sparkline-container", DRMetaDataset.translateAttributeNames()[attribute]
-            );
-            let chartDiv            = Utils.spawnChildDiv(chartContainerDiv.id, null, "model-detail-sparkline");
+        // Draw hyperparameter charts.
+        for (let valueType in values) {
+            for (let attribute of metadataStructure[valueType]) {
+                let key     = valueType === "hyperparameters" ? attribute.name : attribute;
+                let record  = values[valueType][key];
 
+                // Append new div for attribute.
+                let chartContainerDiv   = Utils.spawnChildDiv(
+                    valueType === "hyperparameters" ? hyperparameterContentDiv[0].id : objectiveContentDiv[0].id,
+                    null,
+                    "model-detail-sparkline-container",
+                    "<div class='attr-label'>" + DRMetaDataset.translateAttributeNames()[key] + "</div>"
+                );
+                let chartDiv            = Utils.spawnChildDiv(chartContainerDiv.id, null, "model-detail-sparkline");
 
-            console.log(values.hyperparameters[attribute].data);
-            $("#" + chartDiv.id).sparkline(
-                values.hyperparameters[attribute].data,
-                {
-                    type: "bar",
-                    barWidth: 10,
-                    barSpacing: 1,
-                    chartRangeMin: 0,
-                    height: 20,
-                    // tooltipValueLookups: {
-                    //     names: {
-                    //         0: 'Squirrel',
-                    //         1: 'Kitty',
-                    //         2: 'Bird',
-                    //         3: 'Three',
-                    //         4: 'Four',
-                    //         5: 'Five',
-                    //         6: 'Six',
-                    //         7: 'Seven'
-                    //     }
-                    // },
-                    colorMap: ["green", "blue", "red"]
-                }
-            );
+                // Draw chart.
+                $("#" + chartDiv.id).sparkline(
+                    record.data,
+                    {
+                        type: "bar",
+                        barWidth: Math.min(10, 50 / record.data.length),
+                        barSpacing: 1,
+                        chartRangeMin: 0,
+                        height: 20,
+                        tooltipFormat: '{{offset:offset}}',
+                        tooltipValueLookups: {'offset': record.tooltips},
+                        colorMap: record.colors
+                    }
+                );
+            }
         }
+
     }
 
     processSettingsChange(delta)

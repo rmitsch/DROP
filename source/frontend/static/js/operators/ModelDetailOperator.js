@@ -70,7 +70,7 @@ export default class ModelDetailOperator extends Operator
             modelDetailData.original_dataset = JSON.parse(modelDetailData.original_dataset);
             // Store dataset.
             scope._dataset = {
-                modelID: modelID,
+                modelID: scope._modelID,
                 primitiveData: modelDetailData,
                 crossfilter: null
             };
