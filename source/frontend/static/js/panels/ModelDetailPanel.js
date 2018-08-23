@@ -151,15 +151,52 @@ export default class ModelDetailPanel extends Panel
         for (let valueType in values) {
             for (let attribute of metadataStructure[valueType]) {
                 let key             = valueType === "hyperparameters" ? attribute.name : attribute;
-                let bins            = drMetaDataset._cf_groups[key + "#histogram"].all();
+                let bins            = JSON.parse(JSON.stringify(drMetaDataset._cf_groups[key + "#histogram"].all()));
                 let binWidth        = drMetaDataset._cf_intervals[key] / drMetaDataset._binCount;
-
                 // Iterate over bins in this group.
                 let isCategorical   = valueType === "hyperparameters" && attribute.type === "categorical";
 
+
+                if (key === "n_iter") {
+                    console.log(key)
+                console.log(bins);
+                console.log(drMetaDataset._cf_extrema[key]);
+                let binsWithPlaceholders = [];
+                for (let i = 0; i <= drMetaDataset._binCount; i++) {
+                    // Only consider numerical values for now.
+                    if (!isCategorical) {
+                        let currBinKey = drMetaDataset._cf_extrema[key].min + binWidth * i;
+
+                        let nonEmptyBin = bins.filter(bin => { return bin.key === currBinKey; });
+
+                        if (nonEmptyBin.length === 1) {
+                            console.log("found");
+                        }
+                        else {
+                            console.log(currBinKey);
+                        }
+
+                    }
+                }
+                console.log("-----------")
+                }
+                // Fill up with empty bins, if series is not complete.
+                let prevBin = bins[0];
+                for (let bin of drMetaDataset._cf_groups[key + "#histogram"].all()) {
+                    // Only consider numerical values for now.
+                    if (!isCategorical) {
+                        let diff = bin.key - prevBin.key;
+                        while (diff > binWidth) {
+                            // console.log("erasing diff for " + key)
+                            diff -= binWidth;
+                        }
+                    }
+
+                    prevBin = bin;
+                }
+
                 // Build dict for this attribute.
                 values[valueType][key]  = {data: [], extrema: drMetaDataset._cf_extrema[key], colors: null, tooltips: null};
-
 
                 // Compile data list.
                 values[valueType][key].data     = bins.map(bin => isCategorical ? bin.value : bin.value.count);

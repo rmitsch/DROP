@@ -164,18 +164,23 @@ export default class DRMetaDataset extends Dataset
             let attribute       = attributes[i];
             histogramAttribute  = attribute + "#histogram";
             let binWidth        = instance._cf_intervals[attribute] / this._binCount;
+            let extrema         = this._cf_extrema[attribute];
 
             // Bin data for current attribute (i. e. hyperparameter or objective).
-            let extrema = this._cf_extrema[attribute];
             for (let j = 0; j < this._data.length; j++) {
                 let value   = this._data[j][attribute];
+                if (value <= extrema.min)
+                    value = extrema.min;
+                else if (value >= extrema.max)
+                    value = extrema.max - binWidth;
 
-                if (value <= extrema[0])
-                    value = extrema[0];
-                else if (value >= extrema[1])
-                    value = extrema[1] - binWidth;
+                // Adjust for extrema.
+                let binnedValue = binWidth !== 0 ? Math.round((value - extrema.min) / binWidth) * binWidth : 0;
+                binnedValue += extrema.min;
+                if (binnedValue >= extrema.max)
+                    binnedValue = extrema.max - binWidth;
 
-                this._data[j][histogramAttribute] = binWidth !== 0 ? (Math.round(value / binWidth) * binWidth) : 0;
+                this._data[j][histogramAttribute] = binnedValue;
             }
 
             // If this is a numerical hyperparameter or an objective: Returned binned width.
