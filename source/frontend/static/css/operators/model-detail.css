@@ -33,7 +33,10 @@
 }
 
 .model-detail-sparkline-container {
-    display: inline-block;
+    display: inline-flex;
+    position: relative;
+    justify-content: center;
+    align-items: center;
     margin-left: 10px;
     margin-bottom: 5px;
     width: 150px;
@@ -41,7 +44,9 @@
 
 .model-detail-sparkline-container .attr-label {
     display: inline-block;
+    position: relative;
     width: 50px;
+
 }
 
 .model-detail-sparkline {

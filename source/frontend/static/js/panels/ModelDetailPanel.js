@@ -151,58 +151,47 @@ export default class ModelDetailPanel extends Panel
         for (let valueType in values) {
             for (let attribute of metadataStructure[valueType]) {
                 let key             = valueType === "hyperparameters" ? attribute.name : attribute;
-                let bins            = JSON.parse(JSON.stringify(drMetaDataset._cf_groups[key + "#histogram"].all()));
+                let unprocessedBins = JSON.parse(JSON.stringify(drMetaDataset._cf_groups[key + "#histogram"].all()));
                 let binWidth        = drMetaDataset._cf_intervals[key] / drMetaDataset._binCount;
                 // Iterate over bins in this group.
                 let isCategorical   = valueType === "hyperparameters" && attribute.type === "categorical";
 
+                // Fill gaps with placeholder bins - we want empty bins to be respected in sparkline chart.
+                // Only consider numerical values for now.
+                let bins = isCategorical ? unprocessedBins : [];
+                if (!isCategorical) {
+                    for (let i = 0; i < drMetaDataset._binCount; i++) {
+                        let currBinKey  = drMetaDataset._cf_extrema[key].min + binWidth * i;
+                        let currBin     = unprocessedBins.filter(bin => { return bin.key === currBinKey; });
 
-                if (key === "n_iter") {
+                        // Current bin not available: Create fake bin to bridge gap in chart.
+                        bins.push(currBin.length < 1 ?
+                            {
+                                key: currBinKey,
+                                value: {items: [], count: 0, extrema: {}}
+                            } : currBin[0]
+                        );
+                    }
+                }
+                if (key === "n_components") {
                     console.log(key)
-                console.log(bins);
-                console.log(drMetaDataset._cf_extrema[key]);
-                let binsWithPlaceholders = [];
-                for (let i = 0; i <= drMetaDataset._binCount; i++) {
-                    // Only consider numerical values for now.
-                    if (!isCategorical) {
-                        let currBinKey = drMetaDataset._cf_extrema[key].min + binWidth * i;
+                    console.log(binWidth)
+                    console.log(unprocessedBins);
+                    console.log(drMetaDataset._cf_extrema[key]);
 
-                        let nonEmptyBin = bins.filter(bin => { return bin.key === currBinKey; });
 
-                        if (nonEmptyBin.length === 1) {
-                            console.log("found");
-                        }
-                        else {
-                            console.log(currBinKey);
-                        }
-
-                    }
-                }
-                console.log("-----------")
-                }
-                // Fill up with empty bins, if series is not complete.
-                let prevBin = bins[0];
-                for (let bin of drMetaDataset._cf_groups[key + "#histogram"].all()) {
-                    // Only consider numerical values for now.
-                    if (!isCategorical) {
-                        let diff = bin.key - prevBin.key;
-                        while (diff > binWidth) {
-                            // console.log("erasing diff for " + key)
-                            diff -= binWidth;
-                        }
-                    }
-
-                    prevBin = bin;
+                    console.log(bins)
+                    console.log("-----------")
                 }
 
                 // Build dict for this attribute.
-                values[valueType][key]  = {data: [], extrema: drMetaDataset._cf_extrema[key], colors: null, tooltips: null};
+                values[valueType][key]          = {data: [], extrema: drMetaDataset._cf_extrema[key], colors: null, tooltips: null};
 
                 // Compile data list.
-                values[valueType][key].data     = bins.map(bin => isCategorical ? bin.value : bin.value.count);
+                values[valueType][key].data     = isCategorical ? bins.map(bin => bin.value) : bins.map(bin => bin.value.count);
 
                 // Compile color map.
-                values[valueType][key].colors = bins.map(
+                values[valueType][key].colors   = bins.map(
                     bin => isCategorical ?
                     // If attribute is categorical: Check if bin key/title is equal to current model's attribute value.
                     (bin.key === scope._data.primitiveData.model_metadata[currModelID][key] ? "red" : "blue") :
