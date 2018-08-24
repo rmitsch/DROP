@@ -126,87 +126,67 @@ export default class ModelDetailPanel extends Panel
 
     render()
     {
+        // -------------------------------------------------------
+        // 1. Draw sparklines for attributes.
+        // -------------------------------------------------------
+
+        this._drawAttributeSparklines();
+
+        // -------------------------------------------------------
+        // 2. Draw scatterplot/SPLOM showing indivdiual records.
+        // -------------------------------------------------------
+
+        this._drawRecordScatterplots();
+    }
+
+    _drawRecordScatterplots()
+    {
         let scope               = this;
         let drMetaDataset       = this._operator._drMetaDataset;
         // Fetch metadata structure (i. e. attribute names and types).
         let metadataStructure   = drMetaDataset._metadata;
-        let currModelID         = this._data.modelID;
+        // Fetch divs containing attribute sparklines.
+        let chartContainerDiv   = $("#" + this._divStructure.scatterplotPaneID);
 
-        // Reset container div.
+        // -------------------------------------------------------
+        // 1. Prepare crossfilter instance.
+        // -------------------------------------------------------
+
+        let numDimensions = this._data._model_metadata[this._data._modelID].n_components;
+
+        // Generate all combinations of dimension indices.
+        for (let i = 0; i < numDimensions; i++) {
+            for (let j = i; j < numDimensions; j++) {
+                console.log(i, j);
+            }
+        }
+    }
+
+    /**
+     * Draws sparklines for attributes (i. e. hyperparameters and objectives).
+     * @private
+     */
+    _drawAttributeSparklines()
+    {
+        let dataset             = this._data;
+        let drMetaDataset       = dataset._drMetaDataset;
+        // Fetch metadata structure (i. e. attribute names and types).
+        let metadataStructure   = drMetaDataset._metadata;
+
+        // Fetch divs containing attribute sparklines.
         let hyperparameterContentDiv    = $("#" + this._divStructure.attributePane.hyperparameterContentID);
         let objectiveContentDiv         = $("#" + this._divStructure.attributePane.objectiveContentID);
+
+        // Reset sparkline container div.
         hyperparameterContentDiv.html("");
         objectiveContentDiv.html("");
-
-        // 5. todo Repeat until all attributes are covered.
-        // 6. Eval. vis.
 
         // -------------------------------------------------------
         // 1. Gather/transform data.
         // -------------------------------------------------------
 
         // Gather values for bins from DRMetaDataset instance.
-        let values = { hyperparameters: {}, objectives: {} };
-
-        for (let valueType in values) {
-            for (let attribute of metadataStructure[valueType]) {
-                let key             = valueType === "hyperparameters" ? attribute.name : attribute;
-                let unprocessedBins = JSON.parse(JSON.stringify(drMetaDataset._cf_groups[key + "#histogram"].all()));
-                let binWidth        = drMetaDataset._cf_intervals[key] / drMetaDataset._binCount;
-                // Iterate over bins in this group.
-                let isCategorical   = valueType === "hyperparameters" && attribute.type === "categorical";
-
-                // Fill gaps with placeholder bins - we want empty bins to be respected in sparkline chart.
-                // Only consider numerical values for now.
-                let bins = isCategorical ? unprocessedBins : [];
-                if (!isCategorical) {
-                    for (let i = 0; i < drMetaDataset._binCount; i++) {
-                        let currBinKey  = drMetaDataset._cf_extrema[key].min + binWidth * i;
-                        let currBin     = unprocessedBins.filter(bin => { return bin.key === currBinKey; });
-
-                        // Current bin not available: Create fake bin to bridge gap in chart.
-                        bins.push(currBin.length < 1 ?
-                            {
-                                key: currBinKey,
-                                value: {items: [], count: 0, extrema: {}}
-                            } : currBin[0]
-                        );
-                    }
-                }
-                if (key === "n_components") {
-                    console.log(key)
-                    console.log(binWidth)
-                    console.log(unprocessedBins);
-                    console.log(drMetaDataset._cf_extrema[key]);
-
-
-                    console.log(bins)
-                    console.log("-----------")
-                }
-
-                // Build dict for this attribute.
-                values[valueType][key]          = {data: [], extrema: drMetaDataset._cf_extrema[key], colors: null, tooltips: null};
-
-                // Compile data list.
-                values[valueType][key].data     = isCategorical ? bins.map(bin => bin.value) : bins.map(bin => bin.value.count);
-
-                // Compile color map.
-                values[valueType][key].colors   = bins.map(
-                    bin => isCategorical ?
-                    // If attribute is categorical: Check if bin key/title is equal to current model's attribute value.
-                    (bin.key === scope._data.primitiveData.model_metadata[currModelID][key] ? "red" : "blue") :
-                    // If attribute is numerical: Check if list of items in bin contains current model with this ID.
-                    bin.value.items.some(item => item.id === scope._data.modelID) ? "red" : "blue"
-                );
-
-                // Compile tooltip map.
-                values[valueType][key].tooltips = {};
-                for (let i = 0; i < bins.length; i++) {
-                    values[valueType][key].tooltips[i] = isCategorical ?
-                        bins[i].key : bins[i].key.toFixed(4) + " - " + (bins[i].key + binWidth).toFixed(4);
-                }
-            }
-        }
+        let values = this._data._preprocessDataForSparklines();
 
         // -------------------------------------------------------
         // 2. Draw charts.
@@ -243,11 +223,11 @@ export default class ModelDetailPanel extends Panel
                 );
             }
         }
-
     }
 
     processSettingsChange(delta)
     {
+        // todo Which settings to consider?
     }
 
     /**
@@ -261,7 +241,7 @@ export default class ModelDetailPanel extends Panel
 
         // Show modal.
         $("#" + this._target).dialog({
-            title: "Model Details for Model with ID #" + data.modelID,
+            title: "Model Details for Model with ID #" + data._modelID,
             width: stageDiv.width() / 1.5,
             height: stageDiv.height() / 1.5
         });

@@ -1,5 +1,6 @@
 import Operator from "./Operator.js";
 import ModelDetailPanel from "../panels/ModelDetailPanel.js";
+import ModelDetailDataset from "../data/ModelDetailDataset.js";
 
 /**
  * Class for ModelDetailOperator.
@@ -69,11 +70,9 @@ export default class ModelDetailOperator extends Operator
             modelDetailData.model_metadata = JSON.parse(modelDetailData.model_metadata);
             modelDetailData.original_dataset = JSON.parse(modelDetailData.original_dataset);
             // Store dataset.
-            scope._dataset = {
-                modelID: scope._modelID,
-                primitiveData: modelDetailData,
-                crossfilter: null
-            };
+            scope._dataset = new ModelDetailDataset(
+                "Model Detail Data", modelID, modelDetailData, scope._drMetaDataset
+            );
 
             // Prompt panel to update data and to re-render.
             scope._panels["Model Details"].update();
