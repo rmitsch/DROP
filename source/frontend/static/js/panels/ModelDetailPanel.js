@@ -22,9 +22,6 @@ export default class ModelDetailPanel extends Panel
 
         // Create div structure for child nodes.
         this._divStructure = this._createDivStructure();
-
-        // Generate charts.
-        this._generateCharts();
     }
 
     /**
@@ -50,7 +47,7 @@ export default class ModelDetailPanel extends Panel
         // Right pane.
         let samplePane = Utils.spawnChildDiv(this._target, "model-detail-sample-pane", "split split-horizontal");
 
-        // Upper-left pane - hyperparameters and objectives for current DR model.
+        // 1. Upper-left pane - hyperparameters and objectives for current DR model.
         let attributePane = Utils.spawnChildDiv(
             parameterPane.id, null, "model-detail-pane split split-vertical",
             `<div class='model-details-block reduced-padding'>
@@ -61,7 +58,7 @@ export default class ModelDetailPanel extends Panel
                 <div id="model-details-block-objective-content"></div>
             </div>`
         );
-        // Bottom-left pane - explanation of hyperparameter importance for this DR model utilizing LIME.
+        // 2. Bottom-left pane - explanation of hyperparameter importance for this DR model utilizing LIME.
         let limePane = Utils.spawnChildDiv(
             parameterPane.id, null, "model-detail-pane split-vertical",
             `<div class='model-details-block'>
@@ -69,13 +66,14 @@ export default class ModelDetailPanel extends Panel
             </div>`
         );
 
-        // Upper-right pane - all records in scatterplot (SPLOM? -> What to do with higher-dim. projections?).
+        // 3. Upper-right pane - all records in scatterplot (SPLOM? -> What to do with higher-dim. projections?).
         let scatterplotPane = Utils.spawnChildDiv(
             samplePane.id, null, "model-detail-pane split-vertical",
             `<div class='model-details-block reduced-padding'>
                 <div class='model-details-title'>All Records</div>
             </div>`
         );
+
         // Bottom-right pane - detailed information to currently selected record.
         let recordPane = Utils.spawnChildDiv(
             samplePane.id, null, "model-detail-pane split-vertical",
@@ -149,7 +147,14 @@ export default class ModelDetailPanel extends Panel
         let chartContainerDiv   = $("#" + this._divStructure.scatterplotPaneID);
 
         // -------------------------------------------------------
-        // 1. Prepare crossfilter instance.
+        // 1. Reset existing chart container.
+        // -------------------------------------------------------
+
+        // Reset chart container.
+        chartContainerDiv.empty();
+
+        // -------------------------------------------------------
+        // 2. Append new chart containers, draw scatterplots.
         // -------------------------------------------------------
 
         let numDimensions = this._data._model_metadata[this._data._modelID].n_components;
@@ -157,7 +162,53 @@ export default class ModelDetailPanel extends Panel
         // Generate all combinations of dimension indices.
         for (let i = 0; i < numDimensions; i++) {
             for (let j = i; j < numDimensions; j++) {
-                console.log(i, j);
+                let key = i + ":" + j;
+
+                let scatterplotContainer = Utils.spawnChildDiv(
+                    this._divStructure.scatterplotPaneID,
+                    "model-detail-scatterplot-" + i + "-" + j,
+                    "model-detail-scatterplot"
+                );
+
+                let scatterplot = dc.scatterPlot(
+                    "#" + scatterplotContainer.id,
+                    "model-detail-scatterplot-chart-group"
+                );
+
+                scatterplot
+                    .height(100)
+                    // Take into account missing width in histograms.
+                    .width(100)
+                    .useCanvas(true)
+                    .x(d3.scale.linear().domain([
+                        scope._data._cf_extrema[i].min, scope._data._cf_extrema[i].max
+                    ]))
+                    .y(d3.scale.linear().domain([
+                        scope._data._cf_extrema[j].min, scope._data._cf_extrema[j].max
+                    ]))
+                    .xAxisLabel(i)
+                    .yAxisLabel(j)
+                    .renderHorizontalGridLines(true)
+                    .dimension(scope._data._cf_dimensions[key])
+                    .group(scope._data._cf_groups[key])
+                    .existenceAccessor(function(d) {
+                        return d.value.items.length > 0;
+                    })
+                    .excludedSize(0.3)
+                    .excludedOpacity(0.3)
+                    .excludedColor("#ccc")
+                    .symbolSize(1)
+                    .keyAccessor(function(d) {
+                        return d.key[0];
+                     })
+                    // Filter on end of brushing action, not meanwhile (performance suffers otherwise).
+                    .filterOnBrushEnd(true)
+                    .mouseZoomable(false)
+                    .margins({top: 0, right: 0, bottom: 25, left: 25});
+                scatterplot.render();
+
+
+
             }
         }
     }
