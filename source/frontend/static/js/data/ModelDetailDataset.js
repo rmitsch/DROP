@@ -23,7 +23,7 @@ export default class ModelDetailDataset extends Dataset
         this._modelID               = modelID;
         this._drMetaDataset         = drMetaDataset;
         this._binCount              = drMetaDataset._binCount;
-        this._low_dim_projection    = modelDataJSON.low_dim_projection;
+        this._low_dim_projection    = ModelDetailDataset._preprocessLowDimProjectionData(modelDataJSON.low_dim_projection);
         this._model_metadata        = modelDataJSON.model_metadata;
         this._originalDataset       = modelDataJSON.original_dataset;
         this._sampleDissonances     = modelDataJSON.sample_dissonances;
@@ -31,6 +31,26 @@ export default class ModelDetailDataset extends Dataset
         // Create crossfilter instance for low dimensoinal projection (LDP).
         this._ldp_crossfilter       = crossfilter(this._low_dim_projection);
         this._initLowDimProjectionCrossfilter();
+    }
+
+    /**
+     * Converts low-dimensional projection data into a JSON object with ID and x_1...x_n coordinates.
+     * @param coordinateLists
+     * @private
+     */
+    static _preprocessLowDimProjectionData(coordinateLists)
+    {
+        let processedCoordinateObjects = [];
+
+        for (let i = 0; i < coordinateLists.length; i++) {
+            let newCoordinateObject = {id: i};
+            for (let j = 0; j < coordinateLists[i].length; j++)
+                newCoordinateObject[j] = coordinateLists[i][j];
+
+            processedCoordinateObjects.push(newCoordinateObject)
+        }
+
+        return processedCoordinateObjects;
     }
 
     /**
@@ -73,7 +93,7 @@ export default class ModelDetailDataset extends Dataset
 
         // Generate groups for all combinations of dimension indices.
         for (let i = 0; i < numDimensions; i++) {
-            for (let j = i; j < numDimensions; j++) {
+            for (let j = i + 1; j < numDimensions; j++) {
                 let combinedKey     = i + ":" + j;
                 let transposedKey   = j + ":" + i;
 

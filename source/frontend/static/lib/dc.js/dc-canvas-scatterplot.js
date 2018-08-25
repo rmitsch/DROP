@@ -412,6 +412,7 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, useBin
      * Plots all points in scatterplot.
      * @param context
      * @param data
+     * @param filteredDatapointCoordinates
      */
     function plotPointsOnCanvas(context, data, filteredDatapointCoordinates)
     {
@@ -442,7 +443,9 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, useBin
             for (let datapoint of d.value.items) {
                 // Round coordinates to increase performance (avoid sub-pixel coordinates).
                 if (datapoint.id in filteredDatapointCoordinates)
-                    dataPoints.filtered.coordinates.push(filteredDatapointCoordinates[datapoint.id]);
+                    dataPoints.filtered.coordinates.push(
+                        filteredDatapointCoordinates[datapoint.id]
+                    );
                 else {
                     dataPoints.notFiltered.coordinates.push([
                         _chart.x()(_chart.keyAccessor()(d)),
@@ -463,6 +466,8 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, useBin
         context.beginPath();
         // b. Plot points.
         for (let coordinate of dataPoints.filtered.coordinates) {
+
+            // console.log(coordinate);
             context.moveTo(coordinate[0], coordinate[1]);
             context.arc(
                 coordinate[0],

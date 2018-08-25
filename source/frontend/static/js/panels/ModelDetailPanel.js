@@ -161,7 +161,7 @@ export default class ModelDetailPanel extends Panel
 
         // Generate all combinations of dimension indices.
         for (let i = 0; i < numDimensions; i++) {
-            for (let j = i; j < numDimensions; j++) {
+            for (let j = i + 1; j < numDimensions; j++) {
                 let key = i + ":" + j;
 
                 let scatterplotContainer = Utils.spawnChildDiv(
@@ -172,13 +172,15 @@ export default class ModelDetailPanel extends Panel
 
                 let scatterplot = dc.scatterPlot(
                     "#" + scatterplotContainer.id,
-                    "model-detail-scatterplot-chart-group"
+                    "model-detail-scatterplot-chart-group",
+                    drMetaDataset,
+                    1,
+                    false
                 );
 
                 scatterplot
-                    .height(100)
-                    // Take into account missing width in histograms.
-                    .width(100)
+                    .height(250)
+                    .width(500)
                     .useCanvas(true)
                     .x(d3.scale.linear().domain([
                         scope._data._cf_extrema[i].min, scope._data._cf_extrema[i].max
@@ -191,23 +193,28 @@ export default class ModelDetailPanel extends Panel
                     .renderHorizontalGridLines(true)
                     .dimension(scope._data._cf_dimensions[key])
                     .group(scope._data._cf_groups[key])
-                    .existenceAccessor(function(d) {
-                        return d.value.items.length > 0;
-                    })
-                    .excludedSize(0.3)
-                    .excludedOpacity(0.3)
-                    .excludedColor("#ccc")
-                    .symbolSize(1)
                     .keyAccessor(function(d) {
                         return d.key[0];
                      })
+                    .valueAccessor(function(d) {
+                        return d.key[1];
+                     })
+                    .existenceAccessor(function(d) {
+                        return d.value.count > 0;
+                    })
+                    .excludedSize(0.5)
+                    .excludedOpacity(0.5)
+                    .excludedColor("#ccc")
+                    .symbolSize(3)
                     // Filter on end of brushing action, not meanwhile (performance suffers otherwise).
                     .filterOnBrushEnd(true)
-                    .mouseZoomable(false)
-                    .margins({top: 0, right: 0, bottom: 25, left: 25});
+                    .mouseZoomable(true)
+                    .margins({top: 25, right: 25, bottom: 25, left: 25});
                 scatterplot.render();
 
-
+                // Set number of ticks for y-axis.
+                scatterplot.yAxis().ticks(3);
+                scatterplot.xAxis().ticks(3);
 
             }
         }
