@@ -25,8 +25,16 @@ export default class ModelDetailDataset extends Dataset
         this._binCount              = drMetaDataset._binCount;
         this._low_dim_projection    = ModelDetailDataset._preprocessLowDimProjectionData(modelDataJSON.low_dim_projection);
         this._model_metadata        = modelDataJSON.model_metadata;
-        this._originalDataset       = modelDataJSON.original_dataset;
+        this._originalDataset       = ModelDetailDataset._preprocessOriginalData(modelDataJSON.original_dataset);
         this._sampleDissonances     = modelDataJSON.sample_dissonances;
+
+        console.log(this._originalDataset)
+        // todo CONTINUE HERE:
+        //  - Prepare dataset for model detail table.
+        //  - Grab dataset from VDA lab.
+        //  - Show data in model detail table.
+        //  - Integration brushing linking between scatterplot/table.
+        //  - Work on LIME integration.
 
         // Create crossfilter instance for low dimensoinal projection (LDP).
         this._ldp_crossfilter       = crossfilter(this._low_dim_projection);
@@ -51,6 +59,23 @@ export default class ModelDetailDataset extends Dataset
         }
 
         return processedCoordinateObjects;
+    }
+
+    /**
+     * Updates structure of original data so it correlates with established structural convention.
+     * @param originalData Dictionary containing original data.
+     * @private
+     */
+    static _preprocessOriginalData(originalData)
+    {
+        let processedOriginalData = [];
+
+        for (let key in originalData) {
+            originalData[key].id = originalData[key].record_name;
+            processedOriginalData.push(originalData[key]);
+        }
+
+        return processedOriginalData;
     }
 
     /**
@@ -129,7 +154,7 @@ export default class ModelDetailDataset extends Dataset
      * @returns {{hyperparameters: {}, objectives: {}}}
      * @private
      */
-    _preprocessDataForSparklines()
+    preprocessDataForSparklines()
     {
         let drMetaDataset       = this._drMetaDataset;
         // Fetch metadata structure (i. e. attribute names and types).
@@ -176,9 +201,9 @@ export default class ModelDetailDataset extends Dataset
                 values[valueType][key].colors   = bins.map(
                     bin => isCategorical ?
                     // If attribute is categorical: Check if bin key/title is equal to current model's attribute value.
-                    (bin.key === this._model_metadata[currModelID][key] ? "red" : "blue") :
+                    (bin.key === this._model_metadata[currModelID][key] ? "red" : "#1f77b4") :
                     // If attribute is numerical: Check if list of items in bin contains current model with this ID.
-                    bin.value.items.some(item => item.id === currModelID) ? "red" : "blue"
+                    bin.value.items.some(item => item.id === currModelID) ? "red" : "#1f77b4"
                 );
 
                 // Compile tooltip map.

@@ -157,12 +157,17 @@ export default class ModelDetailPanel extends Panel
         // 2. Append new chart containers, draw scatterplots.
         // -------------------------------------------------------
 
-        let numDimensions = this._data._model_metadata[this._data._modelID].n_components;
+        let numDimensions   = this._data._model_metadata[this._data._modelID].n_components;
+        let numScatterplots = ((numDimensions - 1) * (numDimensions)) / 2;
 
         // Generate all combinations of dimension indices.
+        // todo Wrap scatterplots into rows in case of d > 2. Also consider case d == 1.
         for (let i = 0; i < numDimensions; i++) {
+            let dataPaddingX = this._data._cf_intervals[i] * 0.1;
+
             for (let j = i + 1; j < numDimensions; j++) {
-                let key = i + ":" + j;
+                let key             = i + ":" + j;
+                let dataPaddingY    = this._data._cf_intervals[j] * 0.1;
 
                 let scatterplotContainer = Utils.spawnChildDiv(
                     this._divStructure.scatterplotPaneID,
@@ -174,22 +179,22 @@ export default class ModelDetailPanel extends Panel
                     "#" + scatterplotContainer.id,
                     "model-detail-scatterplot-chart-group",
                     drMetaDataset,
-                    1,
+                    null,
                     false
                 );
 
                 scatterplot
-                    .height(250)
-                    .width(500)
+                    .height(chartContainerDiv.height() / numScatterplots - numScatterplots * 10)
+                    .width(chartContainerDiv.width() / numScatterplots - numScatterplots * 10)
                     .useCanvas(true)
                     .x(d3.scale.linear().domain([
-                        scope._data._cf_extrema[i].min, scope._data._cf_extrema[i].max
+                        scope._data._cf_extrema[i].min - dataPaddingX,
+                        scope._data._cf_extrema[i].max + dataPaddingX
                     ]))
                     .y(d3.scale.linear().domain([
-                        scope._data._cf_extrema[j].min, scope._data._cf_extrema[j].max
+                        scope._data._cf_extrema[j].min - dataPaddingY,
+                        scope._data._cf_extrema[j].max + dataPaddingY
                     ]))
-                    .xAxisLabel(i)
-                    .yAxisLabel(j)
                     .renderHorizontalGridLines(true)
                     .dimension(scope._data._cf_dimensions[key])
                     .group(scope._data._cf_groups[key])
@@ -202,20 +207,21 @@ export default class ModelDetailPanel extends Panel
                     .existenceAccessor(function(d) {
                         return d.value.count > 0;
                     })
-                    .excludedSize(0.5)
-                    .excludedOpacity(0.5)
+                    .excludedSize(2)
+                    .excludedOpacity(0.7)
                     .excludedColor("#ccc")
                     .symbolSize(3)
                     // Filter on end of brushing action, not meanwhile (performance suffers otherwise).
                     .filterOnBrushEnd(true)
                     .mouseZoomable(true)
-                    .margins({top: 25, right: 25, bottom: 25, left: 25});
-                scatterplot.render();
+                    .margins({top: 25, right: 25, bottom: 25, left: 35});
 
                 // Set number of ticks for y-axis.
                 scatterplot.yAxis().ticks(3);
                 scatterplot.xAxis().ticks(3);
 
+                // Render chart.
+                scatterplot.render();
             }
         }
     }
@@ -244,7 +250,7 @@ export default class ModelDetailPanel extends Panel
         // -------------------------------------------------------
 
         // Gather values for bins from DRMetaDataset instance.
-        let values = this._data._preprocessDataForSparklines();
+        let values = this._data.preprocessDataForSparklines();
 
         // -------------------------------------------------------
         // 2. Draw charts.

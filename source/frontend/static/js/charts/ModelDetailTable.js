@@ -1,14 +1,15 @@
 import Chart from "./Chart.js";
 import Utils from "../Utils.js";
 
-export default class Table extends Chart
+export default class ModelDetailTable extends Chart
 {
     /**
-     *
+     * Table showing records with information on individual records in a dataset/embedding.
      * @param name
      * @param panel
      * @param attributes
-     * @param dataset
+     * @param dataset Instance of ModelDetailDataset, containing original dataset including all attributes + artifical
+     * numerical ID (matching with ID used in embeddings).
      * @param style
      * @param parentDivID
      */
@@ -21,7 +22,7 @@ export default class Table extends Chart
         super(name, panel, attributes, dataset, style, parentDivID);
 
         // Update involved CSS classes.
-        $("#" + this._target).addClass("filter-reduce-table");
+        $("#" + this._target).addClass("model-detail-table");
 
         // Initialize chart handler (too lazy to write a new class just for that).
         this._cf_chart = {};

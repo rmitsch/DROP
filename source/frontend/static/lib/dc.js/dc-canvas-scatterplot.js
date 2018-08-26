@@ -483,7 +483,7 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, useBin
 
         // Plot all unfiltered points.
         // b. Configure canvas context.
-        context.globalAlpha = 0; //dataPoints.notFiltered.opacity;
+        context.globalAlpha = dataPoints.notFiltered.opacity;
         context.fillStyle   = dataPoints.notFiltered.color;
         context.beginPath();
         // b. Plot points.
