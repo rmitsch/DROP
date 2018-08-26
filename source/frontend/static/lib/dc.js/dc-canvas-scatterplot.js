@@ -270,9 +270,9 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, useBin
             context.save();
 
             // Set global drawing options for lines.
-            context.lineWidth   = 1;
+            context.lineWidth   = 0.075;
             context.strokeStyle = "#1f77b4";
-            context.globalAlpha = 0.0275;
+            context.globalAlpha = 0.1; // .0275
 
             // Draw lines between points of a series.
             let extrema = plotLines(context, dataPointCoordinates);

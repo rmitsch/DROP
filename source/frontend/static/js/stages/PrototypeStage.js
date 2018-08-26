@@ -157,6 +157,9 @@ export default class PrototypeStage extends Stage
                   $("#splashscreen").fadeTo(1000, 0, function() {
                       $("#splashscreen").css("display", "none");
                   });
+
+                  let now = new Date();
+                  console.log("*** DROP *** Finished construction at " + now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds() + ".");
             });
     }
 

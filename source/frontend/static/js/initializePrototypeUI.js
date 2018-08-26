@@ -7,6 +7,9 @@ let menuIDs = ["menu_prototype", "menu_about"];
 
 // Initialize setup UI.
 $(document).ready(function() {
+    let now = new Date();
+    console.log("*** DROP *** Starting construction at " + now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds() + ".");
+
     // -----------------------------------------------------
     // 1. Process GET parameters.
     // -----------------------------------------------------
@@ -14,7 +17,7 @@ $(document).ready(function() {
     let metadataGETParameters = processGETParameters();
 
     // -----------------------------------------------------
-    // 2. Initialize loading button.
+    // 2. Initialize dataset loading button.
     // -----------------------------------------------------
 
     $("#load-dataset-link").click(function() {
@@ -59,15 +62,28 @@ $(document).ready(function() {
             $.ajax({
                 url: '/get_metadata_template',
                 type: 'GET',
+                // Compile or load DRMetadatset.
                 success: function(model_metadata) {
-                    // Generate dataset.
-                    console.log("Compiling DRMetaDataset.");
-                    let dataset = new DRMetaDataset(
-                        "PrototypeDataset",
-                        model_data_list,
-                        model_metadata,
-                        10
-                    );
+                    let datasetStorageID    = "test"
+                    let dataset             = null; // DRMetaDataset.restoreFromString(Session.get(datasetStorageID));
+                    console.log(dataset)
+                    if (false && typeof dataset !== "undefined") {
+                        console.log("Loaded DRMetaDataset.");
+                        console.log(dataset)
+                    }
+                    else {
+                        console.log("Compiling and storing DRMetaDataset.");
+                        dataset = new DRMetaDataset(
+                            "PrototypeDataset",
+                            model_data_list,
+                            model_metadata,
+                            10
+                        );
+                        console.log(dataset._cf_groups["angle#histogram"])
+                        // Store object in JSON.
+                        Session.set(datasetStorageID, dataset);
+                    }
+
 
                     // All components inside a panel are automatically linked with dc.js. Panels have to be linked
                     // with each other explicitly, if so desired (since used datasets may differ).
@@ -97,6 +113,7 @@ function processGETParameters()
     // Read GET parameters.
     let datasetName     = Utils.findGETParameter("dataset") === null ? "wine" : Utils.findGETParameter("dataset");
     let drKernelName    = Utils.findGETParameter("drk") === null ? "tsne" : Utils.findGETParameter("drk");
+    let forceReload     = Utils.findGETParameter("force") === null ? "false" : Utils.findGETParameter("force");
 
     // Update displayed value of dropdown based on current URL parameters.
     let datasetNameTranslation = {wine: "Wine", mnist: "MNIST", swiss_roll: "Swiss Roll", vis: "VIS Papers"};
@@ -106,6 +123,7 @@ function processGETParameters()
 
     return {
         datasetName: datasetName,
-        drKernelName: drKernelName
+        drKernelName: drKernelName,
+        forceReload: forceReload === "true"
     }
 }

@@ -28,10 +28,7 @@ export default class ModelDetailDataset extends Dataset
         this._originalDataset       = ModelDetailDataset._preprocessOriginalData(modelDataJSON.original_dataset);
         this._sampleDissonances     = modelDataJSON.sample_dissonances;
 
-        console.log(this._originalDataset)
         // todo CONTINUE HERE:
-        //  - Prepare dataset for model detail table.
-        //  - Grab dataset from VDA lab.
         //  - Show data in model detail table.
         //  - Integration brushing linking between scatterplot/table.
         //  - Work on LIME integration.
@@ -60,6 +57,9 @@ export default class ModelDetailDataset extends Dataset
 
         return processedCoordinateObjects;
     }
+
+    // scp vda-admin@bigmachine8.vda.univie.ac.at:/media/vda-admin/5e2ea268-53ea-410d-90d9-773e59974f94/drop .
+    // /media/vda-admin/5e2ea268-53ea-410d-90d9-773e59974f94/drop
 
     /**
      * Updates structure of original data so it correlates with established structural convention.

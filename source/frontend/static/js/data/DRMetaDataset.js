@@ -517,4 +517,22 @@ export default class DRMetaDataset extends Dataset
     {
         return this._data[this._dataIndicesByID[recordID]];
     }
+
+    /**
+     * Restores object from instance string.
+     * @param instanceString
+     */
+    static restoreFromString(instanceString)
+    {
+        let instance = Cryo.parse(window.name);
+        Object.setPrototypeOf(instance, DRMetaDataset.prototype);
+        Object.setPrototypeOf(instance._crossfilter, crossfilter.prototype);
+
+        for (let groupname in instance._cf_groups) {
+
+            console.log(instance._cf_groups[groupname].all());
+        }
+
+        return instance;
+    }
 }

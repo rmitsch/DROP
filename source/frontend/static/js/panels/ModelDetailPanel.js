@@ -131,10 +131,27 @@ export default class ModelDetailPanel extends Panel
         this._drawAttributeSparklines();
 
         // -------------------------------------------------------
-        // 2. Draw scatterplot/SPLOM showing indivdiual records.
+        // 2. Draw scatterplot/SPLOM showing individual records.
         // -------------------------------------------------------
 
         this._drawRecordScatterplots();
+
+        // -------------------------------------------------------
+        // 3. Fill table with individual, selected records.
+        // -------------------------------------------------------
+
+        this._fillRecordTable();
+    }
+
+    _fillRecordTable()
+    {
+        let scope               = this;
+        let drMetaDataset       = this._operator._drMetaDataset;
+        let origDataset         = this._data._originalDataset;
+        // Fetch metadata structure (i. e. attribute names and types).
+        let metadataStructure   = drMetaDataset._metadata;
+        // Fetch divs containing attribute sparklines.
+        let chartContainerDiv   = $("#" + this._divStructure.scatterplotPaneID);
     }
 
     _drawRecordScatterplots()
