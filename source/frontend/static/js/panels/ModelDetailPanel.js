@@ -1,6 +1,7 @@
 import Panel from "./Panel.js";
 import Utils from "../Utils.js";
 import DRMetaDataset from "../data/DRMetaDataset.js";
+import ModelDetailTable from "../charts/ModelDetailTable.js";
 
 /**
  * Panel for model detail view.
@@ -22,6 +23,9 @@ export default class ModelDetailPanel extends Panel
 
         // Create div structure for child nodes.
         this._divStructure = this._createDivStructure();
+
+        // Initialize table variable. Used as flag for construction at loading time.
+        this._table = null;
     }
 
     /**
@@ -77,7 +81,7 @@ export default class ModelDetailPanel extends Panel
         // Bottom-right pane - detailed information to currently selected record.
         let recordPane = Utils.spawnChildDiv(
             samplePane.id, null, "model-detail-pane split-vertical",
-            `<div class='model-details-block'>
+            `<div class='model-details-block' id='model-details-block-record-table'>
                 <div class='model-details-title'>Selected Sample(s)</span>
             </div>`
         );
@@ -118,7 +122,10 @@ export default class ModelDetailPanel extends Panel
             },
             limePaneID: limePane.id,
             scatterplotPaneID: scatterplotPane.id,
-            recordPaneID: recordPane.id
+            recordPane: {
+                id: recordPane.id,
+                tableID: "model-details-block-record-table"
+            }
         };
     }
 
@@ -137,21 +144,31 @@ export default class ModelDetailPanel extends Panel
         this._drawRecordScatterplots();
 
         // -------------------------------------------------------
-        // 3. Fill table with individual, selected records.
+        // 3. Update table.
         // -------------------------------------------------------
 
-        this._fillRecordTable();
+        if (this._table === null)
+            this._constructTable();
     }
 
-    _fillRecordTable()
+    _constructTable()
     {
         let scope               = this;
         let drMetaDataset       = this._operator._drMetaDataset;
-        let origDataset         = this._data._originalDataset;
         // Fetch metadata structure (i. e. attribute names and types).
         let metadataStructure   = drMetaDataset._metadata;
         // Fetch divs containing attribute sparklines.
         let chartContainerDiv   = $("#" + this._divStructure.scatterplotPaneID);
+
+        // Construct new table.
+        let table = new ModelDetailTable(
+            "Model Detail Table",
+            this,
+            this._data._originalRecordAttributes,
+            this._data,
+            null,
+            this._divStructure.recordPane.tableID
+        );
     }
 
     _drawRecordScatterplots()

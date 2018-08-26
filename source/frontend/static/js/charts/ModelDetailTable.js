@@ -31,7 +31,7 @@ export default class ModelDetailTable extends Chart
         let tableID = this._createDivStructure();
 
         // Select dimension of ID to use for later look-ups.
-        this._dimension = this._dataset.cf_dimensions[this._dataset.metadata.hyperparameters[0].name];
+        this._dimension = this._dataset._cf_dimensions["id"];
 
         // Create storage for filtered IDs.
         this._filteredIDs       = null;
@@ -46,10 +46,10 @@ export default class ModelDetailTable extends Chart
         this._constructFCChart(tableID);
 
         // Implement methods necessary for dc.js hook and integrate it into it's chart registry.
-        this._registerChartInDC();
+        // this._registerChartInDC();
 
         // Fill table initially.
-        this._initTableData();
+        // this._initTableData();
     }
 
     /**

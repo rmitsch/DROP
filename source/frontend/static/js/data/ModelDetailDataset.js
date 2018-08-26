@@ -20,13 +20,20 @@ export default class ModelDetailDataset extends Dataset
         super(name, modelDataJSON);
 
         // Update internal state.
-        this._modelID               = modelID;
-        this._drMetaDataset         = drMetaDataset;
-        this._binCount              = drMetaDataset._binCount;
-        this._low_dim_projection    = ModelDetailDataset._preprocessLowDimProjectionData(modelDataJSON.low_dim_projection);
-        this._model_metadata        = modelDataJSON.model_metadata;
-        this._originalDataset       = ModelDetailDataset._preprocessOriginalData(modelDataJSON.original_dataset);
-        this._sampleDissonances     = modelDataJSON.sample_dissonances;
+        this._modelID                   = modelID;
+        this._drMetaDataset             = drMetaDataset;
+        this._binCount                  = drMetaDataset._binCount;
+        this._low_dim_projection        = ModelDetailDataset._preprocessLowDimProjectionData(
+            modelDataJSON.low_dim_projection, modelDataJSON.original_dataset
+        );
+        this._model_metadata            = modelDataJSON.model_metadata;
+        this._sampleDissonances         = modelDataJSON.sample_dissonances;
+        // Gather attributes available for original record.
+        this._originalRecordAttributes  = [];
+        for (let key in modelDataJSON.original_dataset[0]) {
+            if (key !== "record_name")
+                this._originalRecordAttributes.push(key);
+        }
 
         // todo CONTINUE HERE:
         //  - Show data in model detail table.
@@ -40,42 +47,31 @@ export default class ModelDetailDataset extends Dataset
 
     /**
      * Converts low-dimensional projection data into a JSON object with ID and x_1...x_n coordinates.
+     * Adds data from original records.
      * @param coordinateLists
+     * @param originalData
      * @private
      */
-    static _preprocessLowDimProjectionData(coordinateLists)
+    static _preprocessLowDimProjectionData(coordinateLists, originalData)
     {
         let processedCoordinateObjects = [];
 
         for (let i = 0; i < coordinateLists.length; i++) {
             let newCoordinateObject = {id: i};
-            for (let j = 0; j < coordinateLists[i].length; j++)
+            // Transform data into dict structure.
+            for (let j = 0; j < coordinateLists[i].length; j++) {
                 newCoordinateObject[j] = coordinateLists[i][j];
+            }
+
+            // Append data from original records.
+            for (let key in originalData[0]) {
+                newCoordinateObject["orig_" + key] = originalData[0][key];
+            }
 
             processedCoordinateObjects.push(newCoordinateObject)
         }
 
         return processedCoordinateObjects;
-    }
-
-    // scp vda-admin@bigmachine8.vda.univie.ac.at:/media/vda-admin/5e2ea268-53ea-410d-90d9-773e59974f94/drop .
-    // /media/vda-admin/5e2ea268-53ea-410d-90d9-773e59974f94/drop
-
-    /**
-     * Updates structure of original data so it correlates with established structural convention.
-     * @param originalData Dictionary containing original data.
-     * @private
-     */
-    static _preprocessOriginalData(originalData)
-    {
-        let processedOriginalData = [];
-
-        for (let key in originalData) {
-            originalData[key].id = originalData[key].record_name;
-            processedOriginalData.push(originalData[key]);
-        }
-
-        return processedOriginalData;
     }
 
     /**
@@ -109,6 +105,11 @@ export default class ModelDetailDataset extends Dataset
             // Calculate extrema.
             this._calculateSingularExtremaByAttribute(i);
         }
+
+        // Create ID dimension.
+        this._cf_dimensions["id"] = cf.dimension(
+            function(d) { return d.id; }
+        );
     }
 
     _initBinaryDimensionsAndGroups(includeGroups = true)
