@@ -65,7 +65,7 @@ export default class ModelDetailDataset extends Dataset
 
             // Append data from original records.
             for (let key in originalData[0]) {
-                newCoordinateObject["orig_" + key] = originalData[0][key];
+                newCoordinateObject["orig_" + key] = originalData[i][key];
             }
 
             processedCoordinateObjects.push(newCoordinateObject)

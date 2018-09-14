@@ -147,11 +147,10 @@ export default class ModelDetailPanel extends Panel
         // 3. Update table.
         // -------------------------------------------------------
 
-        if (this._table === null)
-            this._constructTable();
+        this._reconstructTable();
     }
 
-    _constructTable()
+    _reconstructTable()
     {
         let scope               = this;
         let drMetaDataset       = this._operator._drMetaDataset;
@@ -160,8 +159,11 @@ export default class ModelDetailPanel extends Panel
         // Fetch divs containing attribute sparklines.
         let chartContainerDiv   = $("#" + this._divStructure.scatterplotPaneID);
 
+        // Remove old table, if exists.
+        $('div.model-detail-table').remove();
+
         // Construct new table.
-        let table = new ModelDetailTable(
+        this._table = new ModelDetailTable(
             "Model Detail Table",
             this,
             this._data._originalRecordAttributes,

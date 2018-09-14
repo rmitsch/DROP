@@ -46,10 +46,10 @@ export default class ModelDetailTable extends Chart
         this._constructFCChart(tableID);
 
         // Implement methods necessary for dc.js hook and integrate it into it's chart registry.
-        // this._registerChartInDC();
+        this._registerChartInDC();
 
         // Fill table initially.
-        // this._initTableData();
+        this._initTableData();
     }
 
     /**
@@ -65,9 +65,10 @@ export default class ModelDetailTable extends Chart
         // Transform records to format accepted by DataTable.
         for (let i = 0; i < records.length; i++) {
             let transformedRecord   = [this._attributes.length + 1];
+
             transformedRecord[0]    = records[i].id;
             for (let j = 0; j < this._attributes.length; j++) {
-                transformedRecord[j + 1] = records[i][this._attributes[j]];
+                transformedRecord[j + 1] = records[i]["orig_" + this._attributes[j]];
             }
             transformedRecords[i] = transformedRecord;
         }
@@ -158,6 +159,7 @@ export default class ModelDetailTable extends Chart
             for (let i = 0; i < records.length; i++) {
                 instance._filteredIDs.add(records[i].id)
             }
+            console.log(instance._filteredIDs)
 
             // Filter table data using an ugly hack 'cause DataTable.js can't do obvious things.
             // Add filter only if it doesn't exist yet.
@@ -166,6 +168,7 @@ export default class ModelDetailTable extends Chart
                     // oSettings holds information that can be used to differ between different tables -
                     // might be necessary once several tables use different filters.
                     function (oSettings, aData, iDataIndex) {
+                        console.log(oSettings)
                         return instance._filteredIDs.has(+aData[0]);
                     }
                 );
