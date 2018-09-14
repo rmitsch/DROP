@@ -367,8 +367,8 @@ export default class ModelDetailPanel extends Panel
         // Show modal.
         $("#" + this._target).dialog({
             title: "Model Details for Model with ID #" + data._modelID,
-            width: stageDiv.width() / 1.5,
-            height: stageDiv.height() / 1.5
+            width: stageDiv.width() / 1.25,
+            height: stageDiv.height() / 1.25
         });
 
         // Render charts.
