@@ -77,10 +77,20 @@ export default class FilterReduceOperator extends Operator
         let scope = this;
         $("#filter-reduce-info-table-icon").click(function() {
             // Toggle panel visibility.
-            $("#" + tablePanel.table._target).css("display", scope._showTable ? "block" : "none");
+            // let tablePanelDOM = $("#" + tablePanel._target);
+            // if (scope._showTable) {
+            //     $("#" + tablePanel.table._target).css("display", "block");
+            //     tablePanelDOM.css("padding", 10);
+            //     tablePanelDOM.css("width", "30");
+            // }
+            // else {
+            //     $("#" + tablePanel.table._target).css("display", "none");
+            //     tablePanelDOM.css("padding", 0);
+            //     tablePanelDOM.css("width", 0);
+            // }
 
             // Relay changed flag to stage, so that split pane structure can be updated.
-            scope._stage.setEmbeddingsOverviewTableVisiblity(scope._showTable);
+            // scope._stage.setEmbeddingsOverviewTableVisiblity(scope._showTable);
 
             // Toggle flag state.
             scope._showTable = !scope._showTable;

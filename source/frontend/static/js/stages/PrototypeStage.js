@@ -192,8 +192,8 @@ export default class PrototypeStage extends Stage
         }
         // Remove embeddings overview table.
         else {
-            this._bottomSplitPane.setSizes([2, 49, 49]);
-            // this._bottomSplitPane.collapse(0);
+            // this._bottomSplitPane.setSizes([2, 49, 49]);
+            this._bottomSplitPane.collapse(0);
         }
     }
 
