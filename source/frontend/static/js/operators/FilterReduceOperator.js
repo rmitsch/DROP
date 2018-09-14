@@ -18,13 +18,19 @@ export default class FilterReduceOperator extends Operator
      * @param stage
      * @param dataset Instance of DRMetaDataset class.
      * @param parentDivID
+     * @param tableParentDivID ID of parent div for embedding overview table.
      */
-    constructor(name, stage, dataset, parentDivID)
+    constructor(name, stage, dataset, parentDivID, tableParentDivID)
     {
         super(name, stage, "1", "n", dataset, parentDivID);
 
         // Update involved CSS classes.
         $("#" + this._target).addClass("filter-reduce-operator");
+
+        // Store ID of parent table div.
+        this._tableParentDivID = tableParentDivID;
+        // Set flag indicating whether table are shown.
+        this._showTable = false;
 
         // Construct all necessary panels.
         this.constructPanels();
@@ -39,39 +45,50 @@ export default class FilterReduceOperator extends Operator
         // Generate panels.
         // ----------------------------------------------
 
-        // 1. Construct panels for charts.
+        // 1. Construct panel for selection table.
+        let tablePanel = new FilterReduceTablePanel(
+            "Model Selection",
+            this,
+            this._tableParentDivID
+        );
+        this._panels[tablePanel.name] = tablePanel;
+
+        // 2. Construct panels for charts.
         let frcPanel = new FilterReduceChartsPanel(
             "Hyperparameters & Objectives",
             this
         );
         this._panels[frcPanel.name] = frcPanel;
 
-        // 2. Construct panel for selection table.
-        let tablePanel = new FilterReduceTablePanel(
-            "Model Selection",
-            this
-        );
-        this._panels[tablePanel.name] = tablePanel;
-
         // 3. Construct panel for settings.
         let settingsPanel = new FilterReduceSettingsPanel(
-            "Hyperparameters & Objectives: Settings", this, null, "filter-reduce-info-settings-icon"
+            "Hyperparameters & Objectives: Settings",
+            this,
+            null,
+            "filter-reduce-info-settings-icon"
         );
         this._panels[settingsPanel.name] = settingsPanel;
 
         // ----------------------------------------------
-        // Configure modals.
+        // Configure split panes.
         // ----------------------------------------------
 
+        // 4. Set click listener to show table panel.
         let scope = this;
-
-        // 4. Set click listener for FRC panel's table modal.
         $("#filter-reduce-info-table-icon").click(function() {
-            $("#" + scope._panels[tablePanel.name]._target).dialog({
-                title: "All models",
-                width: $("#" + scope._stage._target).width() / 2,
-                height: $("#" + scope._stage._target).height() / 2
-            });
+            // Toggle panel visibility.
+            $("#" + tablePanel.table._target).css("display", scope._showTable ? "block" : "none");
+
+            // Relay changed flag to stage, so that split pane structure can be updated.
+            scope._stage.setEmbeddingsOverviewTableVisiblity(scope._showTable);
+
+            // Toggle flag state.
+            scope._showTable = !scope._showTable;
         });
+    }
+
+    get tablePanel()
+    {
+        return this._panels["Model Selection"];
     }
 }

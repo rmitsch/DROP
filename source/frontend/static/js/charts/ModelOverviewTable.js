@@ -84,7 +84,7 @@ export default class ModelOverviewTable extends Chart
     {
         this._cf_chart = $("#" + tableID).DataTable({
             scrollX: true,
-            scrollY: false,
+            scrollY: Math.floor($("#" + this._panel._target).height()) + "px",
             fixedColumns: false
         });
 

@@ -27,6 +27,9 @@ export default class PrototypeStage extends Stage
     {
         super(name, target, datasets);
 
+        // Store splitter instance for bottom div.
+        this._bottomSplitPane = null;
+
         // Construct operators.
         this.constructOperators()
     }
@@ -40,7 +43,7 @@ export default class PrototypeStage extends Stage
 
         // Fetch (test) dataset for surrogate model first, then initialize panels.
         let surrModelJSON = fetch(
-            "/get_surrogate_model_data?modeltype=tree&objs=r_nx,b_nx&depth=10",
+            "/get_surrogate_model_data?modeltype=tree&objs=r_nx,b_nx&depth=4",
             {
                 headers: { "Content-Type": "application/json; charset=utf-8"},
                 method: "GET"
@@ -82,7 +85,8 @@ export default class PrototypeStage extends Stage
                     "FilterReduce:TSNE",
                     scope,
                     scope._datasets["modelMetadata"],
-                    splitTopDiv.id
+                    splitTopDiv.id,
+                    splitBottomDiv.id
                 );
 
                 // ---------------------------------------------------------
@@ -124,30 +128,43 @@ export default class PrototypeStage extends Stage
                 // 4. Initialize split panes.
                 // ---------------------------------------------------------
 
+                let surrTarget              = scope._operators["SurrogateModel"]._target;
+                let dissTarget              = scope._operators["Dissonance"]._target;
+                let embeddingsTableTarget   = scope._operators["FilterReduce"].tablePanel._target;
+
                 // Horizontal split.
-                let surrTarget = scope._operators["SurrogateModel"]._target;
-                let dissTarget = scope._operators["Dissonance"]._target;
                 $("#" + surrTarget).addClass("split split-horizontal");
                 $("#" + dissTarget).addClass("split split-horizontal");
-                Split(["#" + surrTarget, "#" + dissTarget], {
-                    direction: "horizontal",
-                    sizes: [50, 50],
-                    onDragEnd: function() {}
-                });
+                $("#" + embeddingsTableTarget).addClass("split split-horizontal");
+                scope._bottomSplitPane = Split(
+                    ["#" + embeddingsTableTarget, "#" + surrTarget, "#" + dissTarget],
+                    {
+                        direction: "horizontal",
+                        sizes: [2, 49, 49],
+                        onDragEnd: function() {}
+                    }
+                );
+                // scope._bottomSplitPane.collapse(0);
 
                 // Vertical split.
                 $("#" + splitTopDiv.id).addClass("split split-vertical");
                 $("#" + splitBottomDiv.id).addClass("split split-vertical");
-                Split(["#" + splitTopDiv.id, "#" + splitBottomDiv.id], {
-                    direction: "vertical",
-                    sizes: [57, 43],
-                    onDragEnd: function() {
+                Split(
+                    ["#" + splitTopDiv.id, "#" + splitBottomDiv.id],
+                    {
+                        direction: "vertical",
+                        sizes: [57, 43],
+                        onDragEnd: function() {
+                        }
                     }
-                });
+                );
 
-                // After split: Render (resize-sensitive) charts.
+                // After split: Render (resize-sensitive) components.
                 scope._operators["SurrogateModel"].render();
                 scope._operators["Dissonance"].render();
+                $("#" + embeddingsTableTarget + " .dataTables_scrollBody").css(
+                    'height', ($("#" + splitBottomDiv.id).height() - 200) + "px"
+                );
 
                 // ---------------------------------------------------------
                 // 5. Fade out splash screen, fade in stage.
@@ -163,5 +180,21 @@ export default class PrototypeStage extends Stage
             });
     }
 
+    /**
+     * Toggles visiblity of embeddings overview table.
+     * @param show
+     */
+    setEmbeddingsOverviewTableVisiblity(show)
+    {
+        // Create new split pane structure including embeddings overview table.
+        if (show) {
+            this._bottomSplitPane.setSizes([20, 40, 40]);
+        }
+        // Remove embeddings overview table.
+        else {
+            this._bottomSplitPane.setSizes([2, 49, 49]);
+            // this._bottomSplitPane.collapse(0);
+        }
+    }
 
 }

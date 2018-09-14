@@ -65,7 +65,7 @@ $(document).ready(function() {
                 // Compile or load DRMetadatset.
                 success: function(model_metadata) {
                     let datasetStorageID    = "test"
-                    let dataset             = null; // DRMetaDataset.restoreFromString(Session.get(datasetStorageID));
+                    let dataset             = localStorage.getItem("someVarKey");
 
                     if (false && typeof dataset !== "undefined") {
                         console.log("Loaded DRMetaDataset.");
@@ -81,7 +81,8 @@ $(document).ready(function() {
                         );
 
                         // Store object in JSON.
-                        Session.set(datasetStorageID, dataset);
+                        // Session.set(datasetStorageID, dataset);
+                        localStorage.setItem("someVarKey", dataset);
                     }
 
 

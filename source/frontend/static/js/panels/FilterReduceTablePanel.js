@@ -33,4 +33,9 @@ export default class FilterReduceTablePanel extends Panel
         );
         this._charts[table.name] = table;
     }
+
+    get table()
+    {
+        return this._charts["Model selection table"];
+    }
 }

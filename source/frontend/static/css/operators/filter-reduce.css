@@ -68,14 +68,16 @@ span.filter-reduce-row-label-text {
 }
 
 .filter-reduce-operator {
-    height: 54%;
+    height: 100%;
 }
 
 .filter-reduce-charts-panel {
 }
 
 .filter-reduce-table-panel {
-    display: none;
+    display: block;
+    margin: 0;
+    padding: 10px;
 }
 
 /* Lower canvas' z-index so that highlighting is visible on top. */
