@@ -198,68 +198,95 @@ export default class ModelDetailPanel extends Panel
 
         // Generate all combinations of dimension indices.
         // todo Wrap scatterplots into rows in case of d > 2. Also consider case d == 1.
+
         for (let i = 0; i < numDimensions; i++) {
-            let dataPaddingX = this._data._cf_intervals[i] * 0.1;
-
-            for (let j = i + 1; j < numDimensions; j++) {
-                let key             = i + ":" + j;
-                let dataPaddingY    = this._data._cf_intervals[j] * 0.1;
-
-                let scatterplotContainer = Utils.spawnChildDiv(
-                    this._divStructure.scatterplotPaneID,
-                    "model-detail-scatterplot-" + i + "-" + j,
-                    "model-detail-scatterplot"
+            // Consider that we want to draw a scatterplot with the added "fake"/zero axis if we have a dataset with a
+            // one-dim. embedding.
+            for (let j = i + 1; j < (numDimensions > 1 ? numDimensions : 2); j++) {
+                // Generate scatterplot.
+                let scatterplot = this._generateScatterplot(
+                    [i, j],
+                    {
+                        height: chartContainerDiv.height() / numScatterplots - numScatterplots * 10,
+                        width: chartContainerDiv.width() / numScatterplots - numScatterplots * 10
+                    }
                 );
-
-                let scatterplot = dc.scatterPlot(
-                    "#" + scatterplotContainer.id,
-                    "model-detail-scatterplot-chart-group",
-                    drMetaDataset,
-                    null,
-                    false
-                );
-
-                scatterplot
-                    .height(chartContainerDiv.height() / numScatterplots - numScatterplots * 10)
-                    .width(chartContainerDiv.width() / numScatterplots - numScatterplots * 10)
-                    .useCanvas(true)
-                    .x(d3.scale.linear().domain([
-                        scope._data._cf_extrema[i].min - dataPaddingX,
-                        scope._data._cf_extrema[i].max + dataPaddingX
-                    ]))
-                    .y(d3.scale.linear().domain([
-                        scope._data._cf_extrema[j].min - dataPaddingY,
-                        scope._data._cf_extrema[j].max + dataPaddingY
-                    ]))
-                    .renderHorizontalGridLines(true)
-                    .dimension(scope._data._cf_dimensions[key])
-                    .group(scope._data._cf_groups[key])
-                    .keyAccessor(function(d) {
-                        return d.key[0];
-                     })
-                    .valueAccessor(function(d) {
-                        return d.key[1];
-                     })
-                    .existenceAccessor(function(d) {
-                        return d.value.count > 0;
-                    })
-                    .excludedSize(2)
-                    .excludedOpacity(0.7)
-                    .excludedColor("#ccc")
-                    .symbolSize(3)
-                    // Filter on end of brushing action, not meanwhile (performance suffers otherwise).
-                    .filterOnBrushEnd(true)
-                    .mouseZoomable(true)
-                    .margins({top: 25, right: 25, bottom: 25, left: 35});
-
-                // Set number of ticks for y-axis.
-                scatterplot.yAxis().ticks(3);
-                scatterplot.xAxis().ticks(3);
 
                 // Render chart.
                 scatterplot.render();
             }
         }
+    }
+
+    /**
+     * Generates scatterplot (including divs).
+     * @param currIndices Array of length 2 holding current indices (i, j). Used to generate keys for access to
+     * crossfilter dimensions and groups and to generate unique div IDs.
+     * @param scatterplotSize Size of scatterplot. Has .height and .width.
+     * @returns {dc.scatterPlot} Generated scatter plt.
+     * @private
+     */
+    _generateScatterplot(currIndices, scatterplotSize)
+    {
+        let i                   = currIndices[0];
+        let j                   = currIndices[1];
+        let key                 = i + ":" + j;
+        let scope               = this;
+        let drMetaDataset       = this._operator._drMetaDataset;
+        let dataPadding         = {
+            x: this._data._cf_intervals[i] * 0.1,
+            y: this._data._cf_intervals[j] * 0.1
+        };
+
+        let scatterplotContainer = Utils.spawnChildDiv(
+            this._divStructure.scatterplotPaneID,
+            "model-detail-scatterplot-" + i + "-" + j,
+            "model-detail-scatterplot"
+        );
+
+        let scatterplot = dc.scatterPlot(
+            "#" + scatterplotContainer.id,
+            "model-detail-scatterplot-chart-group",
+            drMetaDataset,
+            null,
+            false
+        );
+
+        // Render scatterplot.
+        scatterplot
+            .height(scatterplotSize.height)
+            .width(scatterplotSize.width)
+            .useCanvas(true)
+            .x(d3.scale.linear().domain([
+                scope._data._cf_extrema[i].min - dataPadding.x,
+                scope._data._cf_extrema[i].max + dataPadding.x
+            ]))
+            .y(d3.scale.linear().domain([
+                scope._data._cf_extrema[j].min - dataPadding.y,
+                scope._data._cf_extrema[j].max + dataPadding.y
+            ]))
+            .renderHorizontalGridLines(true)
+            .dimension(scope._data._cf_dimensions[key])
+            .group(scope._data._cf_groups[key])
+            .keyAccessor(function(d) {
+                return d.key[0];
+             })
+            .valueAccessor(function(d) {
+                return d.key[1];
+             })
+            .existenceAccessor(function(d) {
+                return d.value.count > 0;
+            })
+            .excludedSize(2)
+            .excludedOpacity(0.7)
+            .excludedColor("#ccc")
+            .symbolSize(3)
+            // Filter on end of brushing action, not meanwhile (performance suffers otherwise).
+            .filterOnBrushEnd(true)
+            .mouseZoomable(true)
+            .margins({top: 25, right: 25, bottom: 25, left: 35});
+
+        return scatterplot;
     }
 
     /**

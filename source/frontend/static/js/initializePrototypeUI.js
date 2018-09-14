@@ -66,7 +66,7 @@ $(document).ready(function() {
                 success: function(model_metadata) {
                     let datasetStorageID    = "test"
                     let dataset             = null; // DRMetaDataset.restoreFromString(Session.get(datasetStorageID));
-                    console.log(dataset)
+
                     if (false && typeof dataset !== "undefined") {
                         console.log("Loaded DRMetaDataset.");
                         console.log(dataset)
@@ -79,7 +79,7 @@ $(document).ready(function() {
                             model_metadata,
                             10
                         );
-                        console.log(dataset._cf_groups["angle#histogram"])
+
                         // Store object in JSON.
                         Session.set(datasetStorageID, dataset);
                     }

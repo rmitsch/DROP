@@ -36,9 +36,7 @@ export default class ModelDetailDataset extends Dataset
         }
 
         // todo CONTINUE HERE:
-        //  - Show data in model detail table.
         //  - Integration brushing linking between scatterplot/table.
-        //  - Work on LIME integration.
 
         // Create crossfilter instance for low dimensoinal projection (LDP).
         this._ldp_crossfilter       = crossfilter(this._low_dim_projection);
@@ -62,6 +60,12 @@ export default class ModelDetailDataset extends Dataset
             for (let j = 0; j < coordinateLists[i].length; j++) {
                 newCoordinateObject[j] = coordinateLists[i][j];
             }
+
+            // If low-dim. projection is one-dimensional:
+            // Pad coordinate list with second dimension with fixed values so that dataset can be shown in scatterplot
+            // without further preprocessing.
+            if (coordinateLists[i].length === 1)
+                newCoordinateObject[1] = 0;
 
             // Append data from original records.
             for (let key in originalData[0]) {
@@ -119,7 +123,8 @@ export default class ModelDetailDataset extends Dataset
 
         // Generate groups for all combinations of dimension indices.
         for (let i = 0; i < numDimensions; i++) {
-            for (let j = i + 1; j < numDimensions; j++) {
+            // Consider that "fake" coordinate in 1D projections has to be part of a binary dim./group as well.
+            for (let j = i + 1; j < (numDimensions > 1 ? numDimensions : 2); j++) {
                 let combinedKey     = i + ":" + j;
                 let transposedKey   = j + ":" + i;
 
