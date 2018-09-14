@@ -4,7 +4,7 @@ import Utils from "../Utils.js";
 export default class ModelDetailTable extends Chart
 {
     /**
-     * Table showing records with information on individual records in a dataset/embedding.
+     * ModelOverviewTable showing records with information on individual records in a dataset/embedding.
      * @param name
      * @param panel
      * @param attributes
@@ -28,7 +28,7 @@ export default class ModelDetailTable extends Chart
         this._cf_chart = {};
 
         // Create div structure.
-        let tableID = this._createDivStructure();
+        this._tableID = this._createDivStructure();
 
         // Select dimension of ID to use for later look-ups.
         this._dimension = this._dataset._cf_dimensions["id"];
@@ -43,7 +43,7 @@ export default class ModelDetailTable extends Chart
         // ----------------------------------------
 
         // Generate table.
-        this._constructFCChart(tableID);
+        this._constructFCChart(this._tableID);
 
         // Implement methods necessary for dc.js hook and integrate it into it's chart registry.
         this._registerChartInDC();
@@ -105,13 +105,8 @@ export default class ModelDetailTable extends Chart
         //     );
         // }, 0));
 
-        // On (double-)click: Open detail view.
+        // todo: On (double-)click: Highlight point in chart.
         $("#" + tableID + " tbody").on('dblclick', 'td', function (e) {
-            // Instruct model detail operator to load data for the selected model.
-            instance._panel._operator._stage._operators["ModelDetail"].loadData(
-                // Fetch model ID from first field in selected table row.
-                instance._cf_chart.row(this).data()[0]
-            );
         });
     }
 
@@ -159,7 +154,6 @@ export default class ModelDetailTable extends Chart
             for (let i = 0; i < records.length; i++) {
                 instance._filteredIDs.add(records[i].id)
             }
-            console.log(instance._filteredIDs)
 
             // Filter table data using an ugly hack 'cause DataTable.js can't do obvious things.
             // Add filter only if it doesn't exist yet.
@@ -168,8 +162,11 @@ export default class ModelDetailTable extends Chart
                     // oSettings holds information that can be used to differ between different tables -
                     // might be necessary once several tables use different filters.
                     function (oSettings, aData, iDataIndex) {
-                        console.log(oSettings)
-                        return instance._filteredIDs.has(+aData[0]);
+                        // Check oSettings to see if ew have to apply this filter. Otherwise ignore (i. e. return true
+                        // for all elements).
+                        return oSettings.sTableId === instance._tableID ?
+                            instance._filteredIDs.has(+aData[0]) :
+                            true;
                     }
                 );
 
@@ -189,7 +186,7 @@ export default class ModelDetailTable extends Chart
 
         // Use operators ID as group ID (all panels in operator use the same dataset and therefore should be notified if
         // filter conditions change).
-        dc.chartRegistry.register(this._cf_chart, this._panel._operator._target);
+        dc.chartRegistry.register(this._cf_chart, this._panel._target);
     }
 
     highlight(id, source)

@@ -1,6 +1,6 @@
 import Panel from "./Panel.js";
 import Utils from "../Utils.js";
-import Table from "../charts/Table.js"
+import Table from "../charts/ModelOverviewTable.js"
 
 /**
  * Panel holding table for selection of models in operator FilterReduce.

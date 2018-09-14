@@ -1,7 +1,7 @@
 import Chart from "./Chart.js";
 import Utils from "../Utils.js";
 
-export default class Table extends Chart
+export default class ModelOverviewTable extends Chart
 {
     /**
      *
@@ -27,7 +27,7 @@ export default class Table extends Chart
         this._cf_chart = {};
 
         // Create div structure.
-        let tableID = this._createDivStructure();
+        this._tableID = this._createDivStructure();
 
         // Select dimension of ID to use for later look-ups.
         this._dimension = this._dataset.cf_dimensions[this._dataset.metadata.hyperparameters[0].name];
@@ -42,7 +42,7 @@ export default class Table extends Chart
         // ----------------------------------------
 
         // Generate table.
-        this._constructFCChart(tableID);
+        this._constructFCChart(this._tableID);
 
         // Implement methods necessary for dc.js hook and integrate it into it's chart registry.
         this._registerChartInDC();
@@ -165,7 +165,11 @@ export default class Table extends Chart
                     // oSettings holds information that can be used to differ between different tables -
                     // might be necessary once several tables use different filters.
                     function (oSettings, aData, iDataIndex) {
-                        return instance._filteredIDs.has(+aData[0]);
+                        // Check oSettings to see if ew have to apply this filter. Otherwise ignore (i. e. return true
+                        // for all elements).
+                        return oSettings.sTableId === instance._tableID ?
+                            instance._filteredIDs.has(+aData[0]) :
+                            true;
                     }
                 );
 

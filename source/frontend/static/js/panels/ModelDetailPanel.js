@@ -164,7 +164,7 @@ export default class ModelDetailPanel extends Panel
 
         // Construct new table.
         this._table = new ModelDetailTable(
-            "Model Detail Table",
+            "Model Detail ModelOverviewTable",
             this,
             this._data._originalRecordAttributes,
             this._data,
@@ -197,8 +197,6 @@ export default class ModelDetailPanel extends Panel
         let numScatterplots = ((numDimensions - 1) * (numDimensions)) / 2;
 
         // Generate all combinations of dimension indices.
-        // todo Wrap scatterplots into rows in case of d > 2. Also consider case d == 1.
-
         for (let i = 0; i < numDimensions; i++) {
             // Consider that we want to draw a scatterplot with the added "fake"/zero axis if we have a dataset with a
             // one-dim. embedding.
@@ -246,7 +244,7 @@ export default class ModelDetailPanel extends Panel
 
         let scatterplot = dc.scatterPlot(
             "#" + scatterplotContainer.id,
-            "model-detail-scatterplot-chart-group",
+            this._target,
             drMetaDataset,
             null,
             false
