@@ -1,4 +1,6 @@
 import os
+
+import sklearn
 from flask import Flask
 from flask import render_template
 from flask import request
@@ -38,6 +40,11 @@ def init_flask_app():
     flask_app.config["DR_KERNEL_NAME"] = "tsne"
     flask_app.config["FULL_FILE_NAME"] = "wine"
 
+    # For storage of global, unrestricted model used by LIME for local explanations.
+    # Has one global regressor for each possible objective.
+    flask_app.config["GLOBAL_SURROGATE_MODELS"] = {}
+    flask_app.config["LIME_EXPLAINER"] = None
+
     return flask_app
 
 
@@ -64,6 +71,9 @@ def get_metadata():
     """
     app.config["DATASET_NAME"] = InputDataset.check_dataset_name(request.args.get('datasetName'))
     app.config["DR_KERNEL_NAME"] = DimensionalityReductionKernel.check_kernel_name(request.args.get('drKernelName'))
+    # Compile metadata template.
+    if app.config["METADATA_TEMPLATE"] is None:
+        get_metadata_template()
 
     # Build file name.
     file_name = os.getcwd() + "/../data/drop_" + app.config["DATASET_NAME"] + "_" + app.config["DR_KERNEL_NAME"] + ".h5"
@@ -73,12 +83,35 @@ def get_metadata():
     if app.config["DATASET_NAME"] is not None and \
             app.config["DR_KERNEL_NAME"] is not None and \
             os.path.isfile(file_name):
+        ###################################################
+        # Load dataset.
+        ###################################################
+
         h5file = tables.open_file(filename=file_name, mode="r")
         # Cast to dataframe, then return as JSON.
         df = pandas.DataFrame(h5file.root.metadata[:]).set_index("id")
         # Close file.
         h5file.close()
 
+        ###################################################
+        # Compute global surrogate models and initialize
+        # corresponding LIME explainers.
+        ###################################################
+
+        # Compute regressors.
+        app.config["GLOBAL_SURROGATE_MODELS"] = Utils.fit_random_forest_regressors(
+            metadata_template=app.config["METADATA_TEMPLATE"],
+            embeddings_metadata=df
+        )
+
+        # NEXT: Initialize and store LIME explainer.
+        # Note: Think again whether we want several one-label regressors or one multi-label regressor.
+        app.config["LIME_EXPLAINER"] = Utils.initialize_lime_explainer(
+            metadata_template=app.config["METADATA_TEMPLATE"],
+            embeddings_metadata=df
+        )
+
+        # Return JSON-formatted embedding data.
         return jsonify(df.to_json(orient='index'))
 
     else:
@@ -93,8 +126,8 @@ def get_metadata_template():
     """
 
     app.config["METADATA_TEMPLATE"] = {
-        "hyperparameters":
-            DimensionalityReductionKernel.DIM_RED_KERNELS[app.config["DR_KERNEL_NAME"].upper()]["parameters"],
+        "hyperparameters": DimensionalityReductionKernel.
+            DIM_RED_KERNELS[app.config["DR_KERNEL_NAME"].upper()]["parameters"],
         "objectives": [
             "runtime",
             "r_nx",
@@ -276,6 +309,18 @@ def get_dr_model_details():
     h5file.close()
 
     return jsonify(result)
+
+
+@app.route('/get_lime_data', methods=["GET"])
+def get_lime_data():
+    """
+    Fetch LIME explainer for specified embedding.
+    GET parameters:
+        - "embedding_id" for embedding's ID.
+    :return:
+    """
+    embedding_id = int(request.args["id"])
+    pass
 
 # Launch on :2483.
 if __name__ == "__main__":

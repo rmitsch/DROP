@@ -24,8 +24,9 @@ export default class FilterReduceTablePanel extends Panel
         this._divStructure = this._createDivStructure();
 
         // Generate table.
+        this._tableName = "Model selection table";
         let table = new Table(
-            "Model selection table",
+            this._tableName,
             this,
             Utils.unfoldHyperparameterObjectList(
                 this._operator.dataset.metadata.hyperparameters
@@ -39,7 +40,7 @@ export default class FilterReduceTablePanel extends Panel
 
     get table()
     {
-        return this._charts["Model selection table"];
+        return this._charts[this._tableName];
     }
 
     /**
