@@ -25,10 +25,10 @@
 }
 
 .dissonance-charts-container {
-    width: 80%;
+    width: 75%;
     height: calc(100% - 10px);
     position: relative;
-    margin-left: 6%;
+    margin-left: 40px;
 }
 
 .dissonance-charts-container .chart {

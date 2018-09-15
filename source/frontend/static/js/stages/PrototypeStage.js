@@ -141,6 +141,8 @@ export default class PrototypeStage extends Stage
                     {
                         direction: "horizontal",
                         sizes: [35, 30, 35],
+                        minSize: 0,
+                        snapOffset: 0,
                         onDragEnd: function() {}
                     }
                 );
