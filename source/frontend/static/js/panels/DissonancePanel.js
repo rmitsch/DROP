@@ -66,7 +66,7 @@ export default class DissonancePanel extends Panel
 
         // Note: Listener for table icon is added by FilterReduceOperator, since it requires information about the table
         // panel.
-        let infoDiv = Utils.spawnChildDiv(this._target, null, "dissonance-info");
+        let infoDiv = Utils.spawnChildDiv(this._target, null, "panel-info");
         $("#" + infoDiv.id).html(
             "<span class='title'>" + scope._name + "</span>" +
             "<a id='dissonance-info-settings-icon' href='#'>" +

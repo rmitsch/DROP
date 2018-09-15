@@ -20,6 +20,9 @@ export default class FilterReduceTablePanel extends Panel
         // Update involved CSS classes.
         $("#" + this._target).addClass("filter-reduce-table-panel");
 
+        // Initialize div structure.
+        this._divStructure = this._createDivStructure();
+
         // Generate table.
         let table = new Table(
             "Model selection table",
@@ -37,5 +40,25 @@ export default class FilterReduceTablePanel extends Panel
     get table()
     {
         return this._charts["Model selection table"];
+    }
+
+    /**
+     * Create (hardcoded) div structure for child nodes.
+     * @returns {Object}
+     */
+    _createDivStructure()
+    {
+        console.log("div structure")
+        let infoDiv = Utils.spawnChildDiv(this._target, null, "panel-info");
+        $("#" + infoDiv.id).html(
+            "<span class='title'>All embeddings</span>" +
+            "<a id='filter-reduce-table-info-settings-icon' href='#'>" +
+            "    <img src='./static/img/icon_settings.png' class='info-icon' alt='Settings' width='20px'>" +
+            "</a>"
+        );
+
+        return {
+          infoDivID: infoDiv.id
+        };
     }
 }

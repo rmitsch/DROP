@@ -114,3 +114,17 @@ ul.pure-menu-children li {
     top: 2px;
     margin-right: 10px;
 }
+
+.panel-info {
+    height: 100px;
+    position: absolute;
+    top: 10px;
+    right: 25px;
+    font-size: 20px;
+    z-index: 10;
+}
+
+.panel-info .title {
+    margin-right: 10px;
+    font-weight: bold;
+}

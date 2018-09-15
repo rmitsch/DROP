@@ -68,33 +68,6 @@ export default class FilterReduceOperator extends Operator
             "filter-reduce-info-settings-icon"
         );
         this._panels[settingsPanel.name] = settingsPanel;
-
-        // ----------------------------------------------
-        // Configure split panes.
-        // ----------------------------------------------
-
-        // 4. Set click listener to show table panel.
-        let scope = this;
-        $("#filter-reduce-info-table-icon").click(function() {
-            // Toggle panel visibility.
-            // let tablePanelDOM = $("#" + tablePanel._target);
-            // if (scope._showTable) {
-            //     $("#" + tablePanel.table._target).css("display", "block");
-            //     tablePanelDOM.css("padding", 10);
-            //     tablePanelDOM.css("width", "30");
-            // }
-            // else {
-            //     $("#" + tablePanel.table._target).css("display", "none");
-            //     tablePanelDOM.css("padding", 0);
-            //     tablePanelDOM.css("width", 0);
-            // }
-
-            // Relay changed flag to stage, so that split pane structure can be updated.
-            // scope._stage.setEmbeddingsOverviewTableVisiblity(scope._showTable);
-
-            // Toggle flag state.
-            scope._showTable = !scope._showTable;
-        });
     }
 
     get tablePanel()

@@ -327,16 +327,13 @@ export default class FilterReduceChartsPanel extends Panel
 
         // Note: Listener for table icon is added by FilterReduceOperator, since it requires information about the table
         // panel.
-        let infoDiv = Utils.spawnChildDiv(this._target, null, "filter-reduce-info");
+        let infoDiv = Utils.spawnChildDiv(this._target, null, "panel-info filter-reduce-info");
         $("#" + infoDiv.id).html(
             "<span class='title'>" + scope._name + "</span>" +
             "<a id='filter-reduce-info-settings-icon' href='#'>" +
             "    <img src='./static/img/icon_settings.png' class='info-icon' alt='Settings' width='20px'>" +
-            "</a>" +
-            "<a id='filter-reduce-info-table-icon' href='#'>" +
-            "    <img src='./static/img/icon_table.png' class='info-icon' alt='View in table' width='20px'>" +
             "</a>"
-        )
+        );
 
         return {
             containerDivIDs: containerDivIDs,
