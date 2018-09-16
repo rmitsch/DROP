@@ -11,6 +11,7 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.preprocessing import LabelEncoder
 from tables import *
 import numpy
+from sklearn.datasets import load_boston
 
 from backend.data_generation.datasets.InputDataset import InputDataset
 from backend.data_generation.dimensionality_reduction import DimensionalityReductionKernel
@@ -42,7 +43,7 @@ def init_flask_app():
 
     # For storage of global, unrestricted model used by LIME for local explanations.
     # Has one global regressor for each possible objective.
-    flask_app.config["GLOBAL_SURROGATE_MODELS"] = {}
+    flask_app.config["GLOBAL_SURROGATE_MODEL"] = {}
     flask_app.config["LIME_EXPLAINER"] = None
 
     return flask_app
@@ -99,7 +100,7 @@ def get_metadata():
         ###################################################
 
         # Compute regressors.
-        app.config["GLOBAL_SURROGATE_MODELS"] = Utils.fit_random_forest_regressors(
+        app.config["GLOBAL_SURROGATE_MODEL"] = Utils.fit_random_forest_regressor(
             metadata_template=app.config["METADATA_TEMPLATE"],
             embeddings_metadata=df
         )
@@ -108,7 +109,8 @@ def get_metadata():
         # Note: Think again whether we want several one-label regressors or one multi-label regressor.
         app.config["LIME_EXPLAINER"] = Utils.initialize_lime_explainer(
             metadata_template=app.config["METADATA_TEMPLATE"],
-            embeddings_metadata=df
+            embeddings_metadata=df,
+            bla=app.config["GLOBAL_SURROGATE_MODEL"]
         )
 
         # Return JSON-formatted embedding data.
@@ -262,11 +264,11 @@ def get_dr_model_details():
     """
     Fetches data for DR model with specifie ID.
     GET parameters:
-        - "id" for ID of DR model.
+        - "id" for ID of DR embedding.
     :return: Jsonified structure of surrogate model for DR metadata.
     """
 
-    model_id = int(request.args["id"])
+    embedding_id = int(request.args["id"])
     file_name = app.config["FULL_FILE_NAME"]
     high_dim_file_name = os.getcwd() + "/../data/" + app.config["DATASET_NAME"] + "_records.csv"
 
@@ -278,6 +280,36 @@ def get_dr_model_details():
     # Open file containing information on low-dimensional projections.
     h5file = open_file(filename=file_name, mode="r+")
 
+    # Prepare dataframe with embedding metadata.
+    embedding_metadata_df = pandas.DataFrame.from_records(
+        h5file.root.metadata.read_where("(id == " + str(embedding_id) + ")")
+    ).set_index("id")
+
+    boston = load_boston()
+    train, test, labels_train, labels_test = sklearn.model_selection.train_test_split(boston.data, boston.target,
+                                                                                      train_size=0.80, test_size=0.20)
+
+    # Preprocess dataframe.
+    embedding_metadata_feat_df, embedding_metadata_labels_df = Utils.preprocess_embedding_metadata_for_predictor(
+        metadata_template=app.config["METADATA_TEMPLATE"],
+        embeddings_metadata=embedding_metadata_df
+    )
+
+    print(test[0])
+    print(test[0].shape)
+    print(embedding_metadata_feat_df.iloc[0].values.reshape(1, -1).shape)
+    print(embedding_metadata_feat_df.iloc[0].values.shape)
+
+    print(app.config["GLOBAL_SURROGATE_MODEL"].predict(embedding_metadata_feat_df.iloc[0].values.reshape(1, -1)))
+    explanation = app.config["LIME_EXPLAINER"].explain_instance(
+        data_row=embedding_metadata_feat_df.iloc[0].values.reshape(1, -1),
+        predict_fn=app.config["GLOBAL_SURROGATE_MODEL"].predict,
+        labels=(obj for obj in app.config["METADATA_TEMPLATE"]["objectives"]),
+        # num_features=len(app.config["METADATA_TEMPLATE"]["hyperparameters"])
+    )
+    print(explanation.as_list())
+
+
     # Assemble result object.
     result = {
         # --------------------------------------------------------
@@ -285,13 +317,11 @@ def get_dr_model_details():
         # --------------------------------------------------------
 
         # Transform node with this model into a dataframe so we can easily retain column names.
-        "model_metadata": pandas.DataFrame.from_records(
-            h5file.root.metadata.read_where("(id == " + str(model_id) + ")")
-        ).set_index("id").to_json(orient='index'),
+        "model_metadata": embedding_metadata_df.to_json(orient='index'),
         # Fetch projection record by node name.
-        "low_dim_projection": h5file.root.projection_coordinates._f_get_child("model" + str(model_id)).read().tolist(),
+        "low_dim_projection": h5file.root.projection_coordinates._f_get_child("model" + str(embedding_id)).read().tolist(),
         # Get dissonances of this model's samples.
-        "sample_dissonances": h5file.root.pointwise_quality._f_get_child("model" + str(model_id)).read().tolist(),
+        "sample_dissonances": h5file.root.pointwise_quality._f_get_child("model" + str(embedding_id)).read().tolist(),
 
         # --------------------------------------------------------
         # Retrieve data from original, high-dim. dataset.
@@ -302,7 +332,13 @@ def get_dr_model_details():
             filepath_or_buffer=os.getcwd() + "/../data/" + app.config["DATASET_NAME"] + "_records.csv",
             delimiter=';',
             quotechar='"'
-        ).to_json(orient='index')
+        ).to_json(orient='index'),
+
+        # --------------------------------------------------------
+        # Explain embedding value with LIME.
+        # --------------------------------------------------------
+
+        "lime_explanation": 0
     }
 
     # Close file with low-dim. data.
@@ -310,17 +346,6 @@ def get_dr_model_details():
 
     return jsonify(result)
 
-
-@app.route('/get_lime_data', methods=["GET"])
-def get_lime_data():
-    """
-    Fetch LIME explainer for specified embedding.
-    GET parameters:
-        - "embedding_id" for embedding's ID.
-    :return:
-    """
-    embedding_id = int(request.args["id"])
-    pass
 
 # Launch on :2483.
 if __name__ == "__main__":

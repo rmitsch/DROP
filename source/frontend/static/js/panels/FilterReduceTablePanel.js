@@ -49,7 +49,6 @@ export default class FilterReduceTablePanel extends Panel
      */
     _createDivStructure()
     {
-        console.log("div structure")
         let infoDiv = Utils.spawnChildDiv(this._target, null, "panel-info");
         $("#" + infoDiv.id).html(
             "<span class='title'>All embeddings</span>" +
