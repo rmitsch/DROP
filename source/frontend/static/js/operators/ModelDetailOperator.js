@@ -69,7 +69,7 @@ export default class ModelDetailOperator extends Operator
             // Parse substructures.
             modelDetailData.model_metadata = JSON.parse(modelDetailData.model_metadata);
             modelDetailData.original_dataset = JSON.parse(modelDetailData.original_dataset);
-            console.log(modelDetailData);
+
             // Store dataset.
             scope._dataset = new ModelDetailDataset(
                 "Model Detail Data", modelID, modelDetailData, scope._drMetaDataset

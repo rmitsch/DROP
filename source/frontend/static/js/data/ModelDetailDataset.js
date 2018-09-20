@@ -27,7 +27,9 @@ export default class ModelDetailDataset extends Dataset
             modelDataJSON.low_dim_projection, modelDataJSON.original_dataset
         );
         this._model_metadata            = modelDataJSON.model_metadata;
+        this._limeData                  = modelDataJSON.lime_explanation;
         this._sampleDissonances         = modelDataJSON.sample_dissonances;
+
         // Gather attributes available for original record.
         this._originalRecordAttributes  = [];
         for (let key in modelDataJSON.original_dataset[0]) {
@@ -35,12 +37,48 @@ export default class ModelDetailDataset extends Dataset
                 this._originalRecordAttributes.push(key);
         }
 
-        // todo CONTINUE HERE:
-        //  - Integration brushing linking between scatterplot/table.
+        // Create crossfilter instance for low-dimensional projection (LDP).
+        this._ldp_crossfilter = crossfilter(this._low_dim_projection);
+        this._configureLowDimProjectionCrossfilter();
 
-        // Create crossfilter instance for low dimensoinal projection (LDP).
-        this._ldp_crossfilter       = crossfilter(this._low_dim_projection);
-        this._initLowDimProjectionCrossfilter();
+        // Create crossiflter instance for LIME heatmap.
+        this._lime_crossfilter = crossfilter(this._preprocessLimeData());
+        this._configureLIMECrossfilter();
+    }
+
+    /**
+     * Preprocesses LIME data to fit data pattern expected by crossfilter.js.
+     * @returns {Array}
+     * @private
+     */
+    _preprocessLimeData()
+    {
+        let parsedLimeData = [];
+        for (let objective in this._limeData) {
+            for (let rule in this._limeData[objective]) {
+                let rule_parts = rule.split(" ");
+                parsedLimeData.push({
+                    "objective": objective,
+                    "rule_hyperparameter": rule_parts[0],
+                    "rule_comparator":  rule_parts[1],
+                    "rule_value":  rule_parts[2],
+                    "weight": this._limeData[objective][rule]
+                });
+            }
+        }
+
+        return parsedLimeData;
+    }
+
+    /**
+     * Configures dimensions and groups for LIME crossfilter used in heatmap.
+     * @private
+     */
+    _configureLIMECrossfilter()
+    {
+        // todo Continue here: Create dimensions/groups necessary for heatmap.
+        // Keep in mind that heatmap cells/labels have to be linked to rule data, incl. comparator;
+        // while heatmap only shows rule weight.
     }
 
     /**
@@ -82,7 +120,7 @@ export default class ModelDetailDataset extends Dataset
      * Initializes all crossfilter-specific data used for low-dimensional projection/coordinates.
      * @private
      */
-    _initLowDimProjectionCrossfilter()
+    _configureLowDimProjectionCrossfilter()
     {
         // Create singular dimensions, determine extrema.
         this._initSingularDimensionsAndGroups();

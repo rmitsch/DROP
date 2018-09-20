@@ -78,7 +78,7 @@ export default class ModelDetailPanel extends Panel
             </div>`
         );
 
-        // Bottom-right pane - detailed information to currently selected record.
+        // 4. Bottom-right pane - detailed information to currently selected record.
         let recordPane = Utils.spawnChildDiv(
             samplePane.id, null, "model-detail-pane split-vertical",
             `<div class='model-details-block' id='model-details-block-record-table'>
@@ -135,30 +135,35 @@ export default class ModelDetailPanel extends Panel
         // 1. Draw sparklines for attributes.
         // -------------------------------------------------------
 
-        this._drawAttributeSparklines();
+        this._redrawAttributeSparklines();
 
         // -------------------------------------------------------
         // 2. Draw scatterplot/SPLOM showing individual records.
         // -------------------------------------------------------
 
-        this._drawRecordScatterplots();
+        this._redrawRecordScatterplots();
 
         // -------------------------------------------------------
         // 3. Update table.
         // -------------------------------------------------------
 
         this._reconstructTable();
+
+        // -------------------------------------------------------
+        // 4. Draw LIME matrix.
+        // -------------------------------------------------------
+
+        this._redrawLIMEHeatmap();
+    }
+
+    _redrawLIMEHeatmap()
+    {
+        console.log("redrawing lime")
+        console.log(this._data);
     }
 
     _reconstructTable()
     {
-        let scope               = this;
-        let drMetaDataset       = this._operator._drMetaDataset;
-        // Fetch metadata structure (i. e. attribute names and types).
-        let metadataStructure   = drMetaDataset._metadata;
-        // Fetch divs containing attribute sparklines.
-        let chartContainerDiv   = $("#" + this._divStructure.scatterplotPaneID);
-
         // Remove old table, if exists.
         $('div.model-detail-table').remove();
 
@@ -173,7 +178,7 @@ export default class ModelDetailPanel extends Panel
         );
     }
 
-    _drawRecordScatterplots()
+    _redrawRecordScatterplots()
     {
         let scope               = this;
         let drMetaDataset       = this._operator._drMetaDataset;
@@ -291,7 +296,7 @@ export default class ModelDetailPanel extends Panel
      * Draws sparklines for attributes (i. e. hyperparameters and objectives).
      * @private
      */
-    _drawAttributeSparklines()
+    _redrawAttributeSparklines()
     {
         let dataset             = this._data;
         let drMetaDataset       = dataset._drMetaDataset;
@@ -356,7 +361,7 @@ export default class ModelDetailPanel extends Panel
     }
 
     /**
-     * Updates dataset; re-renders charts.
+     * Updates dataset; re-renders charts with new data.
      */
     update()
     {
