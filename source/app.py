@@ -35,6 +35,14 @@ def init_flask_app():
     # Store metadata template. Is assembled once in /get_metadata.
     flask_app.config["METADATA_TEMPLATE"] = None
 
+    # Store dataframe holding embedding metadata and related data.
+    flask_app.config["EMBEDDING_METADATA"] = {
+        "original": None,
+        "features_preprocessed": None,
+        "features_categorical_encoding_translation": None,
+        "labels": None
+    }
+
     # Store name of current dataset and kernel. Note that these values is only changed at call of /get_metadata.
     # Use t-SNE on wine dataset as default.
     flask_app.config["DATASET_NAME"] = None
@@ -95,6 +103,18 @@ def get_metadata():
         h5file.close()
 
         ###################################################
+        # Preprocess and cache dataset.
+        ###################################################
+
+        app.config["EMBEDDING_METADATA"]["original"] = df
+        app.config["EMBEDDING_METADATA"]["features_preprocessed"], \
+        app.config["EMBEDDING_METADATA"]["labels"], \
+        app.config["EMBEDDING_METADATA"]["features_categorical_encoding_translation"] = \
+            Utils.preprocess_embedding_metadata_for_predictor(
+                metadata_template=app.config["METADATA_TEMPLATE"], embeddings_metadata=df
+            )
+
+        ###################################################
         # Compute global surrogate models and initialize
         # corresponding LIME explainers.
         ###################################################
@@ -102,13 +122,14 @@ def get_metadata():
         # Compute regressor for each objective.
         app.config["GLOBAL_SURROGATE_MODELS"] = Utils.fit_random_forest_regressors(
             metadata_template=app.config["METADATA_TEMPLATE"],
-            embeddings_metadata=df
+            features_df=app.config["EMBEDDING_METADATA"]["features_preprocessed"],
+            labels_df=app.config["EMBEDDING_METADATA"]["labels"]
         )
 
         # Initialize LIME explainers for each objective.
         app.config["LIME_EXPLAINERS"] = Utils.initialize_lime_explainers(
             metadata_template=app.config["METADATA_TEMPLATE"],
-            embeddings_metadata=df
+            features_df=app.config["EMBEDDING_METADATA"]["features_preprocessed"]
         )
 
         # Return JSON-formatted embedding data.
@@ -168,47 +189,25 @@ def get_surrogate_model_data():
             return "Objective " + obj_name + " is not supported.", 400
 
     # ------------------------------------------------------
-    # 2. Fetch data.
+    # 2. Build regressor.
     # ------------------------------------------------------
 
-    # Open .h5 file.
-    file_name = app.config["FULL_FILE_NAME"]
-    if os.path.isfile(file_name):
-        h5file = tables.open_file(filename=file_name, mode="r")
-        # Cast to dataframe, then return as JSON.
-        df = pandas.DataFrame(h5file.root.metadata[:]).set_index("id")
-        # Close file.
-        h5file.close()
+    # Fit decision tree.
+    tree = DecisionTreeRegressor(max_depth=depth)
+    tree.fit(
+        app.config["EMBEDDING_METADATA"]["features_preprocessed"],
+        app.config["EMBEDDING_METADATA"]["labels"]
+    )
 
-        # ------------------------------------------------------
-        # 3. Build model.
-        # ------------------------------------------------------
+    # ------------------------------------------------------
+    # 3. Extract tree structure and return result.
+    # ------------------------------------------------------
 
-        # Create one decision tree model for each metric.
-        features_names = [item["name"] for item in metadata_template["hyperparameters"]]
-        features_df = df[features_names]
-
-        # Encode categorical values numerically.
-        for feature in metadata_template["hyperparameters"]:
-            if feature["type"] != "numeric":
-                features_df[feature["name"]] = LabelEncoder().fit_transform(
-                    features_df[feature["name"]].values
-                )
-
-        # Fit decision tree.
-        tree = DecisionTreeRegressor(max_depth=depth)
-        tree.fit(features_df, df[objective_names])
-
-        # ------------------------------------------------------
-        # 4. Extract tree structure and return result.
-        # ------------------------------------------------------
-
-        # Extract tree structure and return as JSON.
-        tree_structure = Utils.extract_decision_tree_structure(tree, features_names, [objective_names])
-        return jsonify(tree_structure)
-
-    else:
-        return "File does not exist.", 400
+    # Extract tree structure and return as JSON.
+    tree_structure = Utils.extract_decision_tree_structure(
+        tree, app.config["EMBEDDING_METADATA"]["features_preprocessed"].columns, [objective_names]
+    )
+    return jsonify(tree_structure)
 
 
 @app.route('/get_sample_dissonance', methods=["GET"])
@@ -278,35 +277,21 @@ def get_dr_model_details():
     # Open file containing information on low-dimensional projections.
     h5file = open_file(filename=file_name, mode="r+")
 
-    # Prepare dataframe with embedding metadata.
-    embedding_metadata_df = pandas.DataFrame.from_records(
-        h5file.root.metadata.read_where("(id == " + str(embedding_id) + ")")
-    ).set_index("id")
+    # Fetch dataframe with preprocessed features.
+    embedding_metadata_feat_df = app.config["EMBEDDING_METADATA"]["features_preprocessed"].loc[[str(embedding_id)]]
 
-    boston = load_boston()
-    train, test, labels_train, labels_test = sklearn.model_selection.train_test_split(boston.data, boston.target,
-                                                                                      train_size=0.80, test_size=0.20)
-
-    # Preprocess dataframe.
-    embedding_metadata_feat_df, embedding_metadata_labels_df = Utils.preprocess_embedding_metadata_for_predictor(
-        metadata_template=app.config["METADATA_TEMPLATE"],
-        embeddings_metadata=embedding_metadata_df
-    )
-
-    print(test[0])
-    print(test[0].shape)
-    print(embedding_metadata_feat_df.iloc[0].values.reshape(1, -1).shape)
-    print(embedding_metadata_feat_df.iloc[0].values.shape)
-    CONTINUE HERE: Get and return results.
-    print(app.config["GLOBAL_SURROGATE_MODEL"].predict(embedding_metadata_feat_df.iloc[0].values.reshape(1, -1)))
-    explanation = app.config["LIME_EXPLAINER"].explain_instance(
-        data_row=embedding_metadata_feat_df.iloc[0].values.reshape(1, -1),
-        predict_fn=app.config["GLOBAL_SURROGATE_MODEL"].predict,
-        labels=(obj for obj in app.config["METADATA_TEMPLATE"]["objectives"]),
-        # num_features=len(app.config["METADATA_TEMPLATE"]["hyperparameters"])
-    )
-    print(explanation.as_list())
-
+    # Let LIME explain influence of hyperparameters on this instance's objectives.
+    explanations = {
+        objective: {
+            rule: weight for rule, weight in
+            app.config["LIME_EXPLAINERS"][objective].explain_instance(
+                data_row=embedding_metadata_feat_df.values[0],
+                predict_fn=app.config["GLOBAL_SURROGATE_MODELS"][objective].predict,
+                labels=(objective,),
+            ).as_list()
+        }
+        for objective in app.config["METADATA_TEMPLATE"]["objectives"]
+    }
 
     # Assemble result object.
     result = {
@@ -315,7 +300,7 @@ def get_dr_model_details():
         # --------------------------------------------------------
 
         # Transform node with this model into a dataframe so we can easily retain column names.
-        "model_metadata": embedding_metadata_df.to_json(orient='index'),
+        "model_metadata": app.config["EMBEDDING_METADATA"]["original"].to_json(orient='index'),
         # Fetch projection record by node name.
         "low_dim_projection": h5file.root.projection_coordinates._f_get_child("model" + str(embedding_id)).read().tolist(),
         # Get dissonances of this model's samples.
@@ -336,7 +321,7 @@ def get_dr_model_details():
         # Explain embedding value with LIME.
         # --------------------------------------------------------
 
-        "lime_explanation": 0
+        "lime_explanation": explanations
     }
 
     # Close file with low-dim. data.

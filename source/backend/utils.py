@@ -93,38 +93,64 @@ class Utils:
     @staticmethod
     def preprocess_embedding_metadata_for_predictor(metadata_template: dict, embeddings_metadata: pandas.DataFrame):
         """
-        Preprocesses embedding metadata for use in sklearn-style predictors.
+        Preprocesses embedding metadata for use in sklearn-style predictors and LIME.
         :param metadata_template:
         :param embeddings_metadata:
         :return: (1) Data frame holding all features (categorical ones are coded numerically); (2) data frame holding
-        labels.
+        labels; (3) list of lists translating encoding indices to original category names.
         """
 
         features_names = [item["name"] for item in metadata_template["hyperparameters"]]
-        features_df = embeddings_metadata[features_names]
+        features_df = embeddings_metadata[features_names].copy(deep=True)
 
         # Encode categorical values numerically.
-        for feature in metadata_template["hyperparameters"]:
-            if feature["type"] != "numeric":
+        encoded_categorical_values_to_category_names = {}
+        for i, feature in enumerate(metadata_template["hyperparameters"]):
+            if feature["type"] == "categorical":
+                # Map encoded numerical value to original categorical value.
+                encoded_categorical_values_to_category_names[i] = [
+                    value.decode('UTF-8') for value in features_df[feature["name"]].unique()
+                ]
+
+                # Encode categorical values numerically.
                 features_df[feature["name"]] = LabelEncoder().fit_transform(
                     features_df[feature["name"]].values
                 )
 
-        return features_df, embeddings_metadata[metadata_template["objectives"]]
+                # Encode as one-hot.
+                features_df = pandas.concat([
+                    features_df,
+                    pandas.get_dummies(
+                        features_df[feature["name"]],
+                        prefix="cat_" + feature["name"]
+                    )
+                ], axis=1).drop([feature["name"]], axis=1)
+
+                # Rename columns according to actual values.
+                features_df = features_df.rename(
+                    index=str,
+                    columns={
+                        "cat_" + feature["name"] + "_" + str(i): feature["name"] + "_" + value
+                        for i, value in enumerate(encoded_categorical_values_to_category_names[i])
+                    }
+                )
+
+        return features_df, \
+               embeddings_metadata[metadata_template["objectives"]], \
+               encoded_categorical_values_to_category_names
 
     @staticmethod
-    def fit_random_forest_regressors(metadata_template: dict, embeddings_metadata: pandas.DataFrame):
+    def fit_random_forest_regressors(
+            metadata_template: dict, features_df: pandas.DataFrame, labels_df: pandas.DataFrame
+    ):
         """
         Fits sklearn random forest regressors to specified dataframe holding embedding data for each objective defined.
         in metadata_template["objectives"].
         :param metadata_template:
-        :param embeddings_metadata:
+        :param features_df: Preprocessed dataframes with feature values.
+        :param labels_df: Preprocessed dataframes with label values.
         :return: Dictionary with objective -> regressor.
         """
-        # Prepare data frame for sklearn predictors.
-        features_df, labels_df = Utils.preprocess_embedding_metadata_for_predictor(
-            metadata_template=metadata_template, embeddings_metadata=embeddings_metadata
-        )
 
         # Compute global surrogate models as basis for LIME's local explainers.
         return {
@@ -139,34 +165,47 @@ class Utils:
         }
 
     @staticmethod
-    def initialize_lime_explainers(metadata_template: dict, embeddings_metadata: pandas.DataFrame):
+    def initialize_lime_explainers(metadata_template: dict, features_df: pandas.DataFrame):
         """
         Initialize LIME explainers with global surrogate models (as produced by Utils.fit_random_forest_regressors).
         :param metadata_template:
-        :param embeddings_metadata:
+        :param features_df: Preprocessed dataframes with feature values.
         :return: Dictionary with objective -> LIME explainer for this objective.
         """
-        # Prepare data frame for LIME.
-        features_df, labels_df = Utils.preprocess_embedding_metadata_for_predictor(
-            metadata_template=metadata_template, embeddings_metadata=embeddings_metadata
-        )
+        ##################################
+        # 1. Prepare information on
+        # categorical values for LIME.
+        ##################################
 
-        # exp2 = explainer.explain_instance(
-        #     features_df.values[0],
-        #     bla.predict, # lambda record: bla.predict(record).flatten(),
-        #     num_features=7
-        # )
-        # print(exp2.as_list())
+        # Fetch names of categorical hyperparameters.
+        categorical_hyperparameters = [
+            dict["name"]
+            for index, dict in enumerate(metadata_template["hyperparameters"])
+            if dict["type"] == "categorical"
+        ]
 
-        # Initialize explainers for each objective.
+        # A bit hacky: Find categorical attributes by picking columns starting with "CATEGORICAL ATTRIBUTE"_X.
+        categorical_feature_indices = [
+            i for i, col_name in enumerate(features_df.columns)
+            # col_name_parts[0] is the prefix, i. e. the name of the original (potentially categorical) hyperparameter.
+            if len(col_name.split("_")) == 2 and col_name.split("_")[0] in categorical_hyperparameters
+        ]
+
+        ##################################
+        # 2. Initialize explainers for
+        # each objective.
+        ##################################
+
         return {
             objective: lime.lime_tabular.LimeTabularExplainer(
                 training_data=features_df.values,
-                feature_names=[param["name"] for param in metadata_template["hyperparameters"]],
+                feature_names=features_df.columns,
                 class_names=metadata_template["objectives"],
                 # discretize_continuous=True,
                 # discretizer='decile',
-                verbose=True,
+                # Specify categorical hyperparameters.
+                categorical_features=categorical_feature_indices,
+                verbose=False,
                 mode='regression'
             )
             for objective in metadata_template["objectives"]
