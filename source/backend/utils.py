@@ -113,109 +113,64 @@ class Utils:
         return features_df, embeddings_metadata[metadata_template["objectives"]]
 
     @staticmethod
-    def fit_random_forest_regressor(metadata_template: dict, embeddings_metadata: pandas.DataFrame):
+    def fit_random_forest_regressors(metadata_template: dict, embeddings_metadata: pandas.DataFrame):
         """
-        Fits a sklearn random forest regressor to specified dataframe holding embedding data for all objectives defined
+        Fits sklearn random forest regressors to specified dataframe holding embedding data for each objective defined.
         in metadata_template["objectives"].
         :param metadata_template:
         :param embeddings_metadata:
-        :return:
+        :return: Dictionary with objective -> regressor.
         """
-
         # Prepare data frame for sklearn predictors.
         features_df, labels_df = Utils.preprocess_embedding_metadata_for_predictor(
             metadata_template=metadata_template, embeddings_metadata=embeddings_metadata
         )
 
-        # Compute global surrogate model as basis for LIME's local explainers.
-        result = sklearn.ensemble.RandomForestRegressor(
-            n_estimators=100,
-            n_jobs=psutil.cpu_count(logical=False)
-        ).fit(
-            X=features_df,
-            y=labels_df[metadata_template["objectives"]]
-        )
-
-        return result
+        # Compute global surrogate models as basis for LIME's local explainers.
+        return {
+            objective: sklearn.ensemble.RandomForestRegressor(
+                n_estimators=100,
+                n_jobs=psutil.cpu_count(logical=False)
+            ).fit(
+                X=features_df,
+                y=labels_df[objective]
+            )
+            for objective in metadata_template["objectives"]
+        }
 
     @staticmethod
-    def initialize_lime_explainer(metadata_template: dict, embeddings_metadata: pandas.DataFrame, bla):
+    def initialize_lime_explainers(metadata_template: dict, embeddings_metadata: pandas.DataFrame):
         """
-        Initialize LIME explainer with global surrogate model (as produced by Utils.fit_random_forest_regressors).
+        Initialize LIME explainers with global surrogate models (as produced by Utils.fit_random_forest_regressors).
         :param metadata_template:
         :param embeddings_metadata:
-        :return:
+        :return: Dictionary with objective -> LIME explainer for this objective.
         """
         # Prepare data frame for LIME.
         features_df, labels_df = Utils.preprocess_embedding_metadata_for_predictor(
             metadata_template=metadata_template, embeddings_metadata=embeddings_metadata
         )
 
-        print(features_df.values.shape)
-
-        boston = load_boston()
-        rf = sklearn.ensemble.RandomForestRegressor(n_estimators=100)
-        train, test, labels_train, labels_test = sklearn.model_selection.train_test_split(boston.data, boston.target,
-                                                                                          train_size=0.80,
-
-                                                                                         test_size=0.20)
-        print("shape", train.shape)
-        print("shape", test.shape)
-        rf.fit(train, labels_train)
-
-        categorical_features = numpy.argwhere(
-            numpy.array([len(set(boston.data[:, x])) for x in range(boston.data.shape[1])]) <= 10).flatten()
-
-        explainer = lime.lime_tabular.LimeTabularExplainer(
-            train,
-            feature_names=boston.feature_names,
-            class_names=['price'],
-            categorical_features=categorical_features,
-            verbose=True,
-            mode='regression'
-        )
-
-        print("***")
-        print(test[3].shape)
-        print(test[3].reshape(1, -1).shape)
-        print(rf.predict(test[3].reshape(1, -1)))
-        print(rf.predict(test[3].reshape(1, -1)).shape)
-        print("***")
-        exp = explainer.explain_instance(test[3], rf.predict, num_features=5)
-
-        # return lime.lime_tabular.LimeTabularExplainer(
-        #     training_data=features_df.values,
-        #     feature_names=[param["name"] for param in metadata_template["hyperparameters"]],
-        #     class_names=metadata_template["objectives"],
-        #     # discretize_continuous=True,
-        #     # discretizer='decile',
-        #     verbose=True,
-        #     mode='regression'
+        # exp2 = explainer.explain_instance(
+        #     features_df.values[0],
+        #     bla.predict, # lambda record: bla.predict(record).flatten(),
+        #     num_features=7
         # )
+        # print(exp2.as_list())
 
-        print("shape", features_df.values.shape)
-        explainer2 = lime.lime_tabular.LimeTabularExplainer(
-            training_data=features_df.values,
-            feature_names=[param["name"] for param in metadata_template["hyperparameters"]],
-            class_names=metadata_template["objectives"],
-            # discretize_continuous=True,
-            # discretizer='decile',
-            verbose=True,
-            mode='regression'
-        )
-
-        print("####")
-        print(features_df.values[0].shape)
-        print("####")
-        exp = explainer2.explain_instance(
-            features_df.values[0],
-            lambda record: bla.predict(record).flatten(),
-            num_features=7
-        )
-
-        print(explainer2)
-
-        return explainer
+        # Initialize explainers for each objective.
+        return {
+            objective: lime.lime_tabular.LimeTabularExplainer(
+                training_data=features_df.values,
+                feature_names=[param["name"] for param in metadata_template["hyperparameters"]],
+                class_names=metadata_template["objectives"],
+                # discretize_continuous=True,
+                # discretizer='decile',
+                verbose=True,
+                mode='regression'
+            )
+            for objective in metadata_template["objectives"]
+        }
 
     @staticmethod
     def you_suck(rafi=[], ich=[]):

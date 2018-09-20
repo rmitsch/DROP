@@ -99,18 +99,16 @@ def get_metadata():
         # corresponding LIME explainers.
         ###################################################
 
-        # Compute regressors.
-        app.config["GLOBAL_SURROGATE_MODEL"] = Utils.fit_random_forest_regressor(
+        # Compute regressor for each objective.
+        app.config["GLOBAL_SURROGATE_MODELS"] = Utils.fit_random_forest_regressors(
             metadata_template=app.config["METADATA_TEMPLATE"],
             embeddings_metadata=df
         )
 
-        # NEXT: Initialize and store LIME explainer.
-        # Note: Think again whether we want several one-label regressors or one multi-label regressor.
-        app.config["LIME_EXPLAINER"] = Utils.initialize_lime_explainer(
+        # Initialize LIME explainers for each objective.
+        app.config["LIME_EXPLAINERS"] = Utils.initialize_lime_explainers(
             metadata_template=app.config["METADATA_TEMPLATE"],
-            embeddings_metadata=df,
-            bla=app.config["GLOBAL_SURROGATE_MODEL"]
+            embeddings_metadata=df
         )
 
         # Return JSON-formatted embedding data.
@@ -299,7 +297,7 @@ def get_dr_model_details():
     print(test[0].shape)
     print(embedding_metadata_feat_df.iloc[0].values.reshape(1, -1).shape)
     print(embedding_metadata_feat_df.iloc[0].values.shape)
-
+    CONTINUE HERE: Get and return results.
     print(app.config["GLOBAL_SURROGATE_MODEL"].predict(embedding_metadata_feat_df.iloc[0].values.reshape(1, -1)))
     explanation = app.config["LIME_EXPLAINER"].explain_instance(
         data_row=embedding_metadata_feat_df.iloc[0].values.reshape(1, -1),
