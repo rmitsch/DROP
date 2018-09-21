@@ -42,28 +42,60 @@ export default class ModelDetailDataset extends Dataset
         this._configureLowDimProjectionCrossfilter();
 
         // Create crossiflter instance for LIME heatmap.
-        this._lime_crossfilter = crossfilter(this._preprocessLimeData());
+        this._limeCrossfilterData = {
+            crossfilter: crossfilter(ModelDetailDataset._preprocessLimeData(this._limeData)),
+            dimensions: {},
+            groups: {}
+        };
         this._configureLIMECrossfilter();
     }
 
     /**
      * Preprocesses LIME data to fit data pattern expected by crossfilter.js.
+     * @param limeData
      * @returns {Array}
      * @private
      */
-    _preprocessLimeData()
+    static _preprocessLimeData(limeData)
     {
         let parsedLimeData = [];
-        for (let objective in this._limeData) {
-            for (let rule in this._limeData[objective]) {
+        for (let objective in limeData) {
+            for (let rule in limeData[objective]) {
+                let original_rule = rule;
                 let rule_parts = rule.split(" ");
-                parsedLimeData.push({
-                    "objective": objective,
-                    "rule_hyperparameter": rule_parts[0],
-                    "rule_comparator":  rule_parts[1],
-                    "rule_value":  rule_parts[2],
-                    "weight": this._limeData[objective][rule]
-                });
+
+                // Filter out hyperparameter. Consider that split/categorical arguments are structured differently.
+                let hyperparameter = null;
+                // Pattern: NUMBER OPERATOR HYPERPARAMETER OPERATOR NUMBER, e. g. 3 <= n_components < 6.
+                if (rule_parts.length === 5)
+                    hyperparameter = rule_parts[2];
+                // Pattern: HYPERPARAMETER OPERATOR NUMBER, e. g. n_components > 2.
+                else if (rule_parts.length === 3)
+                    hyperparameter = rule_parts[0];
+                // Pattern: HYPERPARAMETER=NUMBER, e. g. metric=cosine, indicating a categorical value.
+                else if (rule_parts.length === 1) {
+                    rule_parts = rule.split("=");
+
+                    // Only accept hyperparameter if it was actually active in this record.
+                    if (rule_parts[1] === "1") {
+                        rule_parts = rule_parts[0].split("_");
+                        hyperparameter = rule_parts[0];
+                        rule = hyperparameter + " = " + rule_parts[1];
+                    }
+                }
+
+                // Append parsed record, except when it contains a categorical value for this hyperparameter that
+                // equates zero - meaning there is another record in the dataset with another categorical value for this
+                // hyperparameter that actually applies.
+                // Procedure to be debated - LIME values for these values seem to roughly cancel each other out, so as
+                // an approximation it seems feasible.
+                if (hyperparameter !== null)
+                    parsedLimeData.push({
+                        "objective": objective,
+                        "hyperparameter": hyperparameter,
+                        "rule":  rule,
+                        "weight": limeData[objective][original_rule]
+                    });
             }
         }
 
@@ -79,6 +111,18 @@ export default class ModelDetailDataset extends Dataset
         // todo Continue here: Create dimensions/groups necessary for heatmap.
         // Keep in mind that heatmap cells/labels have to be linked to rule data, incl. comparator;
         // while heatmap only shows rule weight.
+        let config = this._limeCrossfilterData;
+        console.log(ModelDetailDataset._preprocessLimeData(this._limeData));
+
+        // Initialize binary dimension.
+        config.dimensions["objective:hyperparameter"] = config.crossfilter.dimension(
+            function(d) { return [d.objective, d.hyperparameter]; }
+        );
+
+        // Initialize group returning rule weight.
+        config.groups["objective:hyperparameter"] = config.dimensions["objective:hyperparameter"].group().reduceSum(
+            function(d) { return +d.weight; }
+        );
     }
 
     /**

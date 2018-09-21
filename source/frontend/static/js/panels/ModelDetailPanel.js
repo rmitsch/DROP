@@ -269,6 +269,7 @@ export default class ModelDetailPanel extends Panel
                 scope._data._cf_extrema[j].max + dataPadding.y
             ]))
             .renderHorizontalGridLines(true)
+            .renderVerticalGridLines(true)
             .dimension(scope._data._cf_dimensions[key])
             .group(scope._data._cf_groups[key])
             .keyAccessor(function(d) {
