@@ -37,16 +37,37 @@ export default class ModelDetailDataset extends Dataset
                 this._originalRecordAttributes.push(key);
         }
 
-        // Create crossfilter instance for low-dimensional projection (LDP).
-        this._ldp_crossfilter = crossfilter(this._low_dim_projection);
-        this._configureLowDimProjectionCrossfilter();
+        //--------------------------------------
+        // Initialize crossfilter datasets.
+        //--------------------------------------
 
-        // Create crossiflter instance for LIME heatmap.
-        this._limeCrossfilterData = {
-            crossfilter: crossfilter(ModelDetailDataset._preprocessLimeData(this._limeData)),
-            dimensions: {},
-            groups: {}
-        };
+        this._crossfilterData = {};
+        this._initCrossfilterData();
+    }
+
+    /**
+     * Initializes crossfilter-related data.
+     * @private
+     */
+    _initCrossfilterData()
+    {
+        for (let cf_dataset_name of ["low_dim_projection", "lime"]) {
+            this._crossfilterData[cf_dataset_name] = {
+                crossfilter: null,
+                dimensions: {},
+                groups: {},
+                extrema: {},
+                intervals: {}
+            }
+        }
+
+        // Create crossfilter instance for low-dimensional projection (LDP).
+        this._crossfilterData["low_dim_projection"].crossfilter = crossfilter(this._low_dim_projection);
+        // Create crossfilter instance for LIME heatmap.
+        this._crossfilterData["lime"].crossfilter               = crossfilter(ModelDetailDataset._preprocessLimeData(this._limeData));
+
+        // Initialize dimensions and groups for crossfilter datasets.
+        this._configureLowDimProjectionCrossfilter();
         this._configureLIMECrossfilter();
     }
 
@@ -111,7 +132,7 @@ export default class ModelDetailDataset extends Dataset
         // todo Continue here: Create dimensions/groups necessary for heatmap.
         // Keep in mind that heatmap cells/labels have to be linked to rule data, incl. comparator;
         // while heatmap only shows rule weight.
-        let config = this._limeCrossfilterData;
+        let config = this._crossfilterData.lime;
         console.log(ModelDetailDataset._preprocessLimeData(this._limeData));
 
         // Initialize binary dimension.
@@ -180,27 +201,31 @@ export default class ModelDetailDataset extends Dataset
 
     _initSingularDimensionsAndGroups()
     {
-        let cf              = this._ldp_crossfilter;
+        let config          = this._crossfilterData["low_dim_projection"];
+        let cf              = config.crossfilter;
         let numDimensions   = this._model_metadata[this._modelID].n_components;
 
         // Create singular dimensions.
         for (let i = 0; i < numDimensions; i++) {
-            this._cf_dimensions[i] = cf.dimension(
+            config.dimensions[i] = cf.dimension(
                 function(d) { return d[i]; }
             );
             // Calculate extrema.
-            this._calculateSingularExtremaByAttribute(i);
+            let extremaInfo = this._calculateSingularExtremaByDimension(config.dimensions[i], i);
+            config.extrema[i] = extremaInfo.extrema;
+            config.intervals[i] = extremaInfo.interval;
         }
 
         // Create ID dimension.
-        this._cf_dimensions["id"] = cf.dimension(
+        config.dimensions["id"] = cf.dimension(
             function(d) { return d.id; }
         );
     }
 
     _initBinaryDimensionsAndGroups(includeGroups = true)
     {
-        let cf              = this._ldp_crossfilter;
+        let config          = this._crossfilterData["low_dim_projection"];
+        let cf              = config.crossfilter;
         let numDimensions   = this._model_metadata[this._modelID].n_components;
 
         // Generate groups for all combinations of dimension indices.
@@ -211,16 +236,18 @@ export default class ModelDetailDataset extends Dataset
                 let transposedKey   = j + ":" + i;
 
                 // Create combined dimension (for scatterplot).
-                this._cf_dimensions[combinedKey] = cf.dimension(
+                config.dimensions[combinedKey] = cf.dimension(
                     function(d) { return [d[i], d[j]]; }
                 );
                 // Mirror dimension to transposed key.
-                this._cf_dimensions[transposedKey] = this._cf_dimensions[combinedKey];
+                config.dimensions[transposedKey] = config.dimensions[combinedKey];
 
                 // Create group for scatterplot.
-                this._cf_groups[combinedKey] = this._generateGroupWithCounts(combinedKey, [i, j]);
+                config.groups[combinedKey] = this._generateGroupWithCountsForDimension(
+                    config.dimensions[combinedKey], [i, j]
+                );
                 // Mirror group to transposed key.
-                this._cf_groups[transposedKey] = this._cf_groups[combinedKey];
+                config.groups[transposedKey] = config.groups[combinedKey];
             }
         }
     }
@@ -229,11 +256,6 @@ export default class ModelDetailDataset extends Dataset
     {
         throw new TypeError("ModelDetailDataset._initSingularDimension(): Abstract method must not be called.");
     }
-
-    /**
-     * Creates JSON object
-     * @private
-     */
 
     /**
      * Creates JSON object containing data preprocessed for usage in sparkline histograms - i. e. with filled gaps and
@@ -305,5 +327,10 @@ export default class ModelDetailDataset extends Dataset
         }
 
         return values;
+    }
+
+    get crossfilterData()
+    {
+        return this._crossfilterData;
     }
 }

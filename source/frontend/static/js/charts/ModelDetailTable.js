@@ -31,7 +31,7 @@ export default class ModelDetailTable extends Chart
         this._tableID = this._createDivStructure();
 
         // Select dimension of ID to use for later look-ups.
-        this._dimension = this._dataset._cf_dimensions["id"];
+        this._dimension = this._dataset.crossfilterData["low_dim_projection"].dimensions["id"];
 
         // Create storage for filtered IDs.
         this._filteredIDs       = null;

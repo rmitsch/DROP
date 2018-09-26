@@ -24,8 +24,8 @@ export default class ModelDetailPanel extends Panel
         // Create div structure for child nodes.
         this._divStructure = this._createDivStructure();
 
-        // Initialize table variable. Used as flag for construction at loading time.
-        this._table = null;
+        // Generate charts.
+        this._generateCharts();
     }
 
     /**
@@ -34,6 +34,18 @@ export default class ModelDetailPanel extends Panel
     _generateCharts()
     {
         console.log("Generating ModelDetailPanel...");
+
+        // Use operator's target ID as group name.
+        let dcGroupName = this._operator._target;
+
+        // Initialize table.
+        this._charts["table"] = null;
+
+        // Initialize LIME heatmap.
+        this._charts["limeHeatmap"] = dc.heatMap(
+            "#" + this._divStructure.limePaneID,
+            dcGroupName
+        );
     }
 
     /**
@@ -160,6 +172,14 @@ export default class ModelDetailPanel extends Panel
     {
         console.log("redrawing lime")
         console.log(this._data);
+
+        // Create shorthand references.
+        // let scope       = this;
+        // let dataset     = this._dataset;
+        // let cfConfig    = this._dataset.crossfilterData["lime"];
+        // let dimensions  = cfConfig.dimensions;
+        // let attribute   = "samplesInModelsMeasure:sampleDRModelMeasure";
+
     }
 
     _reconstructTable()
@@ -167,8 +187,8 @@ export default class ModelDetailPanel extends Panel
         // Remove old table, if exists.
         $('div.model-detail-table').remove();
 
-        // Construct new table.
-        this._table = new ModelDetailTable(
+        // Construct new table - easier than updating existing one.
+        this._charts["table"] = new ModelDetailTable(
             "Model Detail ModelOverviewTable",
             this,
             this._data._originalRecordAttributes,
@@ -180,10 +200,6 @@ export default class ModelDetailPanel extends Panel
 
     _redrawRecordScatterplots()
     {
-        let scope               = this;
-        let drMetaDataset       = this._operator._drMetaDataset;
-        // Fetch metadata structure (i. e. attribute names and types).
-        let metadataStructure   = drMetaDataset._metadata;
         // Fetch divs containing attribute sparklines.
         let chartContainerDiv   = $("#" + this._divStructure.scatterplotPaneID);
 
@@ -231,14 +247,15 @@ export default class ModelDetailPanel extends Panel
      */
     _generateScatterplot(currIndices, scatterplotSize)
     {
+        let cf_config           = this._data.crossfilterData["low_dim_projection"];
         let i                   = currIndices[0];
         let j                   = currIndices[1];
         let key                 = i + ":" + j;
         let scope               = this;
         let drMetaDataset       = this._operator._drMetaDataset;
         let dataPadding         = {
-            x: this._data._cf_intervals[i] * 0.1,
-            y: this._data._cf_intervals[j] * 0.1
+            x: cf_config.intervals[i] * 0.1,
+            y: cf_config.intervals[j] * 0.1
         };
 
         let scatterplotContainer = Utils.spawnChildDiv(
@@ -255,23 +272,26 @@ export default class ModelDetailPanel extends Panel
             false
         );
 
+        console.log(cf_config.extrema[i]);
+        console.log(cf_config.extrema[j]);
+
         // Render scatterplot.
         scatterplot
             .height(scatterplotSize.height)
             .width(scatterplotSize.width)
             .useCanvas(true)
             .x(d3.scale.linear().domain([
-                scope._data._cf_extrema[i].min - dataPadding.x,
-                scope._data._cf_extrema[i].max + dataPadding.x
+                cf_config.extrema[i].min - dataPadding.x,
+                cf_config.extrema[i].max + dataPadding.x
             ]))
             .y(d3.scale.linear().domain([
-                scope._data._cf_extrema[j].min - dataPadding.y,
-                scope._data._cf_extrema[j].max + dataPadding.y
+                cf_config.extrema[j].min - dataPadding.y,
+                cf_config.extrema[j].max + dataPadding.y
             ]))
             .renderHorizontalGridLines(true)
             .renderVerticalGridLines(true)
-            .dimension(scope._data._cf_dimensions[key])
-            .group(scope._data._cf_groups[key])
+            .dimension(cf_config.dimensions[key])
+            .group(cf_config.groups[key])
             .keyAccessor(function(d) {
                 return d.key[0];
              })
