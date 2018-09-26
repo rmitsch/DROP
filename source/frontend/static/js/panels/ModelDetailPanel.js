@@ -24,8 +24,29 @@ export default class ModelDetailPanel extends Panel
         // Create div structure for child nodes.
         this._divStructure = this._createDivStructure();
 
+        // Dictionary for lookup of LIME rules.
+        this._limeRuleLookup = {};
+
         // Generate charts.
         this._generateCharts();
+    }
+
+    /**
+     * Calculates color domain based on existing color scheme and data extrema.
+     * @param extrema
+     * @param colorScheme
+     * @returns {number[]}
+     * @private
+     */
+    static _calculateColorDomain(extrema, colorScheme)
+    {
+        let colorDomain = [];
+
+        colorScheme.forEach(
+            (color, i) => colorDomain.push(extrema.min + ((extrema.max - extrema.min) / colorScheme.length * i))
+        );
+
+        return colorDomain;
     }
 
     /**
@@ -46,6 +67,22 @@ export default class ModelDetailPanel extends Panel
             "#" + this._divStructure.limePaneID,
             dcGroupName
         );
+    }
+
+    /**
+     * Extracts dictionary {hyperparameter -> {objective -> rule}} from loaded dataset.
+     * Stores result in this._limeRuleLookup.
+     * @private
+     */
+    _updateLimeRuleLookup()
+    {
+        for (let rule of this._data._preprocessedLimeData) {
+            if (!(rule.hyperparameter in this._limeRuleLookup)) {
+                this._limeRuleLookup[rule.hyperparameter] = {};
+            }
+
+            this._limeRuleLookup[rule.hyperparameter][rule.objective] = rule.rule + ": " + rule.weight;
+        }
     }
 
     /**
@@ -79,6 +116,7 @@ export default class ModelDetailPanel extends Panel
             parameterPane.id, null, "model-detail-pane split-vertical",
             `<div class='model-details-block'>
                 <div class='model-details-title'>Local Hyperparameter Relevance</div>
+                <div id="model-details-lime-pane"</div>
             </div>`
         );
 
@@ -112,7 +150,7 @@ export default class ModelDetailPanel extends Panel
         // Split upper-left and bottom-left pane.
         Split(["#" + attributePane.id, "#" + limePane.id], {
             direction: "vertical",
-            sizes: [50, 50],
+            sizes: [40, 60],
             onDragEnd: function() {}
         });
 
@@ -132,7 +170,7 @@ export default class ModelDetailPanel extends Panel
                 hyperparameterContentID: "model-details-block-hyperparameter-content",
                 objectiveContentID: "model-details-block-objective-content",
             },
-            limePaneID: limePane.id,
+            limePaneID: "model-details-lime-pane",
             scatterplotPaneID: scatterplotPane.id,
             recordPane: {
                 id: recordPane.id,
@@ -170,16 +208,52 @@ export default class ModelDetailPanel extends Panel
 
     _redrawLIMEHeatmap()
     {
-        console.log("redrawing lime")
-        console.log(this._data);
+        let scope       = this;
+        let cfConfig    = this._data.crossfilterData["lime"];
+        let attribute   = "objective:hyperparameter";
 
-        // Create shorthand references.
-        // let scope       = this;
-        // let dataset     = this._dataset;
-        // let cfConfig    = this._dataset.crossfilterData["lime"];
-        // let dimensions  = cfConfig.dimensions;
-        // let attribute   = "samplesInModelsMeasure:sampleDRModelMeasure";
+        // Determine color scheme, color domain.
+        let colorScheme = [
+            '#ca0020','#f4a582','#f7f7f7','#92c5de','#0571b0'
+        ];
+        // let colorDomain = ModelDetailPanel._calculateColorDomain(cfConfig.extrema["weight"], colorScheme);
+        let colorDomain = ModelDetailPanel._calculateColorDomain({min: -1, max: 1}, colorScheme);
 
+        this._charts["limeHeatmap"]
+            .height($("#model-details-lime-pane").height())
+            .width($("#model-details-lime-pane").width())
+            .dimension(cfConfig.dimensions[attribute])
+            .group(cfConfig.groups[attribute])
+            .colorAccessor(function(d)  { return d.value; })
+            .colors(
+                d3.scale
+                    .linear()
+                    .domain(colorDomain)
+                    .range(colorScheme)
+            )
+            .keyAccessor(function(d)    { return d.key[0]; })
+            .valueAccessor(function(d)  { return d.key[1]; })
+            .title(function(d) {
+                return scope._limeRuleLookup[d.key[1]][d.key[0]];
+            })
+            .colsLabel(function(d)      { return DRMetaDataset.translateAttributeNames(false)[d]; })
+            .rowsLabel(function(d)      { return DRMetaDataset.translateAttributeNames(false)[d]; })
+            .margins({top: 0, right: 20, bottom: 48, left: 60})
+            .transitionDuration(0)
+            .xBorderRadius(0)
+            // Rotrate labels.
+            .on('pretransition', function(chart) {
+                chart
+                    .selectAll('g.cols.axis > text')
+                    .attr('transform', function (d) {
+                        let coord = this.getBBox();
+                        let x = coord.x + (coord.width/2) + coord.height * 1.5,
+                            y = coord.y + (coord.height/2) * 5;
+
+                        return "rotate(-50 "+ x + " " + y + ")"
+                    });
+            });
+        this._charts["limeHeatmap"].render();
     }
 
     _reconstructTable()
@@ -271,9 +345,6 @@ export default class ModelDetailPanel extends Panel
             null,
             false
         );
-
-        console.log(cf_config.extrema[i]);
-        console.log(cf_config.extrema[j]);
 
         // Render scatterplot.
         scatterplot
@@ -389,6 +460,9 @@ export default class ModelDetailPanel extends Panel
         this._data      = this._operator._dataset;
         let data        = this._data;
         let stageDiv    = $("#" + this._operator._stage._target);
+
+        // Update LIME rule lookup.
+        this._updateLimeRuleLookup();
 
         // Show modal.
         $("#" + this._target).dialog({

@@ -59,9 +59,10 @@ export default class DRMetaDataset extends Dataset
      * Returns dict for translating column headers in JSON/dataframe into human-readable titles.
      * This is a catch-all for translation - all possible objectives and hyperparameters, regardless of the associated
      * DR algorithm, are included here for translation purposes.
+     * @param useHTMLFormatting
      * @returns Dictionary with frontend translations for backend attributes.
      */
-    static translateAttributeNames()
+    static translateAttributeNames(useHTMLFormatting = true)
     {
         return {
             // Hyperparameters.
@@ -77,8 +78,8 @@ export default class DRMetaDataset extends Dataset
             "local_connectivity": "Local Conn.",
             "n_epochs": "Iterations",
             // From here: Objectives.
-            "r_nx": "R<sub>nx</sub>",
-            "b_nx": "B<sub>nx</sub>",
+            "r_nx": useHTMLFormatting ? "R<sub>nx</sub>" : "R_nx",
+            "b_nx": useHTMLFormatting ? "B<sub>nx</sub>" : "B_nx",
             "stress": "Stress",
             "classification_accuracy": "Accuracy",
             "separability_metric": "Silhouette",

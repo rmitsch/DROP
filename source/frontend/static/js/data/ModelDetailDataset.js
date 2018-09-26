@@ -28,6 +28,7 @@ export default class ModelDetailDataset extends Dataset
         );
         this._model_metadata            = modelDataJSON.model_metadata;
         this._limeData                  = modelDataJSON.lime_explanation;
+        this._preprocessedLimeData      = ModelDetailDataset._preprocessLimeData(this._limeData);
         this._sampleDissonances         = modelDataJSON.sample_dissonances;
 
         // Gather attributes available for original record.
@@ -64,7 +65,7 @@ export default class ModelDetailDataset extends Dataset
         // Create crossfilter instance for low-dimensional projection (LDP).
         this._crossfilterData["low_dim_projection"].crossfilter = crossfilter(this._low_dim_projection);
         // Create crossfilter instance for LIME heatmap.
-        this._crossfilterData["lime"].crossfilter               = crossfilter(ModelDetailDataset._preprocessLimeData(this._limeData));
+        this._crossfilterData["lime"].crossfilter               = crossfilter(this._preprocessedLimeData);
 
         // Initialize dimensions and groups for crossfilter datasets.
         this._configureLowDimProjectionCrossfilter();
@@ -133,9 +134,11 @@ export default class ModelDetailDataset extends Dataset
         // Keep in mind that heatmap cells/labels have to be linked to rule data, incl. comparator;
         // while heatmap only shows rule weight.
         let config = this._crossfilterData.lime;
-        console.log(ModelDetailDataset._preprocessLimeData(this._limeData));
 
-        // Initialize binary dimension.
+        // Initialize dimensions.
+        config.dimensions["weight"] = config.crossfilter.dimension(
+            function(d) { return +d.weight; }
+        );
         config.dimensions["objective:hyperparameter"] = config.crossfilter.dimension(
             function(d) { return [d.objective, d.hyperparameter]; }
         );
@@ -144,6 +147,11 @@ export default class ModelDetailDataset extends Dataset
         config.groups["objective:hyperparameter"] = config.dimensions["objective:hyperparameter"].group().reduceSum(
             function(d) { return +d.weight; }
         );
+
+        // Calculate extrema.
+        let extremaInfo = this._calculateSingularExtremaByDimension(config.dimensions["weight"], "weight");
+        config.extrema["weight"] = extremaInfo.extrema;
+        config.intervals["weight"] = extremaInfo.interval;
     }
 
     /**
