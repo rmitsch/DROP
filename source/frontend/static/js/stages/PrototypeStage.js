@@ -143,10 +143,13 @@ export default class PrototypeStage extends Stage
                         sizes: [35, 30, 35],
                         minSize: 0,
                         snapOffset: 0,
-                        onDragEnd: function() {}
+                        onDragEnd: function() {
+                            console.log("drag end horizontal")
+                            scope._operators["SurrogateModel"].resize();
+                            scope._operators["FilterReduce"].resize();
+                        }
                     }
                 );
-                // scope._bottomSplitPane.collapse(0);
 
                 // Vertical split.
                 $("#" + splitTopDiv.id).addClass("split split-vertical");
@@ -157,6 +160,8 @@ export default class PrototypeStage extends Stage
                         direction: "vertical",
                         sizes: [57, 43],
                         onDragEnd: function() {
+                            console.log("drag end vertical x");
+                            scope._operators["SurrogateModel"].resize();
                         }
                     }
                 );

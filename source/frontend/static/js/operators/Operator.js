@@ -58,7 +58,7 @@ export default class Operator
     /**
      * Resizes all panels.
      */
-    render()
+    resize()
     {
         throw new TypeError("Operator.resize(): Abstract method must not be called.");
     }

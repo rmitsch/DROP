@@ -22,6 +22,8 @@ export default class SurrogateModelChart extends Chart
     constructor(name, panel, attributes, dataset, style, parentDivID)
     {
         super(name, panel, attributes, dataset, style, parentDivID);
+        // Store size of panel at time of last render.
+        this._lastOperatorSize = {width: 0, height: 0};
 
         // Construct graph.
         this.constructCFChart();
@@ -51,31 +53,35 @@ export default class SurrogateModelChart extends Chart
      */
     render()
     {
+        let operatorDiv = $("#" + this._panel._operator._target);
+        this._lastOperatorSize.width = operatorDiv.width();
+        this._lastOperatorSize.height = operatorDiv.height();
+
         let margin      = {top: 5, right: 120, bottom: 20, left: 120};
-        let baseWidth   = $("#" + this._panel._operator._target).width() - 0;
-        let baseHeight  = $("#" + this._panel._operator._target).height() - 5;
-        let treeData    = this._dataset;
+        let baseWidth   = operatorDiv.width() - 0;
+        let baseHeight  = operatorDiv.height() - 5;
+        let treeData    = JSON.parse(JSON.stringify(this._dataset));
         let scope       = this;
 
         // Generate chart.
-        var width   = baseWidth - margin.right - margin.left;
-        var height  = baseHeight - margin.top - margin.bottom;
+        let width   = baseWidth - margin.right - margin.left;
+        let height  = baseHeight - margin.top - margin.bottom;
 
-        var i = 0,
+        let i = 0,
             duration = 500,
             root;
 
-        var tree = d3.layout.tree()
+        let tree = d3.layout.tree()
             .size([height, width]);
 
-        var diagonal = d3.svg.diagonal()
+        let diagonal = d3.svg.diagonal()
             .projection(function (d) {
                 return [d.y, d.x];
             });
 
         let svgContainer = d3.select("#" + this._target);
         // Create chart.
-        var svg = svgContainer.append("svg")
+        let svg = svgContainer.append("svg")
             .attr("id", "surrogate-model-chart-svg")
             .attr("width", "100%")
             .attr("height", height + margin.top + margin.bottom)
@@ -97,11 +103,11 @@ export default class SurrogateModelChart extends Chart
         root.children.forEach(collapse);
         update(root);
 
-        d3.select(self.frameElement).style("height", "480px");
+        // d3.select(self.frameElement).style("height", "480px");
 
         function update(source) {
             // Compute the new tree layout.
-            var nodes = tree.nodes(root).reverse(),
+            let nodes = tree.nodes(root).reverse(),
                 links = tree.links(nodes);
 
             // Normalize for fixed-depth.
@@ -110,13 +116,13 @@ export default class SurrogateModelChart extends Chart
             });
 
             // Update the nodes…
-            var node = svg.selectAll("g.node")
+            let node = svg.selectAll("g.node")
                 .data(nodes, function (d) {
                     return d.id || (d.id = ++i);
                 });
 
             // Enter any new nodes at the parent's previous position.
-            var nodeEnter = node.enter().append("g")
+            let nodeEnter = node.enter().append("g")
                 .attr("class", "node")
                 .attr("transform", function (d) {
                     return "translate(" + source.y0 + "," + source.x0 + ")";
@@ -143,7 +149,7 @@ export default class SurrogateModelChart extends Chart
                 .style("fill-opacity", 1e-6);
 
             // Transition nodes to their new position.
-            var nodeUpdate = node.transition()
+            let nodeUpdate = node.transition()
                 .duration(duration)
                 .attr("transform", function (d) {
                     return "translate(" + d.y + "," + d.x + ")";
@@ -159,7 +165,7 @@ export default class SurrogateModelChart extends Chart
                 .style("fill-opacity", 1);
 
             // Transition exiting nodes to the parent's new position.
-            var nodeExit = node.exit().transition()
+            let nodeExit = node.exit().transition()
                 .duration(duration)
                 .attr("transform", function (d) {
                     return "translate(" + source.y + "," + source.x + ")";
@@ -173,7 +179,7 @@ export default class SurrogateModelChart extends Chart
                 .style("fill-opacity", 1e-6);
 
             // Update the links…
-            var link = svg.selectAll("path.link")
+            let link = svg.selectAll("path.link")
                 .data(links, function (d) {
                     return d.target.id;
                 });
@@ -182,7 +188,7 @@ export default class SurrogateModelChart extends Chart
             link.enter().insert("path", "g")
                 .attr("class", "link")
                 .attr("d", function (d) {
-                    var o = {x: source.x0, y: source.y0};
+                    let o = {x: source.x0, y: source.y0};
                     return diagonal({source: o, target: o});
                 });
 
@@ -195,7 +201,7 @@ export default class SurrogateModelChart extends Chart
             link.exit().transition()
                 .duration(duration)
                 .attr("d", function (d) {
-                    var o = {x: source.x, y: source.y};
+                    let o = {x: source.x, y: source.y};
                     return diagonal({source: o, target: o});
                 })
                 .remove();
@@ -220,12 +226,13 @@ export default class SurrogateModelChart extends Chart
 
             // Widen panel, if necessary.
             if (d.children) {
+                let panelDiv = $("#" + scope._panel._target);
                 // Add margin.left and 120 to reflect offset on the left and length of result label on the right.
                 let value = (d.depth + 1) * 110 + margin.left + 120;
-                let currPanelWidth = $("#" + scope._panel._target).width();
+                let currPanelWidth = panelDiv.width();
 
                 if (currPanelWidth < value) {
-                    $("#" + scope._panel._target).width(value);
+                    panelDiv.width(value);
                 }
             }
 
@@ -245,10 +252,12 @@ export default class SurrogateModelChart extends Chart
 
     resize()
     {
-        // Check if panel has to be widened.
-        let currPanelWidth = $("#" + this._panel._target).width();
-        if (currPanelWidth < this._extrema.x[1]) {
-            $("#" + this._panel._target).width(this._extrema.x[1]);
+        let operatorDiv = $("#" + this._panel._operator._target);
+
+        // Check if panel height has changed.
+        if (operatorDiv.height() != this._lastOperatorSize.height) {
+            d3.select("#surrogate-model-chart-svg").remove();
+            this.render();
         }
     }
 
