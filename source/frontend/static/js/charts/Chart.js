@@ -19,12 +19,14 @@ export default class Chart
      */
     constructor(name, panel, attributes, dataset, style, parentDivID)
     {
-        this._name          = name;
-        this._panel         = panel;
-        this._attributes    = attributes;
-        this._dataset       = dataset;
-        this._style         = style;
-        this._target        = Utils.uuidv4();
+        this._name              = name;
+        this._panel             = panel;
+        this._attributes        = attributes;
+        this._dataset           = dataset;
+        this._style             = style;
+        this._target            = Utils.uuidv4();
+        // Store size of panel at time of last render.
+        this._lastOperatorSize  = {width: 0, height: 0};
 
         // Create div structure for this chart.
         let div = document.createElement('div');

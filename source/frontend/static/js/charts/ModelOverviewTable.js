@@ -197,4 +197,9 @@ export default class ModelOverviewTable extends Chart
         if (source !== this._target) {
         }
     }
+
+    get table()
+    {
+        return this._cf_chart;
+    }
 }

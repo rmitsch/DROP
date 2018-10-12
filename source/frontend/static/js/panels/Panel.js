@@ -17,10 +17,12 @@ export default class Panel
      */
     constructor(name, operator, parentDivID)
     {
-        this._name      = name;
-        this._operator  = operator;
-        this._charts    = {};
-        this._target    = Utils.uuidv4();
+        this._name              = name;
+        this._operator          = operator;
+        this._charts            = {};
+        this._target            = Utils.uuidv4();
+        // Store size of panel at time of last render.
+        this._lastOperatorSize  = {width: 0, height: 0};
 
         // Panels datasets never differ from their operators'.
         this._data      = this._operator.data;

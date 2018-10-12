@@ -74,4 +74,11 @@ export default class FilterReduceOperator extends Operator
     {
         return this._panels["Model Selection"];
     }
+
+    resize()
+    {
+        for (let panelName in this._panels) {
+            this._panels[panelName].resize();
+        }
+    }
 }

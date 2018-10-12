@@ -144,7 +144,6 @@ export default class PrototypeStage extends Stage
                         minSize: 0,
                         snapOffset: 0,
                         onDragEnd: function() {
-                            console.log("drag end horizontal")
                             scope._operators["SurrogateModel"].resize();
                             scope._operators["FilterReduce"].resize();
                         }
@@ -160,8 +159,8 @@ export default class PrototypeStage extends Stage
                         direction: "vertical",
                         sizes: [57, 43],
                         onDragEnd: function() {
-                            console.log("drag end vertical x");
                             scope._operators["SurrogateModel"].resize();
+                            scope._operators["FilterReduce"].resize();
                         }
                     }
                 );
@@ -170,7 +169,7 @@ export default class PrototypeStage extends Stage
                 scope._operators["SurrogateModel"].render();
                 scope._operators["Dissonance"].render();
                 $("#" + embeddingsTableTarget + " .dataTables_scrollBody").css(
-                    'height', ($("#" + splitBottomDiv.id).height() - 200) + "px"
+                    'height', ($("#" + splitBottomDiv.id).height() - 190) + "px"
                 );
 
                 // ---------------------------------------------------------

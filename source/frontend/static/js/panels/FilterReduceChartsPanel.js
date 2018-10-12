@@ -340,4 +340,10 @@ export default class FilterReduceChartsPanel extends Panel
             histogramDivIDs: histogramDivIDs
         };
     }
+
+    resize()
+    {
+        console.log("resizing filterreducechartspanel")
+        // todo implement resize
+    }
 }

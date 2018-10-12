@@ -61,4 +61,19 @@ export default class FilterReduceTablePanel extends Panel
           infoDivID: infoDiv.id
         };
     }
+
+    resize()
+    {
+        let panelDiv = $("#" + this._target);
+        if (panelDiv.height() != this._lastOperatorSize.height) {
+            console.log("resize:", $("#" + this._target).height(), this._lastOperatorSize.height)
+            $("#" + this._target + " .dataTables_scrollBody").css(
+                'height', ($("#" + this._target).height() - 190) + "px"
+            );
+        }
+
+        // Store size of panel at time of last render.
+        this._lastOperatorSize.width = panelDiv.width();
+        this._lastOperatorSize.height = panelDiv.height();
+    }
 }

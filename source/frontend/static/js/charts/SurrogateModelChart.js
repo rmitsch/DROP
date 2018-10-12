@@ -22,8 +22,6 @@ export default class SurrogateModelChart extends Chart
     constructor(name, panel, attributes, dataset, style, parentDivID)
     {
         super(name, panel, attributes, dataset, style, parentDivID);
-        // Store size of panel at time of last render.
-        this._lastOperatorSize = {width: 0, height: 0};
 
         // Construct graph.
         this.constructCFChart();
