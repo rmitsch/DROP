@@ -22,7 +22,7 @@ export default class DissonanceChart extends Chart
     {
         super(name, panel, attributes, dataset, style, parentDivID);
 
-        // Constant width in pixel heatmap SVG is too wide.
+        // Constant width in pixel heatmap SVG is too large.
         this._heatmapCutoff = 20;
         // Constant for color scheme.
         this._colorScheme = ["#fff", "#fff7fb","#ece7f2","#d0d1e6","#a6bddb","#74a9cf","#3690c0","#0570b0","#045a8d","#023858"];
@@ -83,11 +83,11 @@ export default class DissonanceChart extends Chart
         let numRows         = this._dataset._binCounts.y;
         // Use heatmap width and height as yard stick for histograms.
         let newHeight       = Math.floor(
-            ($("#" + this._panel._target).height() * 0.9 - 55) / numRows
+            ($("#" + this._panel._target).height() * 1 - 90) / numRows
         ) * numRows;
         let newWidth        = Math.floor(
-            $("#" + this._target).width() * 0.95 / numCols
-        ) * numCols;
+            ($("#" + this._target).width()) / numCols
+        ) * numCols + 30;
 
         // -------------------------------
         // 1. Render horizontal histogram.
@@ -199,9 +199,9 @@ export default class DissonanceChart extends Chart
         // Forward cell selection to filter mechanism in DissonanceDataset.
         this._dissonanceHeatmap.boxOnClick(function (d) {
             dc.events.trigger(function () {
-                dataset.addToHeatmapCellSelection(d.key)
-                scope._dissonanceHeatmap.filter(d.key);
-                scope._dissonanceHeatmap.redrawGroup();
+                // dataset.addToHeatmapCellSelection(d.key)
+                // scope._dissonanceHeatmap.filter(d.key);
+                // scope._dissonanceHeatmap.redrawGroup();
             });
         });
 
@@ -244,6 +244,7 @@ export default class DissonanceChart extends Chart
             .dimension(dimensions[xAttribute + "#sort"])
             .group(dataset._cf_groups[yAttribute])
             .margins({top: 5, right: 5, bottom: 5, left: 40})
+            .brushOn(false)
             .gap(0);
 
         // Set bar width.
@@ -287,6 +288,7 @@ export default class DissonanceChart extends Chart
             .filterOnBrushEnd(true)
             .dimension(dimensions[xAttribute + "#sort"])
             .group(dataset._cf_groups[yAttribute])
+            .brushOn(false)
             .margins({top: 5, right: 5, bottom: 5, left: 35})
             .gap(0);
 
@@ -338,7 +340,7 @@ export default class DissonanceChart extends Chart
 
         // Create axis labels.
         let xAxisLabel = Utils.spawnChildDiv(
-            this._target, null, "dissonance-chart-x-axis-label", "Sample-in-embedding quality"
+            this._target, null, "dissonance-chart-x-axis-label", "Metric per record in embedding"
         );
         let yAxisLabel = Utils.spawnChildDiv(
             this._target, null, "dissonance-chart-y-axis-label", "Embedding quality"
@@ -419,5 +421,18 @@ export default class DissonanceChart extends Chart
             dataset._sortSettings.heatmap
         ));
         this._dissonanceHeatmap.render();
+    }
+
+    resize()
+    {
+        let panelDiv = $("#" + this._target);
+        if (panelDiv.height() != this._lastOperatorSize.height ||
+            panelDiv.width() != this._lastOperatorSize.width) {
+            this.render();
+        }
+
+        // Store size of panel at time of last render.
+        this._lastOperatorSize.width = panelDiv.width();
+        this._lastOperatorSize.height = panelDiv.height();
     }
 }

@@ -35,7 +35,7 @@ export default class DissonanceOperator extends Operator
     {
         // 1. Construct panel for surrogate model visualization.
         let dissPanel = new DissonancePanel(
-            "Sample-in-Embedding Quality",
+            "Pointwise Quality",
             this
         );
         this._panels[dissPanel.name] = dissPanel;
@@ -51,6 +51,13 @@ export default class DissonanceOperator extends Operator
     {
         for (let panelName in this._panels) {
             this._panels[panelName].render();
+        }
+    }
+
+    resize()
+    {
+        for (let panelName in this._panels) {
+            this._panels[panelName].resize();
         }
     }
 }

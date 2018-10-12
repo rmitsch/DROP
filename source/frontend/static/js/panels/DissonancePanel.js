@@ -87,6 +87,11 @@ export default class DissonancePanel extends Panel
         this._chart.render();
     }
 
+    resize()
+    {
+        this._chart.resize();
+    }
+
     processSettingsChange(delta)
     {
         this._chart.orderBy(delta);

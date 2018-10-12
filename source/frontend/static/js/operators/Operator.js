@@ -52,7 +52,9 @@ export default class Operator
      */
     render()
     {
-        throw new TypeError("Operator.render(): Abstract method must not be called.");
+        for (let panelName in this._panels) {
+            this._panels[panelName].render();
+        }
     }
 
     /**
@@ -60,7 +62,9 @@ export default class Operator
      */
     resize()
     {
-        throw new TypeError("Operator.resize(): Abstract method must not be called.");
+        for (let panelName in this._panels) {
+            this._panels[panelName].render();
+        }
     }
 
     /**

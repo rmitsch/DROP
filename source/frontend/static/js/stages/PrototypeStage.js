@@ -146,6 +146,7 @@ export default class PrototypeStage extends Stage
                         onDragEnd: function() {
                             scope._operators["SurrogateModel"].resize();
                             scope._operators["FilterReduce"].resize();
+                            scope._operators["Dissonance"].resize();
                         }
                     }
                 );
@@ -161,6 +162,7 @@ export default class PrototypeStage extends Stage
                         onDragEnd: function() {
                             scope._operators["SurrogateModel"].resize();
                             scope._operators["FilterReduce"].resize();
+                            scope._operators["Dissonance"].resize();
                         }
                     }
                 );
