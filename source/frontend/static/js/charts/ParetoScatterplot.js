@@ -40,7 +40,7 @@ export default class ParetoScatterplot extends Scatterplot
         this._cf_chart.render();
 
         if (this._useBinning)
-            this._drawHexagonalHeatmap(this._hexHeatmapContainerID);
+            this._drawHexagonalHeatmap();
     }
 
     constructCFChart()
@@ -151,7 +151,6 @@ export default class ParetoScatterplot extends Scatterplot
         d3.select("#" + this._hexHeatmapContainerID).append("svg").attr("width", "100%").attr("height", "100%");
         svg = d3.select("#" + this._hexHeatmapContainerID).select("svg");
 
-
         // --------------------------------------
         // 2. Update size of container div and
         // SVG.
@@ -160,7 +159,7 @@ export default class ParetoScatterplot extends Scatterplot
         // Container div.
         let heatmapContainer = $("#" + this._hexHeatmapContainerID);
         heatmapContainer.width(this._cf_chart.width() - this._cf_chart.margins().left - 1);
-        heatmapContainer.height(this._cf_chart.height() - this._cf_chart.margins().bottom - 1);
+        heatmapContainer.height(this._cf_chart.height() - this._cf_chart.margins().bottom - 2);
         heatmapContainer.css("left", this._cf_chart.margins().left);
         // SVG.
         heatmapContainer.find("svg")[0].setAttribute('width', heatmapContainer.width());
@@ -259,5 +258,20 @@ export default class ParetoScatterplot extends Scatterplot
             .attr("d", hexbin.hexagon())
             .attr("transform", d => "translate(" + d.x + "," + d.y + ")" )
             .attr("fill", d => colors(d.length) );
+    }
+
+    resize(height = -1, width = -1) {
+        if (height !== -1)
+            this._cf_chart.height(height);
+        if (width !== -1)
+            this._cf_chart.width(width);
+
+        if (this._useBinning)
+            $("#" + this._hexHeatmapContainerID).remove();
+        this._cf_chart.render();
+        if (this._useBinning) {
+            this._hexHeatmapContainerID = Utils.spawnChildDiv(this._target, null, 'pareto-scatterplot-hexheatmap').id;
+            this._drawHexagonalHeatmap();
+        }
     }
 }

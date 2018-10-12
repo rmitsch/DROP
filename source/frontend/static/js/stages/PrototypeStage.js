@@ -67,7 +67,7 @@ export default class PrototypeStage extends Stage
                 scope._datasets["dissonance"]       = new DissonanceDataset(
                     "Dissonance Dataset",
                     values[1],
-                    {x: 20, y: 10},
+                    {x: 10, y: 10},
                     scope._datasets["modelMetadata"],
                     "r_nx"
                 );
@@ -158,7 +158,8 @@ export default class PrototypeStage extends Stage
                     ["#" + splitTopDiv.id, "#" + splitBottomDiv.id],
                     {
                         direction: "vertical",
-                        sizes: [57, 43],
+                        sizes: [52, 48],
+                        minSize: [0.45 * $(document).height(), 10],
                         onDragEnd: function() {
                             scope._operators["SurrogateModel"].resize();
                             scope._operators["FilterReduce"].resize();

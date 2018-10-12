@@ -42,4 +42,14 @@ export default class Histogram extends Chart
     {
         throw new TypeError("Histogram.constructCFChart(): Abstract method must not be called.");
     }
+
+    resize(height = -1, width = -1)
+    {
+        if (height !== -1)
+            this._cf_chart.height(height);
+        if (width !== -1)
+            this._cf_chart.width(width);
+
+        this._cf_chart.render();
+    }
 }

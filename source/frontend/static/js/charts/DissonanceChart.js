@@ -83,11 +83,11 @@ export default class DissonanceChart extends Chart
         let numRows         = this._dataset._binCounts.y;
         // Use heatmap width and height as yard stick for histograms.
         let newHeight       = Math.floor(
-            ($("#" + this._panel._target).height() * 1 - 90) / numRows
+            ($("#" + this._panel._target).height() - 90) / numRows
         ) * numRows;
         let newWidth        = Math.floor(
             ($("#" + this._target).width()) / numCols
-        ) * numCols + 30;
+        ) * numCols - 140;
 
         // -------------------------------
         // 1. Render horizontal histogram.

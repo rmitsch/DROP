@@ -54,8 +54,9 @@ export default class Utils
      */
     static spawnChildSpan(parentDivID, childSpanID, childSpanCSSClasses, text)
     {
+
         let span        = document.createElement('span');
-        span.id         = (typeof childSpanID == "undefined") || (childSpanID == null) ? Utils.uuidv4() : childDivID;
+        span.id         = (typeof childSpanID == "undefined") || (childSpanID == null) ? Utils.uuidv4() : childSpanID;
         span.className  = childSpanCSSClasses;
         if (text != null && typeof text != "undefined")
             span.innerHTML = text;

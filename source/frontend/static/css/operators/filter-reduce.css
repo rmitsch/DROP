@@ -10,6 +10,7 @@
 
 .filter-reduce-charts-container {
     display: inline-block;
+    height: calc(100% - 25px - 10px);
     min-width: 20px;
     width: 7.3%;
     margin-top: 25px;
@@ -26,7 +27,7 @@
 
 .filter-reduce-row-label {
     display: block;
-    font-size: 16px;
+    font-size: 15px;
     text-align: right;
     width: 0px;
     height: 10px;
@@ -35,7 +36,7 @@
 }
 
 .filter-reduce-charts-container .title {
-    font-size: 16px;
+    font-size: 15px;
     text-align: center;
     position: absolute;
     top: -25px;
@@ -72,9 +73,11 @@ span.filter-reduce-row-label-text {
 }
 
 .filter-reduce-charts-panel {
+    height: 100%;
 }
 
 .filter-reduce-table-panel {
+    height: 100%;
     display: block;
     position: relative;
     margin: 0;

@@ -280,7 +280,9 @@ export default class FilterReduceChartsPanel extends Panel
         let labelContainer = Utils.spawnChildDiv(this._target, null, 'filter-reduce-labels-container');
         // Add labels to container.
         for (let objective of dataset.metadata.objectives) {
-            let label = Utils.spawnChildDiv(labelContainer.id, null, 'filter-reduce-row-label');
+            let label = Utils.spawnChildDiv(
+                labelContainer.id, "filter-reduce-row-label-" + objective, 'filter-reduce-row-label'
+            );
             Utils.spawnChildSpan(
                 label.id,
                 null,
@@ -299,11 +301,18 @@ export default class FilterReduceChartsPanel extends Panel
         // Iterate over all attributes.
         let i = 0;
         for (let attribute of hyperparameters.concat(dataset.metadata.objectives)) {
-            let div = Utils.spawnChildDiv(this._target, null, "filter-reduce-charts-container");
+            let div = Utils.spawnChildDiv(
+                this._target, null, "filter-reduce-charts-container"
+            );
             containerDivIDs[attribute] = div.id;
 
             // Add column label/title.
-            let titleDiv = Utils.spawnChildDiv(div.id, null, "title", Dataset.translateAttributeNames()[attribute]);
+            let titleDiv = Utils.spawnChildDiv(
+                div.id,
+                "filter-reduce-title-" + attribute,
+                dataset.metadata.objectives.includes(attribute) ? "title objective" : "title hyperparameter",
+                Dataset.translateAttributeNames()[attribute]
+            );
             // Place column title accordingly.
             let numberOfPlaceholders = Math.max(i - hyperparameters.length + 1, 0);
             $("#" + titleDiv.id).css({"top": (-25 + 69 * numberOfPlaceholders)  + "px"});
@@ -343,7 +352,25 @@ export default class FilterReduceChartsPanel extends Panel
 
     resize()
     {
-        console.log("resizing filterreducechartspanel")
-        // todo implement resize
+        let chartContainerHeight = $(
+            "#" + this._containerDivIDs[Object.keys(this._containerDivIDs)[0]]
+        ).height();
+        let metadata = this._operator.dataset.metadata;
+
+        let chartHeight = Math.floor(chartContainerHeight / (this._operator.dataset.metadata.objectives.length + 1.5));
+        $(".chart-placeholder").css("height", chartHeight + "px");
+
+        // Resize charts.
+        for (let chartName in this._charts) {
+            this._charts[chartName].resize(chartHeight);
+        }
+
+        // Reposition chart column and row titles.
+        for (let i = 0; i < metadata.objectives.length; i++) {
+            $("#filter-reduce-title-" + metadata.objectives[i]).css("top", (i + 1) * chartHeight - 20);
+        }
+        $(".filter-reduce-labels-container").css("margin-top", (chartHeight) + "px");
+        $(".filter-reduce-row-label").css("margin-bottom", (chartHeight - 6) + "px");
+        $(".filter-reduce-row-label-text").css("padding-top", (chartHeight / 2) + "px");
     }
 }
