@@ -23,6 +23,7 @@ export default class DRMetaDataset extends Dataset
         this._dataIndicesByID   = {};
         this._metadata          = metadata;
         this._binCount          = binCount;
+        this._binCountSSP       = 10;
 
         // Extract categorical hyperparameter for later shorthand usage.
         this._categoricalHyperparameterSet = this._extractCategoricalHyperparameters();
@@ -31,6 +32,10 @@ export default class DRMetaDataset extends Dataset
         for (let i = 0; i < this._data.length; i++) {
             this._dataIndicesByID[this._data[i].id] = i;
         }
+
+        // todo Bin data for scatterplots, base all dimensions and groups on binned dataset.
+        //
+        this._binDataByMetrics();
 
         // Translate categorical variables into numerical ones; store maps for translation.
         this._categoricalToNumericalValues = {};
@@ -53,6 +58,50 @@ export default class DRMetaDataset extends Dataset
         // Since for the intended use case (i. e. DROP) it is to be expected to need series variant w.r.t. each possible
         // hyperparameter, in makes sense to calculate all of them beforehand.
         this._seriesMappingByHyperparameter = this._generateSeriesMappingForHyperparameters();
+    }
+
+    /**
+     * Bin data by floored metric values to reduce number of records.
+     * @private
+     */
+    _binDataByMetrics()
+    {
+        // ---------------------------------------------------
+        // 1. Find extrema for each objective.
+        // ---------------------------------------------------
+
+        let extrema = {};
+        for (let obj of this._metadata.objectives) {
+            extrema[obj] = {max: -Infinity, min: Infinity};
+        }
+
+        for (let record of this._data) {
+            for (let obj of this._metadata.objectives) {
+                extrema[obj].min = extrema[obj].min <= record[obj] ? extrema[obj].min : record[obj];
+                extrema[obj].max = extrema[obj].max >= record[obj] ? extrema[obj].max : record[obj];
+            }
+        }
+
+        // Calculate intervals.
+        for (let obj of this._metadata.objectives) {
+            extrema[obj].binInterval = (extrema[obj].max - extrema[obj].min) / this._binCountSSP;
+        }
+
+        // ---------------------------------------------------
+        // 2. Group records by bin values; keep count by bin.
+        // ---------------------------------------------------
+
+        let recordAggregation = [];
+        for (let record of this._data) {
+            let rc = JSON.parse(JSON.stringify(record));
+            for (let obj of this._metadata.objectives) {
+                rc[obj] = Utils.floor(rc[obj], extrema[obj].binInterval);
+            }
+            recordAggregation.push(rc);
+        }
+
+        // todo group by measure and hyperparam values: https://stackoverflow.com/questions/14446511/what-is-the-most-efficient-method-to-groupby-on-a-javascript-array-of-objects
+        // or do a manual group by (serialized arrays(
     }
 
     /**
@@ -88,16 +137,17 @@ export default class DRMetaDataset extends Dataset
     }
 
     /**
-     * Calculates extrema for all histogram dimensions/groups.
+     * Calculates extrema for specified dimensions/groups.
      * @param attribute
+     * @param prefix
      * @param dataType "categorical" or "numerical". Distinction is necessary due to diverging structure of histogram
      * data.
      */
-    _calculateHistogramExtremaForAttribute(attribute, dataType)
+    _calculateExtremaForAttribute(attribute, prefix, dataType)
     {
         // Calculate extrema for histograms.
-        let histogramAttribute  = attribute + "#histogram";
-        let sortedData          = JSON.parse(JSON.stringify(this._cf_groups[histogramAttribute].all()))
+        let modifiedAttribute   = attribute + prefix;
+        let sortedData          = JSON.parse(JSON.stringify(this._cf_groups[modifiedAttribute].all()))
 
         // Sort data by number of entries in this attribute's histogram.
         sortedData.sort(function(entryA, entryB) {
@@ -108,16 +158,16 @@ export default class DRMetaDataset extends Dataset
         });
 
         // Determine extrema.
-        this._cf_extrema[histogramAttribute] = {
+        this._cf_extrema[modifiedAttribute] = {
             min: ((dataType === "numerical") ? sortedData[0].value.count : sortedData[0].value),
             max: ((dataType === "numerical") ? sortedData[sortedData.length - 1].value.count : sortedData[sortedData.length - 1].value)
         };
 
         // Update extrema by padding values (hardcoded to 10%) for x-axis.
-        this._cf_intervals[histogramAttribute]   = this._cf_extrema[histogramAttribute].max - this._cf_extrema[histogramAttribute].min;
+        this._cf_intervals[modifiedAttribute]   = this._cf_extrema[modifiedAttribute].max - this._cf_extrema[modifiedAttribute].min;
         if (this._axisPaddingRatio > 0) {
-            this._cf_extrema[histogramAttribute].min -= this._cf_intervals[histogramAttribute] / this._axisPaddingRatio;
-            this._cf_extrema[histogramAttribute].max += this._cf_intervals[histogramAttribute] / this._axisPaddingRatio;
+            this._cf_extrema[modifiedAttribute].min -= this._cf_intervals[modifiedAttribute] / this._axisPaddingRatio;
+            this._cf_extrema[modifiedAttribute].max += this._cf_intervals[modifiedAttribute] / this._axisPaddingRatio;
         }
     }
 
@@ -200,7 +250,7 @@ export default class DRMetaDataset extends Dataset
                 );
 
                 // Calculate extrema.
-                this._calculateHistogramExtremaForAttribute(attribute, "numerical");
+                this._calculateExtremaForAttribute(attribute, "#histogram", "numerical");
             }
 
             // Else if this is a categorical hyperparameter: Return value itself.
@@ -213,7 +263,7 @@ export default class DRMetaDataset extends Dataset
                 this._cf_groups[attribute + "#histogram"] = this._cf_dimensions[attribute + "#histogram"].group().reduceCount();
 
                 // Calculate extrema.
-                this._calculateHistogramExtremaForAttribute(attribute, "categorical");
+                this._calculateExtremaForAttribute(attribute, "#histogram", "categorical");
             }
 
         }
@@ -235,7 +285,7 @@ export default class DRMetaDataset extends Dataset
             // Check if attribute is a categorical hyperparameter.
             // Use suffix "*" if attribute is categorical (and hence its numerical representation is to be used in
             // scatterplots).
-            let processedAttribute1         = attribute1 + (categoricalHyperparameters.has(attribute1) ? "*" : "");
+            let processedAttribute1 = attribute1 + (categoricalHyperparameters.has(attribute1) ? "*" : "");
 
             for (let attribute2 of this._metadata.objectives) {
                 let combinedKey     = processedAttribute1 + ":" + attribute2;
@@ -248,7 +298,7 @@ export default class DRMetaDataset extends Dataset
                     !(transposedKey in this._cf_dimensions) &&
                     attribute1 !== attribute2
                 ) {
-                    // Create combined dimension (for scatterplot).
+                    // Create combined dimension (for scatterplot)..
                     this._cf_dimensions[combinedKey] = this._crossfilter.dimension(
                         function(d) {
                             return [d[processedAttribute1], d[attribute2]];
@@ -282,6 +332,8 @@ export default class DRMetaDataset extends Dataset
      */
     _generateGroupWithCounts(attribute, primitiveAttributes)
     {
+        // console.log("************", attribute, primitiveAttributes);
+        // console.log(this._cf_dimensions[attribute].top(Infinity));
         return this._cf_dimensions[attribute].group().reduce(
             function(elements, item) {
                elements.items.push(item);

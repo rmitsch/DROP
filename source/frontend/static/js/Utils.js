@@ -149,4 +149,30 @@ export default class Utils
 
         return result;
     }
+
+    /**
+     * Round value to nearest step.
+     * @param value
+     * @param step
+     * @returns {number}
+     */
+    static round(value, step)
+    {
+        step || (step = 1.0);
+        let inv = 1.0 / step;
+        return Math.round(value * inv) / inv;
+    }
+
+    /**
+     * Round value to nearest step.
+     * @param value
+     * @param step
+     * @returns {number}
+     */
+    static floor(value, step)
+    {
+        step || (step = 1.0);
+        let inv = 1.0 / step;
+        return Math.floor(value * inv) / inv;
+    }
 }
