@@ -61,7 +61,7 @@ export default class DRMetaDataset extends Dataset
     }
 
     /**
-     * Bin data by floored metric values to reduce number of records.
+     * Bin data by metric & objective values.
      * @private
      */
     _binDataByMetrics()
@@ -71,37 +71,156 @@ export default class DRMetaDataset extends Dataset
         // ---------------------------------------------------
 
         let extrema = {};
-        for (let obj of this._metadata.objectives) {
-            extrema[obj] = {max: -Infinity, min: Infinity};
+        let attributes = Utils.unfoldHyperparameterObjectList(this._metadata.hyperparameters).concat(this._metadata.objectives);
+
+        for (let attribute of attributes) {
+            extrema[attribute] = {max: -Infinity, min: Infinity};
         }
 
         for (let record of this._data) {
-            for (let obj of this._metadata.objectives) {
-                extrema[obj].min = extrema[obj].min <= record[obj] ? extrema[obj].min : record[obj];
-                extrema[obj].max = extrema[obj].max >= record[obj] ? extrema[obj].max : record[obj];
+            for (let attr of attributes) {
+                extrema[attr].min = extrema[attr].min <= record[attr] ? extrema[attr].min : record[attr];
+                extrema[attr].max = extrema[attr].max >= record[attr] ? extrema[attr].max : record[attr];
             }
         }
 
-        // Calculate intervals.
-        for (let obj of this._metadata.objectives) {
-            extrema[obj].binInterval = (extrema[obj].max - extrema[obj].min) / this._binCountSSP;
+        let groupedRecords = this.determineRoundedAttributeValues(extrema, 0.0001);
+
+        // ---------------------------------------------------
+        // 2. For each record: Match up with corresponding
+        // bin for all attributes.
+        // ---------------------------------------------------
+
+        let numericAttributes       = JSON.parse(JSON.stringify(this._metadata.objectives));
+        let categoricalAttributes   = [];
+        for (let hp of this._metadata.hyperparameters) {
+            if (hp.type === "numeric")
+                numericAttributes.push(hp.name);
+            else
+                categoricalAttributes.push(hp.name);
         }
 
-        // ---------------------------------------------------
-        // 2. Group records by bin values; keep count by bin.
-        // ---------------------------------------------------
-
-        let recordAggregation = [];
+        // todo
+        //  * Next: associate cat. values with bins.
+        //  * Build hyp/obj, obj/obj combinations, construct ndx datasets.
+        //  * Introduce central ID repository for filtering.
+        //  * Use new datasets for plotting in charts.
+        //  * Sketch intra-panel B+L.
+        //  * Sketch intra-operator B+L.
+        //  * Sketch inter-operator B+L.
+        
+        console.log(groupedRecords)
         for (let record of this._data) {
-            let rc = JSON.parse(JSON.stringify(record));
-            for (let obj of this._metadata.objectives) {
-                rc[obj] = Utils.floor(rc[obj], extrema[obj].binInterval);
+            for (let attr of numericAttributes) {
+                for (let i = 0; i < groupedRecords[attr].length; i++) {
+                    if (record[attr] < groupedRecords[attr][i].value) {
+                        groupedRecords[attr][i - 1].ids.add(record.id);
+                        break;
+                    }
+                    else if (record[attr] === groupedRecords[attr][i].value) {
+                        groupedRecords[attr][i].ids.add(record.id);
+                        break;
+                    }
+                }
             }
-            recordAggregation.push(rc);
+        }
+        console.log(groupedRecords)
+        // group for each hyp/obj, obj/obj combination.
+
+        // for (let record of this._data) {
+        //     let rc = JSON.parse(JSON.stringify(record));
+        //     for (let obj of this._metadata.objectives) {
+        //         rc[obj] = Utils.floor(rc[obj], extrema[obj].binInterval);
+        //     }
+        //     delete rc.id;
+        //     delete rc.num_records;
+        //     for (let obj of this._metadata.hyperparameters)
+        //         delete rc[obj];
+        //     let rcKey = JSON.stringify(rc);
+        //
+        //     if (!(rcKey in groupedRecords)) {1
+        //         groupedRecords[rcKey] = {
+        //             count: 1, ids: [record.id]
+        //         };
+        //     }
+        //     else {
+        //         groupedRecords[rcKey].count += 1;
+        //         groupedRecords[rcKey].ids.push(record.id);
+        //     }
+        // }
+        //
+        // // todo group by measure and hyperparam values: https://stackoverflow.com/questions/14446511/what-is-the-most-efficient-method-to-groupby-on-a-javascript-array-of-objects
+        // // or do a manual group by (serialized arrays)
+        // for (let key in groupedRecords) {
+        //     let group = groupedRecords[key];
+        //     if (group.count > 1)
+        //         console.log(group);
+        // }
+        // console.log(groupedRecords)
+        // console.log("finished binning");
+    }
+
+    /**
+     * Determine rounded values used for bins.
+     * Note: Modifies extrema by flooring them.
+     * @param extrema
+     * @param roundingStep
+     * @returns {{}} Rounded bin values for each attribute.
+     */
+    determineRoundedAttributeValues(extrema, roundingStep)
+    {
+        let roundedValuesToRecords  = {};
+
+        // Apply on objectives.
+        for (let obj of this._metadata.objectives) {
+            roundedValuesToRecords[obj] = [];
+            extrema[obj].binInterval = (extrema[obj].max - extrema[obj].min) / (this._binCountSSP - 1);
+
+            if (extrema[obj].binInterval > 0) {
+                for (let i = 0; i < this._binCountSSP; i++) {
+                    roundedValuesToRecords[obj].push({
+                        value: extrema[obj].min + i * extrema[obj].binInterval,
+                        ids: new Set()
+                    });
+                }
+            }
+            else {
+                roundedValuesToRecords[obj].push({
+                    value: extrema[obj].min,
+                    ids: new Set()
+                });
+            }
         }
 
-        // todo group by measure and hyperparam values: https://stackoverflow.com/questions/14446511/what-is-the-most-efficient-method-to-groupby-on-a-javascript-array-of-objects
-        // or do a manual group by (serialized arrays(
+        // Apply on attributes.
+        for (let hyperparam of this._metadata.hyperparameters) {
+            let hpName                      = hyperparam.name;
+            roundedValuesToRecords[hpName]  = [];
+
+            if (hyperparam.type === "numeric") {
+                let sortedHPValues = hyperparam.values.sort((a, b) => a - b);
+                extrema[hpName].binInterval = (extrema[hpName].max - extrema[hpName].min) / (this._binCountSSP - 1);
+                for (let i = 0; i < sortedHPValues.length; i++) {
+                    roundedValuesToRecords[hpName].push({
+                        value: sortedHPValues[i],
+                        ids: new Set()
+                    });
+                }
+            }
+
+            else {
+                let sortedHPValues = hyperparam.values.sort();
+
+                for (let i = 0; i < hyperparam.values.length; i++) {
+                    roundedValuesToRecords[hpName].push({
+                        value: sortedHPValues[i],
+                        ids: new Set()
+                    });
+                }
+            }
+        }
+
+        return roundedValuesToRecords;
     }
 
     /**

@@ -164,7 +164,7 @@ export default class Utils
     }
 
     /**
-     * Round value to nearest step.
+     * Floors value to nearest step.
      * @param value
      * @param step
      * @returns {number}
@@ -174,5 +174,18 @@ export default class Utils
         step || (step = 1.0);
         let inv = 1.0 / step;
         return Math.floor(value * inv) / inv;
+    }
+
+    /**
+     * Ceils value to nearest step.
+     * @param value
+     * @param step
+     * @returns {number}
+     */
+    static ceil(value, step)
+    {
+        step || (step = 1.0);
+        let inv = 1.0 / step;
+        return Math.ceil(value * inv) / inv;
     }
 }
