@@ -35,7 +35,7 @@ export default class DRMetaDataset extends Dataset
 
         // todo Bin data for scatterplots, base all dimensions and groups on binned dataset.
         //
-        this._binDataByMetrics();
+        this._binDataForSSPs();
 
         // Translate categorical variables into numerical ones; store maps for translation.
         this._categoricalToNumericalValues = {};
@@ -61,10 +61,10 @@ export default class DRMetaDataset extends Dataset
     }
 
     /**
-     * Bin data by metric & objective values.
+     * Bin data by metric & objective values for scattered scree plots.
      * @private
      */
-    _binDataByMetrics()
+    _binDataForSSPs()
     {
         // ---------------------------------------------------
         // 1. Find extrema for each objective.
@@ -84,15 +84,51 @@ export default class DRMetaDataset extends Dataset
             }
         }
 
-        let groupedRecords = this.determineRoundedAttributeValues(extrema, 0.0001);
-
         // ---------------------------------------------------
         // 2. For each record: Match up with corresponding
         // bin for all attributes.
         // ---------------------------------------------------
 
+                // todo
+        //  * Build hyp/obj, obj/obj combinations, construct ndx datasets.
+        //  * Introduce central ID repository for filtering.
+        //  * Use new datasets for plotting in charts.
+        //  * Sketch intra-panel B+L.
+        //  * Sketch intra-operator B+L.
+        //  * Sketch inter-operator B+L.
+
+        let unaryBinning = this._constructUnaryBinning(this._determineRoundedAttributeValues(extrema, 0.0001));
+        console.log(unaryBinning);
+
+        // ---------------------------------------------------
+        // 3. For all SSP attribute (hyp/obj, obj/obj)
+        // combinations, build structure containing
+        // records whose values correspond to these inter-
+        // secting sets.
+        // ---------------------------------------------------
+
+        // group for each hyp/obj, obj/obj combination.
+        let binaryBinning = this._constructBinaryBinning(unaryBinning);
+        console.log(binaryBinning);
+
+        // // todo group by measure and hyperparam values: https://stackoverflow.com/questions/14446511/what-is-the-most-efficient-method-to-groupby-on-a-javascript-array-of-objects
+
+        // console.log("finished binning");
+    }
+
+    /**
+     * Associates records' IDs with attribute bins they correspond with, thus creating an unary binning of records
+     * w.r.t. their values along each dimension.
+     * Note: Manipulates groupedRecords.
+     * @param groupedRecords
+     * @private
+     */
+    _constructUnaryBinning(groupedRecords)
+    {
         let numericAttributes       = JSON.parse(JSON.stringify(this._metadata.objectives));
         let categoricalAttributes   = [];
+        let unaryBinning            = groupedRecords;
+
         for (let hp of this._metadata.hyperparameters) {
             if (hp.type === "numeric")
                 numericAttributes.push(hp.name);
@@ -100,72 +136,67 @@ export default class DRMetaDataset extends Dataset
                 categoricalAttributes.push(hp.name);
         }
 
-        // todo
-        //  * Build hyp/obj, obj/obj combinations, construct ndx datasets.
-        //  * Introduce central ID repository for filtering.
-        //  * Use new datasets for plotting in charts.
-        //  * Sketch intra-panel B+L.
-        //  * Sketch intra-operator B+L.
-        //  * Sketch inter-operator B+L.
         for (let record of this._data) {
             // Associate numerical attributes.
             for (let attr of numericAttributes) {
-                for (let i = 0; i < groupedRecords[attr].length; i++) {
-                    if (record[attr] < groupedRecords[attr][i].value) {
-                        groupedRecords[attr][i - 1].ids.add(record.id);
+                for (let i = 0; i < unaryBinning[attr].length; i++) {
+                    if (record[attr] < unaryBinning[attr][i].value) {
+                        unaryBinning[attr][i - 1].ids.add(record.id);
                         break;
                     }
-                    else if (record[attr] === groupedRecords[attr][i].value) {
-                        groupedRecords[attr][i].ids.add(record.id);
+                    else if (record[attr] === unaryBinning[attr][i].value) {
+                        unaryBinning[attr][i].ids.add(record.id);
                         break;
                     }
                 }
             }
             // Associate categorical attributes.
             for (let attr of categoricalAttributes) {
-                for (let i = 0; i < groupedRecords[attr].length; i++) {
-                    if (record[attr] === groupedRecords[attr][i].value) {
-                        groupedRecords[attr][i].ids.add(record.id);
+                for (let i = 0; i < unaryBinning[attr].length; i++) {
+                    if (record[attr] === unaryBinning[attr][i].value) {
+                        unaryBinning[attr][i].ids.add(record.id);
                         break;
                     }
                 }
             }
-
         }
-        console.log(groupedRecords)
-        // group for each hyp/obj, obj/obj combination.
 
-        // for (let record of this._data) {
-        //     let rc = JSON.parse(JSON.stringify(record));
-        //     for (let obj of this._metadata.objectives) {
-        //         rc[obj] = Utils.floor(rc[obj], extrema[obj].binInterval);
-        //     }
-        //     delete rc.id;
-        //     delete rc.num_records;
-        //     for (let obj of this._metadata.hyperparameters)
-        //         delete rc[obj];
-        //     let rcKey = JSON.stringify(rc);
-        //
-        //     if (!(rcKey in groupedRecords)) {1
-        //         groupedRecords[rcKey] = {
-        //             count: 1, ids: [record.id]
-        //         };
-        //     }
-        //     else {
-        //         groupedRecords[rcKey].count += 1;
-        //         groupedRecords[rcKey].ids.push(record.id);
-        //     }
-        // }
-        //
-        // // todo group by measure and hyperparam values: https://stackoverflow.com/questions/14446511/what-is-the-most-efficient-method-to-groupby-on-a-javascript-array-of-objects
-        // // or do a manual group by (serialized arrays)
-        // for (let key in groupedRecords) {
-        //     let group = groupedRecords[key];
-        //     if (group.count > 1)
-        //         console.log(group);
-        // }
-        // console.log(groupedRecords)
-        // console.log("finished binning");
+        return unaryBinning;
+    }
+
+    /**
+     * Constructs binary binning for each possible combination of (attr/obj), (obj/obj) values.
+     * @param unaryBinning
+     * @returns {{}}
+     * @private
+     */
+    _constructBinaryBinning(unaryBinning)
+    {
+        let attributes = Utils.unfoldHyperparameterObjectList(this._metadata.hyperparameters).concat(this._metadata.objectives);
+        let binaryBinning = {};
+
+        for (let attr of attributes) {
+            for (let obj of this._metadata.objectives) {
+                if (attr !== obj) {
+                    binaryBinning[attr + ":" + obj] = [];
+
+                    // Combine all possible values of current attribute + obj.
+                    for (let i = 0; i < unaryBinning[attr].length; i++) {
+                        for (let j = 0; j < unaryBinning[obj].length; j++) {
+                            binaryBinning[attr + ":" + obj].push({
+                                x: unaryBinning[attr][i].value,
+                                y: unaryBinning[obj][j].value,
+                                ids: new Set([...unaryBinning[attr][i].ids].filter(
+                                    x => unaryBinning[obj][j].ids.has(x))
+                                )
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        return binaryBinning;
     }
 
     /**
@@ -174,8 +205,12 @@ export default class DRMetaDataset extends Dataset
      * @param extrema
      * @param roundingStep
      * @returns {{}} Rounded bin values for each attribute.
+     * @param extrema
+     * @param roundingStep
+     * @returns {{}}
+     * @private
      */
-    determineRoundedAttributeValues(extrema, roundingStep)
+    _determineRoundedAttributeValues(extrema, roundingStep)
     {
         let roundedValuesToRecords  = {};
 
@@ -183,7 +218,6 @@ export default class DRMetaDataset extends Dataset
         for (let obj of this._metadata.objectives) {
             roundedValuesToRecords[obj] = [];
             extrema[obj].binInterval = (extrema[obj].max - extrema[obj].min) / (this._binCountSSP - 1);
-
             if (extrema[obj].binInterval > 0) {
                 for (let i = 0; i < this._binCountSSP; i++) {
                     roundedValuesToRecords[obj].push({
@@ -208,6 +242,7 @@ export default class DRMetaDataset extends Dataset
             if (hyperparam.type === "numeric") {
                 let sortedHPValues = hyperparam.values.sort((a, b) => a - b);
                 extrema[hpName].binInterval = (extrema[hpName].max - extrema[hpName].min) / (this._binCountSSP - 1);
+
                 for (let i = 0; i < sortedHPValues.length; i++) {
                     roundedValuesToRecords[hpName].push({
                         value: sortedHPValues[i],
