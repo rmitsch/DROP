@@ -101,16 +101,14 @@ export default class DRMetaDataset extends Dataset
         }
 
         // todo
-        //  * Next: associate cat. values with bins.
         //  * Build hyp/obj, obj/obj combinations, construct ndx datasets.
         //  * Introduce central ID repository for filtering.
         //  * Use new datasets for plotting in charts.
         //  * Sketch intra-panel B+L.
         //  * Sketch intra-operator B+L.
         //  * Sketch inter-operator B+L.
-        
-        console.log(groupedRecords)
         for (let record of this._data) {
+            // Associate numerical attributes.
             for (let attr of numericAttributes) {
                 for (let i = 0; i < groupedRecords[attr].length; i++) {
                     if (record[attr] < groupedRecords[attr][i].value) {
@@ -123,6 +121,16 @@ export default class DRMetaDataset extends Dataset
                     }
                 }
             }
+            // Associate categorical attributes.
+            for (let attr of categoricalAttributes) {
+                for (let i = 0; i < groupedRecords[attr].length; i++) {
+                    if (record[attr] === groupedRecords[attr][i].value) {
+                        groupedRecords[attr][i].ids.add(record.id);
+                        break;
+                    }
+                }
+            }
+
         }
         console.log(groupedRecords)
         // group for each hyp/obj, obj/obj combination.
