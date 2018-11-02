@@ -24,26 +24,22 @@ export default class DRMetaDataset extends Dataset
         this._metadata          = metadata;
         this._binCount          = binCount;
         this._binCountSSP       = 10;
+        // Maps for translation of categorical variables into numerical ones.
+        this._categoricalToNumericalValues = {};
+        this._numericalToCategoricalValues = {};
 
         // Extract categorical hyperparameter for later shorthand usage.
         this._categoricalHyperparameterSet = this._extractCategoricalHyperparameters();
 
-        // Store ID-to-index references for data elements.
-        for (let i = 0; i < this._data.length; i++) {
-            this._dataIndicesByID[this._data[i].id] = i;
-        }
+        // Update record metadata before further preprocessing.
+        this._updateRecordMetadata();
 
         // todo Bin data for scatterplots, base all dimensions and groups on binned dataset.
-        //
+        this._crossfilterData = {};
         this._binDataForSSPs();
 
-        // Translate categorical variables into numerical ones; store maps for translation.
-        this._categoricalToNumericalValues = {};
-        this._numericalToCategoricalValues = {};
-        this._discretizeCategoricalHyperparameters();
-
         // Set up containers for crossfilter data.
-        this._crossfilter   = crossfilter(this._data);
+        this._crossfilter = crossfilter(this._data);
 
         // Set up singular dimensions (one dimension per attribute).
         this._initSingularDimensionsAndGroups();
@@ -61,6 +57,35 @@ export default class DRMetaDataset extends Dataset
     }
 
     /**
+     * Executes various tasks necessary before data can be preprocessed further.
+     * Specifically:
+     *  - Adds ID to individual records in this._data.
+     *  - Updates this._metadata.hyperparameters[x].values with correct values as a workaround for bug in backend
+     *    (transmttted hyperparameter values don't necessarily correspond with actual values, since they are hardcoded).
+     * @private
+     */
+    _updateRecordMetadata()
+    {
+        // Store ID-to-index references for data elements.
+        // Also: Collect hyperparameter values to update this._metadata.hyperparameters[x].values.
+        let distinctHypValues = {};
+        for (let hyp of this._metadata.hyperparameters)
+            distinctHypValues[hyp.name] = new Set();
+        for (let i = 0; i < this._data.length; i++) {
+            this._dataIndicesByID[this._data[i].id] = i;
+            for (let hyp of this._metadata.hyperparameters)
+                distinctHypValues[hyp.name].add(this._data[i][hyp.name]);
+        }
+        // Update this._metadata.hyperparameters[x].values as workaround for bug in backend.
+        for (let hyp of this._metadata.hyperparameters) {
+            hyp.values = Array.from(distinctHypValues[hyp.name]).sort();
+        }
+
+        // Create numerical representations of categorical hyperparameters.
+        this._discretizeCategoricalHyperparameters();
+    }
+
+    /**
      * Bin data by metric & objective values for scattered scree plots.
      * @private
      */
@@ -71,7 +96,7 @@ export default class DRMetaDataset extends Dataset
         // ---------------------------------------------------
 
         let extrema = {};
-        let attributes = Utils.unfoldHyperparameterObjectList(this._metadata.hyperparameters).concat(this._metadata.objectives);
+        let attributes  = Utils.unfoldHyperparameterObjectList(this._metadata.hyperparameters).concat(this._metadata.objectives);
 
         for (let attribute of attributes) {
             extrema[attribute] = {max: -Infinity, min: Infinity};
@@ -89,16 +114,7 @@ export default class DRMetaDataset extends Dataset
         // bin for all attributes.
         // ---------------------------------------------------
 
-                // todo
-        //  * Build hyp/obj, obj/obj combinations, construct ndx datasets.
-        //  * Introduce central ID repository for filtering.
-        //  * Use new datasets for plotting in charts.
-        //  * Sketch intra-panel B+L.
-        //  * Sketch intra-operator B+L.
-        //  * Sketch inter-operator B+L.
-
-        let unaryBinning = this._constructUnaryBinning(this._determineRoundedAttributeValues(extrema, 0.0001));
-        console.log(unaryBinning);
+        let unaryBinning = this._constructUnaryBinning(this._determineBins(extrema));
 
         // ---------------------------------------------------
         // 3. For all SSP attribute (hyp/obj, obj/obj)
@@ -109,11 +125,75 @@ export default class DRMetaDataset extends Dataset
 
         // group for each hyp/obj, obj/obj combination.
         let binaryBinning = this._constructBinaryBinning(unaryBinning);
-        console.log(binaryBinning);
 
-        // // todo group by measure and hyperparam values: https://stackoverflow.com/questions/14446511/what-is-the-most-efficient-method-to-groupby-on-a-javascript-array-of-objects
+        // ---------------------------------------------------
+        // 4. Create crossfilter.js dimensions and groups
+        // from binarily binned groups.
+        // ---------------------------------------------------
+
+        this._constructDimensionsAndGroups(unaryBinning, binaryBinning);
+
+        // todo
+        //  * Use new datasets for plotting in charts.
+        //  * Sketch intra-panel B+L.
+        //  * Introduce central ID repository for filtering.
+        //  * Sketch intra-operator B+L.
+        //  * Sketch inter-operator B+L.
 
         // console.log("finished binning");
+    }
+
+    _constructDimensionsAndGroups(unaryBinning, binaryBinning)
+    {
+        for (let attrCombination of Object.keys(binaryBinning)) {
+            let splitAttributes = attrCombination.split(":");
+
+            // Initialize unary constellations, if not defined yet.
+            for (let attribute of splitAttributes) {
+                if (!(attribute in this._crossfilterData)) {
+                    let cf = crossfilter(unaryBinning[attribute]);
+
+                    // Initialize data for attribute.
+                    this._crossfilterData[attribute] = {
+                        crossfilter: cf,
+                        dimensions: {
+                            x: this._initSingularDimension_forCrossfilter(cf)
+                        },
+                        groups: {
+
+                            //             this._generateGroupWithCounts(
+                            //     histogramAttribute, [histogramAttribute]
+                            // );
+
+                            // Calculate extrema.
+                            // this._calculateExtremaForAttribute(attribute, "#histogram", "numerical");
+                            //         }
+                        }
+                    }
+                }
+            }
+
+            // Initialize binary constellations.
+            let cf = crossfilter(binaryBinning[attrCombination]);
+            this._crossfilterData[attrCombination] = {
+                crossfilter: cf,
+                dimensions: {
+                    xy: cf.dimension(
+                        function (d) {
+                            return [d.x, d.y];
+                        }
+                    )
+                },
+                groups: {
+                // this._generateGroupWithCounts(
+                //        combinedKey, [attribute1, attribute2]
+                //    );
+                }
+            };
+        }
+
+        // console.log(this._crossfilterData)
+        // console.log(palim)
     }
 
     /**
@@ -140,16 +220,24 @@ export default class DRMetaDataset extends Dataset
             // Associate numerical attributes.
             for (let attr of numericAttributes) {
                 for (let i = 0; i < unaryBinning[attr].length; i++) {
-                    if (record[attr] < unaryBinning[attr][i].value) {
-                        unaryBinning[attr][i - 1].ids.add(record.id);
-                        break;
-                    }
-                    else if (record[attr] === unaryBinning[attr][i].value) {
+                    if (
+                        (
+                            record[attr] >= unaryBinning[attr][i].lowerThreshold &&
+                            record[attr] < unaryBinning[attr][i].upperThreshold
+                        ) ||
+                        // Allow elements with max. value in last bin.
+                        (
+                            record[attr] > unaryBinning[attr][i].lowerThreshold &&
+                            i === unaryBinning[attr].length - 1
+                        )
+                    ) {
                         unaryBinning[attr][i].ids.add(record.id);
                         break;
                     }
                 }
+
             }
+
             // Associate categorical attributes.
             for (let attr of categoricalAttributes) {
                 for (let i = 0; i < unaryBinning[attr].length; i++) {
@@ -200,51 +288,54 @@ export default class DRMetaDataset extends Dataset
     }
 
     /**
-     * Determine rounded values used for bins.
+     * Determines bins used for bins.
      * Note: Modifies extrema by flooring them.
      * @param extrema
-     * @param roundingStep
      * @returns {{}} Rounded bin values for each attribute.
-     * @param extrema
-     * @param roundingStep
-     * @returns {{}}
      * @private
      */
-    _determineRoundedAttributeValues(extrema, roundingStep)
+    _determineBins(extrema)
     {
-        let roundedValuesToRecords  = {};
+        let binData  = {};
 
-        // Apply on objectives.
+        // Apply to objectives.
         for (let obj of this._metadata.objectives) {
-            roundedValuesToRecords[obj] = [];
-            extrema[obj].binInterval = (extrema[obj].max - extrema[obj].min) / (this._binCountSSP - 1);
+            binData[obj] = [];
+            extrema[obj].binInterval = (extrema[obj].max - extrema[obj].min) / (this._binCountSSP);
+
             if (extrema[obj].binInterval > 0) {
                 for (let i = 0; i < this._binCountSSP; i++) {
-                    roundedValuesToRecords[obj].push({
-                        value: extrema[obj].min + i * extrema[obj].binInterval,
+                    let lowerThreshold = extrema[obj].min + i * extrema[obj].binInterval;
+                    binData[obj].push({
+                        lowerThreshold: lowerThreshold,
+                        upperThreshold: extrema[obj].min + (i + 1) * extrema[obj].binInterval,
+                        value: lowerThreshold,
                         ids: new Set()
                     });
                 }
             }
+            // Workaround for when only one value available.
             else {
-                roundedValuesToRecords[obj].push({
+                binData[obj].push({
                     value: extrema[obj].min,
                     ids: new Set()
                 });
             }
         }
 
-        // Apply on attributes.
+        // Apply to attributes.
         for (let hyperparam of this._metadata.hyperparameters) {
             let hpName                      = hyperparam.name;
-            roundedValuesToRecords[hpName]  = [];
+            binData[hpName]  = [];
 
             if (hyperparam.type === "numeric") {
                 let sortedHPValues = hyperparam.values.sort((a, b) => a - b);
-                extrema[hpName].binInterval = (extrema[hpName].max - extrema[hpName].min) / (this._binCountSSP - 1);
+                extrema[hpName].binInterval = (extrema[hpName].max - extrema[hpName].min) / (sortedHPValues.length);
 
                 for (let i = 0; i < sortedHPValues.length; i++) {
-                    roundedValuesToRecords[hpName].push({
+                    binData[hpName].push({
+                        lowerThreshold: sortedHPValues[i],
+                        upperThreshold: sortedHPValues[i] + extrema[hpName].binInterval,
                         value: sortedHPValues[i],
                         ids: new Set()
                     });
@@ -255,15 +346,16 @@ export default class DRMetaDataset extends Dataset
                 let sortedHPValues = hyperparam.values.sort();
 
                 for (let i = 0; i < hyperparam.values.length; i++) {
-                    roundedValuesToRecords[hpName].push({
-                        value: sortedHPValues[i],
+                    binData[hpName].push({
+                        value: this._categoricalToNumericalValues[hpName][sortedHPValues[i]],
+                        stringValue: sortedHPValues[i],
                         ids: new Set()
                     });
                 }
             }
         }
 
-        return roundedValuesToRecords;
+        return binData;
     }
 
     /**
@@ -350,6 +442,51 @@ export default class DRMetaDataset extends Dataset
                 this._initSingularDimension(attribute + "*");
             }
         }
+    }
+
+    /**
+     * Initializes singular dimensions for given attribute and crossfilter.
+     * @param crossfilter
+     * @private
+     */
+    _initSingularDimension_forCrossfilter(crossfilter)
+    {
+        // Dimension with exact values.
+        let dim = crossfilter.dimension(
+            function(d) { return d.value; }
+        );
+
+        // Calculate extrema.
+        let res = this._calculateSingularExtremaByAttribute_forCrossfilter(dim, crossfilter);
+
+        return { dimension: dim, extrema: res.extrema, interval: res.interval }
+    }
+
+    /**
+     * Calculates singular extrema for given attribute, crossfilter dimension and crossfilter.
+     * @param dimension
+     * @param crossfilter
+     * @returns {{extrema: {min, max}, interval: number}}
+     * @private
+     */
+    _calculateSingularExtremaByAttribute_forCrossfilter(dimension, crossfilter)
+    {
+        // Calculate extrema for singular dimensions.
+        let extrema = {
+            min: dimension.bottom(1)[0].value,
+            max: dimension.top(1)[0].value
+        };
+
+        // Update extrema by padding values (hardcoded to 10%) for x-axis.
+        let interval = extrema.max - extrema.min;
+
+        // Add padding, if specified. Goal: Make also fringe elements clearly visible (other approach?).
+        if (this._axisPaddingRatio > 0) {
+            extrema.min -= interval / this._axisPaddingRatio;
+            extrema.max += interval / this._axisPaddingRatio;
+        }
+
+        return {extrema: extrema, interval: interval}
     }
 
     _initSingularDimension(attribute)
@@ -483,29 +620,17 @@ export default class DRMetaDataset extends Dataset
     }
 
     /**
-     * Generates crossfilter group with information on number of elements..
-     * @param attribute
-     * @param primitiveAttributes List of relevenat attributes in original records. Extrema information is only
-     * collected for these. Note of caution: Extrema are not to be considered reliable, since they aren't
-     * updated after splicing operations (still sufficient for barchart highlighting operations though, since barchart/
-     * group widths on x-axis don't change after splicing).
-     * @returns Newly generated group.
+     * WIP - generateGroupWithCounts() for aggregated dataset.
+     * @param dimension
+     * @param primitiveAttributes
      * @private
      */
-    _generateGroupWithCounts(attribute, primitiveAttributes)
+    _generateGroupWithCounts_forAggregated(dimension, primitiveAttributes)
     {
-        // console.log("************", attribute, primitiveAttributes);
-        // console.log(this._cf_dimensions[attribute].top(Infinity));
         return this._cf_dimensions[attribute].group().reduce(
             function(elements, item) {
                elements.items.push(item);
                elements.count++;
-
-               // Update extrema.
-               for (let attr in elements.extrema) {
-                   elements.extrema[attr].min = item[attr] < elements.extrema[attr].min ? item[attr] : elements.extrema[attr].min;
-                   elements.extrema[attr].max = item[attr] > elements.extrema[attr].max ? item[attr] : elements.extrema[attr].max;
-               }
 
                return elements;
             },
@@ -524,11 +649,38 @@ export default class DRMetaDataset extends Dataset
                 return elements;
             },
             function() {
-                let extrema = {};
-                for (let i = 0; i < primitiveAttributes.length; i++)
-                    extrema[primitiveAttributes[i]] = {min: Number.MAX_VALUE, max: -Number.MAX_VALUE}
+                return {items: [], count: 0};
+            }
+        );
+    }
+    /**
+     * Generates crossfilter group with information on number of elements..
+     * @param attribute
+     * @param primitiveAttributes List of relevenat attributes in original records. Extrema information is only
+     * collected for these. Note of caution: Extrema are not to be considered reliable, since they aren't
+     * updated after splicing operations (still sufficient for barchart highlighting operations though, since barchart/
+     * group widths on x-axis don't change after splicing).
+     * @returns Newly generated group.
+     * @private
+     */
+    _generateGroupWithCounts(attribute, primitiveAttributes)
+    {
+        return this._cf_dimensions[attribute].group().reduce(
+            function(elements, item) {
+                elements.items.add(item);
+                // elements.items.push(item);
+                elements.count++;
 
-                return {items: [], count: 0, extrema: extrema};
+                return elements;
+            },
+            function(elements, item) {
+                // elements.items.splice(elements.items.indexOf(item), 1);
+                elements.items.delete(item);
+                elements.count--;
+                return elements;
+            },
+            function() {
+                return { items: new Set(), count: 0 };
             }
         );
     }
@@ -656,7 +808,7 @@ export default class DRMetaDataset extends Dataset
 
         // -------------------------------------------------
         // 4. Second pass: Add attributes for numerical
-        // represenation in dataset.
+        // representation in dataset.
         // -------------------------------------------------
 
         // Suffix * is used to indiciate an attribute's numerical represenation.

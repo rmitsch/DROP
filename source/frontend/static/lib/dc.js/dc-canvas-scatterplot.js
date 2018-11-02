@@ -240,6 +240,8 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, useBin
 
         // Store association between data points' coordinates and their IDs (ID -> coordinates).
         let dataPointCoordinates = {};
+
+        /*
         data.forEach(function (d, i) {
             // Store coordinates.
             let x = _chart.x()(_chart.keyAccessor()(d));
@@ -293,6 +295,7 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, useBin
 
         if (!_chart.useBinning)
             plotPointsOnCanvas(context, data, dataPointCoordinates);
+        */
     }
 
     /**

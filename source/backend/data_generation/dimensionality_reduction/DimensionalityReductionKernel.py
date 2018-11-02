@@ -14,8 +14,8 @@ class DimensionalityReductionKernel:
     Represents an instance of a dimensionality reduction method.
     Currently supported: TSNE, SVD and UMAP.
     """
+
     # Supported dimensionality reduction algorithms and their parameters.
-    # Note that the
     DIM_RED_KERNELS = {
         "TSNE": {
             "parameters": [

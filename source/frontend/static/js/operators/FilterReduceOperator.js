@@ -29,8 +29,6 @@ export default class FilterReduceOperator extends Operator
 
         // Store ID of parent table div.
         this._tableParentDivID = tableParentDivID;
-        // Set flag indicating whether table are shown.
-        this._showTable = false;
 
         // Construct all necessary panels.
         this.constructPanels();
