@@ -16,6 +16,7 @@ export default class DissonanceDataset extends Dataset
      */
     constructor(name, data, binCounts, drModelMetadata, supportedDRModelMeasure)
     {
+        data = data.splice(1, 100)
         super(name, data);
 
         this._axisPaddingRatio          = 0;

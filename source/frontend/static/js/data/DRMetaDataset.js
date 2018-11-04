@@ -44,11 +44,11 @@ export default class DRMetaDataset extends Dataset
         // Set up singular dimensions (one dimension per attribute).
         this._determineExtrema();
 
-        // Set up binary dimensions (for scatterplots).
-        this._initBinaryDimensionsAndGroups(true);
-
         // Set up histogram dimensions.
         this._initHistogramDimensionsAndGroups();
+
+        // Set up binary dimensions (for scatterplots).
+        this._initBinaryDimensionsAndGroups(true);
 
         // Create series mapping.
         // Since for the intended use case (i. e. DROP) it is to be expected to need series variant w.r.t. each possible
@@ -128,7 +128,7 @@ export default class DRMetaDataset extends Dataset
     {
         // Calculate extrema for histograms.
         let modifiedAttribute   = attribute + prefix;
-        let sortedData          = JSON.parse(JSON.stringify(this._cf_groups[modifiedAttribute].all()))
+        let sortedData          = JSON.parse(JSON.stringify(this._cf_groups[modifiedAttribute].all()));
 
         // Sort data by number of entries in this attribute's histogram.
         sortedData.sort(function(entryA, entryB) {
@@ -137,7 +137,7 @@ export default class DRMetaDataset extends Dataset
 
             return countA > countB ? 1 : (countB > countA ? -1 : 0);
         });
-
+        
         // Determine extrema.
         this._cf_extrema[modifiedAttribute] = {
             min: ((dataType === "numerical") ? sortedData[0].value.count : sortedData[0].value),
@@ -198,24 +198,6 @@ export default class DRMetaDataset extends Dataset
     }
 
     /**
-     * Initializes singular dimensions for given attribute and crossfilter.
-     * @param crossfilter
-     * @private
-     */
-    _initSingularDimension_forCrossfilter(crossfilter)
-    {
-        // Dimension with exact values.
-        let dim = crossfilter.dimension(
-            function(d) { return d.value; }
-        );
-
-        // Calculate extrema.
-        let res = this._calculateSingularExtremaByAttribute_forCrossfilter(dim, crossfilter);
-
-        return { dimension: dim, extrema: res.extrema, interval: res.interval }
-    }
-
-    /**
      * Calculates singular extrema for given attribute, crossfilter dimension and crossfilter.
      * @param dimension
      * @param crossfilter
@@ -258,16 +240,18 @@ export default class DRMetaDataset extends Dataset
      */
     _initHistogramDimensionsAndGroups()
     {
-        let hyperparameters     = Utils.unfoldHyperparameterObjectList(this._metadata.hyperparameters);
-        let attributes          = hyperparameters.concat(this.metadata.objectives);
-        let instance            = this;
-        let histogramAttribute  = null;
+        let hyperparameters             = Utils.unfoldHyperparameterObjectList(this._metadata.hyperparameters);
+        let attributes                  = hyperparameters.concat(this.metadata.objectives);
+        let instance                    = this;
+        let histogramAttribute          = null;
+        let categoricalHyperparameters  = this._extractCategoricalHyperparameters();
 
         for (let i = 0; i < attributes.length; i++) {
             let attribute       = attributes[i];
             histogramAttribute  = attribute + "#histogram";
             let binWidth        = instance._cf_intervals[attribute] / this._binCount;
             let extrema         = this._cf_extrema[attribute];
+            let isCategorical   = categoricalHyperparameters.has(attribute);
 
             // Bin data for current attribute (i. e. hyperparameter or objective).
             for (let j = 0; j < this._data.length; j++) {
@@ -278,7 +262,8 @@ export default class DRMetaDataset extends Dataset
                     value = extrema.max - binWidth;
 
                 // Adjust for extrema.
-                let binnedValue = binWidth !== 0 ? Math.round((value - extrema.min) / binWidth) * binWidth : 0;
+                // Note: .round replaced with .floor. To test.
+                let binnedValue = binWidth !== 0 ? Math.floor((value - extrema.min) / binWidth) * binWidth : 0;
                 binnedValue += extrema.min;
                 if (binnedValue >= extrema.max)
                     binnedValue = extrema.max - binWidth;
@@ -317,7 +302,6 @@ export default class DRMetaDataset extends Dataset
                 // Calculate extrema.
                 this._calculateExtremaForAttribute(attribute, "#histogram", "categorical");
             }
-
         }
     }
 
@@ -339,22 +323,20 @@ export default class DRMetaDataset extends Dataset
             // scatterplots).
             let processedAttribute1 = attribute1 + (categoricalHyperparameters.has(attribute1) ? "*" : "");
 
-            for (let attribute2 of this._metadata.objectives) {
-                let combinedKey     = processedAttribute1 + ":" + attribute2;
-                let transposedKey   = attribute2 + ":" + processedAttribute1;
+            for (let obj of this._metadata.objectives) {
+                let combinedKey     = processedAttribute1 + ":" + obj;
+                let transposedKey   = obj + ":" + processedAttribute1;
 
                 // Only create new dimensions if transposed key didn't appear so far (i. e. the reverse combination
                 // didn't already appear -> for A:B check if B:A was already generated).
                 // Also: Drop auto-references (A:A).
                 if (!(combinedKey in this._cf_dimensions) &&
                     !(transposedKey in this._cf_dimensions) &&
-                    attribute1 !== attribute2
+                    attribute1 !== obj
                 ) {
-                    // Create combined dimension (for scatterplot)..
+                    // Create combined dimension (for scatterplot).
                     this._cf_dimensions[combinedKey] = this._crossfilter.dimension(
-                        function(d) {
-                            return [d[processedAttribute1], d[attribute2]];
-                        }
+                        function(d) { return [d[processedAttribute1], d[obj + "#histogram"]]; }
                     );
 
                     // Mirror dimension to transposed key.
@@ -362,7 +344,7 @@ export default class DRMetaDataset extends Dataset
 
                     // Create group for scatterplot.
                     this._cf_groups[combinedKey] = this._generateGroupWithCounts(
-                        combinedKey, [attribute1, attribute2]
+                        combinedKey, [attribute1, obj]
                     );
 
                     // Mirror group to transposed key.
@@ -373,61 +355,20 @@ export default class DRMetaDataset extends Dataset
     }
 
     /**
-     * WIP - generateGroupWithCounts() for aggregated dataset.
-     * @param dimension
-     * @param primitiveAttributes
-     * @private
-     */
-    _generateGroupWithCounts_forAggregated(dimension, primitiveAttributes)
-    {
-        return this._cf_dimensions[attribute].group().reduce(
-            function(elements, item) {
-               elements.items.push(item);
-               elements.count++;
-
-               return elements;
-            },
-            function(elements, item) {
-                let match = false;
-
-                for (let i = 0; i < elements.items.length && !match; i++) {
-                    // Compare hyperparameter signature.
-                    if (item.id === elements.items[i].id) {
-                        match = true;
-                        elements.items.splice(i, 1);
-                        elements.count--;
-                    }
-                }
-
-                return elements;
-            },
-            function() {
-                return {items: [], count: 0};
-            }
-        );
-    }
-    /**
      * Generates crossfilter group with information on number of elements..
      * @param attribute
-     * @param primitiveAttributes List of relevenat attributes in original records. Extrema information is only
-     * collected for these. Note of caution: Extrema are not to be considered reliable, since they aren't
-     * updated after splicing operations (still sufficient for barchart highlighting operations though, since barchart/
-     * group widths on x-axis don't change after splicing).
      * @returns Newly generated group.
      * @private
      */
-    _generateGroupWithCounts(attribute, primitiveAttributes)
+    _generateGroupWithCounts(attribute)
     {
         return this._cf_dimensions[attribute].group().reduce(
             function(elements, item) {
                 elements.items.add(item);
-                // elements.items.push(item);
                 elements.count++;
-
                 return elements;
             },
             function(elements, item) {
-                // elements.items.splice(elements.items.indexOf(item), 1);
                 elements.items.delete(item);
                 elements.count--;
                 return elements;
