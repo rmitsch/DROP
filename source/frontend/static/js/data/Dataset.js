@@ -33,7 +33,7 @@ export default class Dataset
      */
     _initSingularDimensionsAndGroups()
     {
-        throw new TypeError("Dataset._initSingularDimensionsAndGroups(): Abstract method must not be called.");
+        throw new TypeError("Dataset._determineExtrema(): Abstract method must not be called.");
     }
 
     /**
@@ -58,7 +58,6 @@ export default class Dataset
     /**
      * Calculates extrema for one singular dimension.
      * @param attribute
-     * @param bla
      * @returns {{}}
      * @private
      */

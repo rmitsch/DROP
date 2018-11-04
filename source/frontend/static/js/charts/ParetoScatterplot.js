@@ -63,6 +63,7 @@ export default class ParetoScatterplot extends Scatterplot
         // Use padding so that first/last bar are not cut off in chart.
         let dataPadding = intervals[this._axes_attributes.x] * this._style.paddingFactor;
 
+        console.log(instance._axes_attributes.x, instance._axes_attributes.y)
         // Configure chart.
         this._cf_chart
             .height(instance._style.height)

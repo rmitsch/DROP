@@ -36,13 +36,13 @@ export default class DRMetaDataset extends Dataset
 
         // todo Bin data for scatterplots, base all dimensions and groups on binned dataset.
         this._crossfilterData = {};
-        this._binDataForSSPs();
+        // this._binDataForSSPs();
 
         // Set up containers for crossfilter data.
         this._crossfilter = crossfilter(this._data);
 
         // Set up singular dimensions (one dimension per attribute).
-        this._initSingularDimensionsAndGroups();
+        this._determineExtrema();
 
         // Set up binary dimensions (for scatterplots).
         this._initBinaryDimensionsAndGroups(true);
@@ -425,21 +425,47 @@ export default class DRMetaDataset extends Dataset
         }
     }
 
-    _initSingularDimensionsAndGroups()
+    _determineExtrema()
     {
-        let hyperparameterList = Utils.unfoldHyperparameterObjectList(this._metadata.hyperparameters);
+        let hyperparameterList  = Utils.unfoldHyperparameterObjectList(this._metadata.hyperparameters);
+        let attributes          = JSON.parse(JSON.stringify(hyperparameterList.concat(this._metadata.objectives)));
 
         // -------------------------------------
-        // Create dimensions and groups.
+        // Create dimension for ID.
         // -------------------------------------
 
-        // Create dimensions for hyperparameters and objectives.
-        for (let attribute of hyperparameterList.concat(this._metadata.objectives)) {
-            this._initSingularDimension(attribute);
+        this._initSingularDimension(this._metadata.hyperparameters[0].name);
 
-            // If attribute is categorical: Also create dimension for numerical representation of this attribute.
-            if (this._categoricalHyperparameterSet.has(attribute)) {
-                this._initSingularDimension(attribute + "*");
+        // -------------------------------------
+        // Determine extrema and intervals.
+        // -------------------------------------
+
+        for (let catHP of this._categoricalHyperparameterSet)
+            attributes.push(catHP + "*");
+
+        // Initialize extrema.
+        for (let i = 0; i < attributes.length; i++)
+            this._cf_extrema[attributes[i]] = {max: -Infinity, min: Infinity};
+
+        // Gather extrema.
+        for (let record of this._data) {
+            for (let attribute of attributes) {
+                if (record[attribute] < this._cf_extrema[attribute].min)
+                    this._cf_extrema[attribute].min = record[attribute];
+                if (record[attribute] > this._cf_extrema[attribute].max)
+                    this._cf_extrema[attribute].max = record[attribute];
+            }
+        }
+
+        // Add padding.
+        for (let attribute of attributes) {
+            // Update extrema by padding values (hardcoded to 10%) for x-axis.
+            this._cf_intervals[attribute] = this._cf_extrema[attribute].max - this._cf_extrema[attribute].min;
+
+            // Add padding, if specified. Goal: Make also fringe elements clearly visible (other approach?).
+            if (this._axisPaddingRatio > 0) {
+                this._cf_extrema[attribute].min -= this._cf_intervals[attribute] / this._axisPaddingRatio;
+                this._cf_extrema[attribute].max += this._cf_intervals[attribute] / this._axisPaddingRatio;
             }
         }
     }
