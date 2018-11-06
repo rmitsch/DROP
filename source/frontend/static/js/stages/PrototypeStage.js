@@ -189,21 +189,9 @@ export default class PrototypeStage extends Stage
             });
     }
 
-    /**
-     * Toggles visiblity of embeddings overview table.
-     * @param show
-     */
-    setEmbeddingsOverviewTableVisiblity(show)
+    filter(source, embeddingIDs)
     {
-        // Create new split pane structure including embeddings overview table.
-        if (show) {
-            this._bottomSplitPane.setSizes([20, 40, 40]);
-        }
-        // Remove embeddings overview table.
-        else {
-            // this._bottomSplitPane.setSizes([2, 49, 49]);
-            this._bottomSplitPane.collapse(0);
-        }
+        console.log("PrototypeStage.filter(), with ", source, embeddingIDs);
     }
 
 }

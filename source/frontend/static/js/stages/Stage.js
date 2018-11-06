@@ -32,6 +32,16 @@ export default class Stage
         throw new TypeError("Stage.constructOperators(): Cannot execute abstract method.");
     }
 
+    /**
+     * Updates current filtering by specifying which IDs are to be considered active.
+     * @param source ID of operator triggering change.
+     * @param embeddingIDs All active embedding IDs.
+     */
+    filter(source, embeddingIDs)
+    {
+        throw new TypeError("Stage.filter(source, embeddingIDs): Cannot execute abstract method.");
+    }
+
     get name()
     {
         return this._name;

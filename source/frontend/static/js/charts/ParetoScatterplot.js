@@ -92,7 +92,7 @@ export default class ParetoScatterplot extends Scatterplot
             .keyAccessor(function(d) {
                 return d.key[0];
              })
-            // Filter on end of brushing action, not meanwhile (performance suffers otherwise).
+            // Filter on end of brushing action, not meanwhile (performance drops massively otherwise).
             .filterOnBrushEnd(true)
             .mouseZoomable(false)
             .margins({top: 0, right: 0, bottom: 25, left: 25})
@@ -101,6 +101,16 @@ export default class ParetoScatterplot extends Scatterplot
                 if (instance._useBinning) {
                     instance._drawHexagonalHeatmap();
                 }
+            })
+            // Call cross-operator filter method on stage instance after filter event.
+            .on("filtered", function() {
+                let embeddingIDs = new Set();
+                for (let record of dimensions[key].top(Infinity))
+                    embeddingIDs.add(record.id);
+
+                instance._panel._operator._stage.filter(
+                    instance._panel._operator._name, embeddingIDs
+                );
             });
 
         // Set number of ticks for y-axis.
@@ -164,7 +174,6 @@ export default class ParetoScatterplot extends Scatterplot
         // SVG.
         heatmapContainer.find("svg")[0].setAttribute('width', heatmapContainer.width());
         heatmapContainer.find("svg")[0].setAttribute('height', heatmapContainer.height());
-
 
         // --------------------------------------
         // 3. Bin filtered records.

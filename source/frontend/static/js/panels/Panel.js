@@ -65,6 +65,17 @@ export default class Panel
     }
 
     /**
+     * Updates current filtering by specifying which IDs are to be considered active.
+     * Triggered by filter() operation for operator.
+     * Note:
+     * @param embeddingIDs All active embedding IDs.
+     */
+    filter(embeddingIDs)
+    {
+        throw new TypeError("Panel.filter(): Abstract method must not be called.");
+    }
+
+    /**
      * Processes changes in data or configuration caused by changes in settings.
      * @param delta New/updated dataset or configuration.
      */

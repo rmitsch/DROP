@@ -50,7 +50,17 @@ export default class CategoricalHistogram extends Histogram
             .group(this._dataset.cf_groups[key])
             .renderHorizontalGridLines(true)
             .margins({top: 0, right: 10, bottom: 25, left: 25})
-            .gap(1);
+            .gap(1)
+            // Call cross-operator filter method on stage instance after filter event.
+            .on("filtered", function() {
+                let embeddingIDs = new Set();
+                for (let record of dimensions[key].top(Infinity))
+                    embeddingIDs.add(record.id);
+
+                instance._panel._operator._stage.filter(
+                    instance._panel._operator._name, embeddingIDs
+                );
+            });
 
         // Set number of ticks (x-axis is ignored).
         this._cf_chart.yAxis().ticks(instance._style.numberOfTicks.y);

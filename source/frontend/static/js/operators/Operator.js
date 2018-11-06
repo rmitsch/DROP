@@ -68,6 +68,17 @@ export default class Operator
     }
 
     /**
+     * Updates current filtering by specifying which IDs are to be considered active.
+     * Triggers filter() operations for its Panel instances. Propagates filter changes to its Stage.
+     * @param source ID of operator triggering change.
+     * @param embeddingIDs All active embedding IDs.
+     */
+    filter(source, embeddingIDs)
+    {
+        throw new TypeError("Operator.filter(): Abstract method must not be called.");
+    }
+
+    /**
      * Propagate changes after settings in corresponding SettingsPanel have been changed.
      * @param delta Resulting diff. from change in settings - can be a new dataset or just changes in configuration.
      * Note that Operator.propagateSettingsChanges() is agnostic towards the content - the associated panels/charts have

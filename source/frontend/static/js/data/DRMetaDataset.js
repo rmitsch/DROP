@@ -137,7 +137,7 @@ export default class DRMetaDataset extends Dataset
 
             return countA > countB ? 1 : (countB > countA ? -1 : 0);
         });
-        
+
         // Determine extrema.
         this._cf_extrema[modifiedAttribute] = {
             min: ((dataType === "numerical") ? sortedData[0].value.count : sortedData[0].value),
