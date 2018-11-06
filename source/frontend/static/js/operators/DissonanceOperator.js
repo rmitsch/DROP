@@ -63,6 +63,7 @@ export default class DissonanceOperator extends Operator
 
     filter(embeddingIDs)
     {
-        console.log("Filtering DO")
+        this._dataset._cf_dimensions["model_id"].filter(id => embeddingIDs.has(id));
+        this._panels["Pointwise Quality"].render();
     }
 }

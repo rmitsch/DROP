@@ -282,7 +282,7 @@ export default class ModelDetailDataset extends Dataset
                 const key           = valueType === "hyperparameters" ? attribute.name : attribute;
                 const groupAll      = drMetaDataset._cf_groups[key + "#histogram"].all();
                 let unprocessedBins = JSON.parse(JSON.stringify(groupAll));
-                const binWidth      = drMetaDataset._cf_intervals[key]/ drMetaDataset._binCount;
+                const binWidth      = drMetaDataset._cf_intervals[key] / drMetaDataset._binCount;
                 // Determine whether this attribute is categorical.
                 const isCategorical = valueType === "hyperparameters" && attribute.type === "categorical";
                 const useBinning    = !isCategorical && binWidth !== 0;

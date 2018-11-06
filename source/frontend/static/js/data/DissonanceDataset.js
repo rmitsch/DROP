@@ -395,21 +395,6 @@ export default class DissonanceDataset extends Dataset
     }
 
     /**
-     * Stores selected cells in heatmap.
-     * @param key
-     */
-    addToHeatmapCellSelection(key)
-    {
-        // Store translated key.
-        this._sortSettings.heatmap.selectedNaturalCells.push([
-            this._sortSettings.horizontal.sortOrderToNaturalOrder[key[0]],
-            this._sortSettings.vertical.sortOrderToNaturalOrder[key[1]]
-        ]);
-        // Store natural key.
-        this._sortSettings.heatmap.selectedOrderedCells.push([key[0], key[1]]);
-    }
-
-    /**
      * Sorts histogram group by specified criterion (e. g. "asc", "desc" or "natural").
      * @param group
      * @param settings Corresponding settings object.
