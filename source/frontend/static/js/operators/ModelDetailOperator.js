@@ -79,4 +79,9 @@ export default class ModelDetailOperator extends Operator
             scope._panels["Model Details"].update();
         });
     }
+
+    filter(embeddingIDs)
+    {
+        // Note: Filtering on global level has no impact on MDO.
+    }
 }

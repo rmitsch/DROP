@@ -74,4 +74,9 @@ export default class SurrogateModelOperator extends Operator
             this._panels[panelName].resize();
         }
     }
+
+    filter(embeddingIDs)
+    {
+        console.log("Filtering SMO")
+    }
 }

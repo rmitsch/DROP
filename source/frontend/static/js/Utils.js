@@ -217,4 +217,17 @@ export default class Utils
         //make sure it's the right value
         return (records[middle][attribute] !== value) ? -1 : middle;
     }
+
+    /**
+     * Comparison of two sets.
+     * @param as
+     * @param bs
+     * @returns {boolean}
+     */
+    static compareSets(as, bs)
+    {
+        if (as.size !== bs.size) return false;
+        for (let a of as) if (!bs.has(a)) return false;
+        return true;
+    }
 }

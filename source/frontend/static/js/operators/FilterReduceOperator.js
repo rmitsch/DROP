@@ -79,4 +79,9 @@ export default class FilterReduceOperator extends Operator
             this._panels[panelName].resize();
         }
     }
+
+    filter(embeddingIDs)
+    {
+        console.log("Filtering FRO")
+    }
 }

@@ -18,6 +18,7 @@
 
 .model-details-title {
     margin-bottom: 10px;
+    display: none;
 }
 
 .model-detail-sparkline-container {

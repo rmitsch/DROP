@@ -60,4 +60,9 @@ export default class DissonanceOperator extends Operator
             this._panels[panelName].resize();
         }
     }
+
+    filter(embeddingIDs)
+    {
+        console.log("Filtering DO")
+    }
 }

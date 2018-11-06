@@ -77,6 +77,25 @@ export default class Chart
         throw new TypeError("Chart.highlight(): Abstract method must not be called.");
     }
 
+    /**
+     * Propagate filter changes to stage.
+     * @param instance
+     * @param key
+     */
+    propagateFilterChange(instance, key)
+    {
+        let dimensions      = instance._dataset._cf_dimensions;
+        let operator        = instance._panel._operator;
+        let embeddingIDs    = new Set();
+        for (let record of dimensions[key].top(Infinity))
+            embeddingIDs.add(record.id);
+
+        if (!(Utils.compareSets(embeddingIDs, operator._filteredIDs))) {
+            operator._filteredIDs = embeddingIDs;
+            operator._stage.filter(operator._name, embeddingIDs);
+        }
+    }
+
     get name()
     {
         return this._name;

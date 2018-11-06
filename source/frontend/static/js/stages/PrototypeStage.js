@@ -192,6 +192,11 @@ export default class PrototypeStage extends Stage
     filter(source, embeddingIDs)
     {
         console.log("PrototypeStage.filter(), with ", source, embeddingIDs);
+
+        for (let opKey in this._operators) {
+            if (this._operators[opKey]._name !== source)
+                this._operators[opKey].filter(embeddingIDs);
+        }
     }
 
 }

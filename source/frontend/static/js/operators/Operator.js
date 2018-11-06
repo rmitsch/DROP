@@ -24,6 +24,7 @@ export default class Operator
         this._inputCardinality  = inputCardinality;
         this._outputCardinality = outputCardinality;
         this._dataset           = dataset;
+        this._filteredIDs       = new Set();
 
         // Create div structure for this operator.
         let div         = document.createElement('div');
@@ -70,10 +71,9 @@ export default class Operator
     /**
      * Updates current filtering by specifying which IDs are to be considered active.
      * Triggers filter() operations for its Panel instances. Propagates filter changes to its Stage.
-     * @param source ID of operator triggering change.
      * @param embeddingIDs All active embedding IDs.
      */
-    filter(source, embeddingIDs)
+    filter(embeddingIDs)
     {
         throw new TypeError("Operator.filter(): Abstract method must not be called.");
     }

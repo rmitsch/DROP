@@ -103,15 +103,7 @@ export default class ParetoScatterplot extends Scatterplot
                 }
             })
             // Call cross-operator filter method on stage instance after filter event.
-            .on("filtered", function() {
-                let embeddingIDs = new Set();
-                for (let record of dimensions[key].top(Infinity))
-                    embeddingIDs.add(record.id);
-
-                instance._panel._operator._stage.filter(
-                    instance._panel._operator._name, embeddingIDs
-                );
-            });
+            .on("filtered", event => this.propagateFilterChange(this, key));
 
         // Set number of ticks for y-axis.
         this._cf_chart.yAxis().ticks(instance._style.numberOfTicks.y);
