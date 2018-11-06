@@ -36,7 +36,6 @@ export default class DRMetaDataset extends Dataset
 
         // todo Bin data for scatterplots, base all dimensions and groups on binned dataset.
         this._crossfilterData = {};
-        // this._binDataForSSPs();
 
         // Set up containers for crossfilter data.
         this._crossfilter = crossfilter(this._data);
@@ -161,7 +160,7 @@ export default class DRMetaDataset extends Dataset
         // Create dimension for ID.
         // -------------------------------------
 
-        this._initSingularDimension(this._metadata.hyperparameters[0].name);
+        this._initSingularDimension("id");
 
         // -------------------------------------
         // Determine extrema and intervals.
@@ -343,9 +342,7 @@ export default class DRMetaDataset extends Dataset
                     this._cf_dimensions[transposedKey] = this._cf_dimensions[combinedKey];
 
                     // Create group for scatterplot.
-                    this._cf_groups[combinedKey] = this._generateGroupWithCounts(
-                        combinedKey, [attribute1, obj]
-                    );
+                    this._cf_groups[combinedKey] = this._generateGroupWithCounts(combinedKey);
 
                     // Mirror group to transposed key.
                     this._cf_groups[transposedKey] = this._cf_groups[combinedKey];

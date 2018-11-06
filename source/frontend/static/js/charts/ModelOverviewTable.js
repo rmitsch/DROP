@@ -30,8 +30,7 @@ export default class ModelOverviewTable extends Chart
         this._tableID = this._createDivStructure();
 
         // Select dimension of ID to use for later look-ups.
-        this._dimension = this._dataset.cf_dimensions[this._dataset.metadata.hyperparameters[0].name];
-
+        this._dimension = this._dataset.cf_dimensions["id"];
         // Create storage for filtered IDs.
         this._filteredIDs       = null;
         // Defines whether filter has already been added to jQuery's DataTable.

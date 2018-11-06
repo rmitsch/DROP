@@ -26,7 +26,7 @@ export default class ModelDetailDataset extends Dataset
         this._low_dim_projection        = ModelDetailDataset._preprocessLowDimProjectionData(
             modelDataJSON.low_dim_projection, modelDataJSON.original_dataset
         );
-        this._model_metadata            = modelDataJSON.model_metadata;
+        this._allModelMetadata          = modelDataJSON.model_metadata;
         this._limeData                  = modelDataJSON.lime_explanation;
         this._preprocessedLimeData      = ModelDetailDataset._preprocessLimeData(this._limeData);
         this._sampleDissonances         = modelDataJSON.sample_dissonances;
@@ -211,7 +211,7 @@ export default class ModelDetailDataset extends Dataset
     {
         let config          = this._crossfilterData["low_dim_projection"];
         let cf              = config.crossfilter;
-        let numDimensions   = this._model_metadata[this._modelID].n_components;
+        let numDimensions   = this._allModelMetadata[this._modelID].n_components;
 
         // Create singular dimensions.
         for (let i = 0; i < numDimensions; i++) {
@@ -234,7 +234,7 @@ export default class ModelDetailDataset extends Dataset
     {
         let config          = this._crossfilterData["low_dim_projection"];
         let cf              = config.crossfilter;
-        let numDimensions   = this._model_metadata[this._modelID].n_components;
+        let numDimensions   = this._allModelMetadata[this._modelID].n_components;
 
         // Generate groups for all combinations of dimension indices.
         for (let i = 0; i < numDimensions; i++) {
@@ -260,11 +260,6 @@ export default class ModelDetailDataset extends Dataset
         }
     }
 
-    _initSingularDimension(attribute)
-    {
-        throw new TypeError("ModelDetailDataset._initSingularDimension(): Abstract method must not be called.");
-    }
-
     /**
      * Creates JSON object containing data preprocessed for usage in sparkline histograms - i. e. with filled gaps and
      * color/bin label encoding.
@@ -284,52 +279,60 @@ export default class ModelDetailDataset extends Dataset
 
         for (let valueType in values) {
             for (let attribute of metadataStructure[valueType]) {
-                let key             = valueType === "hyperparameters" ? attribute.name : attribute;
-                let unprocessedBins = JSON.parse(JSON.stringify(drMetaDataset._cf_groups[key + "#histogram"].all()));
-                let binWidth        = drMetaDataset._cf_intervals[key] / drMetaDataset._binCount;
+                const key           = valueType === "hyperparameters" ? attribute.name : attribute;
+                const groupAll      = drMetaDataset._cf_groups[key + "#histogram"].all();
+                let unprocessedBins = JSON.parse(JSON.stringify(groupAll));
+                const binWidth      = drMetaDataset._cf_intervals[key]/ drMetaDataset._binCount;
                 // Determine whether this attribute is categorical.
-                let isCategorical   = valueType === "hyperparameters" && attribute.type === "categorical";
+                const isCategorical = valueType === "hyperparameters" && attribute.type === "categorical";
+                const useBinning    = !isCategorical && binWidth !== 0;
 
                 // Fill gaps with placeholder bins - we want empty bins to be respected in sparkline chart.
                 // Only consider numerical values for now.
-                let bins = isCategorical ? unprocessedBins : [];
-                if (!isCategorical) {
+                let bins = useBinning ? [] : unprocessedBins;
+                if (useBinning) {
                     for (let i = 0; i < drMetaDataset._binCount; i++) {
                         let currBinKey  = drMetaDataset._cf_extrema[key].min + binWidth * i;
                         let currBin     = unprocessedBins.filter(bin => { return bin.key === currBinKey; });
 
                         // Current bin not available: Create fake bin to bridge gap in chart.
-                        bins.push(currBin.length < 1 ?
-                            {
+                        currBin = currBin.length > 0 ? currBin[0] : {
                                 key: currBinKey,
-                                value: {items: [], count: 0, extrema: {}}
-                            } :
-                            currBin[0]
-                        );
+                                value: {count: 0, extrema: {}}
+                        };
+                        currBin.nextKey = currBinKey + binWidth;
+                        bins.push(currBin);
                     }
                 }
 
                 // Build dict for this attribute.
                 values[valueType][key]          = {data: [], extrema: drMetaDataset._cf_extrema[key], colors: null, tooltips: null};
-
                 // Compile data list.
                 values[valueType][key].data     = isCategorical ? bins.map(bin => bin.value) : bins.map(bin => bin.value.count);
 
                 // Compile color map.
                 values[valueType][key].colors   = bins.map(
-                    bin => isCategorical ?
+                    bin => useBinning ?
+                    // If attribute is numerical or binWidth === 0: Check if list of items in bin contains current model
+                    // with this ID.
+                    this._allModelMetadata[currModelID][key] >= bin.key &&
+                    (
+                        this._allModelMetadata[currModelID][key] < bin.nextKey ||
+                        (
+                            this._allModelMetadata[currModelID][key] === bin.nextKey &&
+                            bin.nextKey === values[valueType][key].extrema.max
+                        )
+                    ) ? "red" : "#1f77b4" :
                     // If attribute is categorical: Check if bin key/title is equal to current model's attribute value.
-                    (bin.key === this._model_metadata[currModelID][key] ? "red" : "#1f77b4") :
-                    // If attribute is numerical: Check if list of items in bin contains current model with this ID.
-                    bin.value.items.some(item => item.id === currModelID) ? "red" : "#1f77b4"
+                    (bin.key === this._allModelMetadata[currModelID][key] ? "red" : "#1f77b4")
                 );
 
                 // Compile tooltip map.
                 values[valueType][key].tooltips = {};
                 for (let i = 0; i < bins.length; i++) {
-                    values[valueType][key].tooltips[i] = isCategorical ?
-                        bins[i].key :
-                        bins[i].key.toFixed(4) + " - " + (bins[i].key + binWidth).toFixed(4);
+                    values[valueType][key].tooltips[i] = useBinning ?
+                        bins[i].key.toFixed(4) + " - " + (bins[i].key + binWidth).toFixed(4) :
+                        bins[i].key;
                 }
             }
         }

@@ -188,4 +188,33 @@ export default class Utils
         let inv = 1.0 / step;
         return Math.ceil(value * inv) / inv;
     }
+
+    /**
+     * Binary search in sorted list. Source:
+     * https://stackoverflow.com/questions/10264239/fastest-way-to-determine-if-an-element-is-in-a-sorted-array.
+     * @param records
+     * @param attribute
+     * @param value
+     * @returns {number}
+     */
+    static binarySearch(records, attribute, value)
+    {
+        let startIndex = 0,
+            stopIndex = records.length - 1,
+            middle = Math.floor((stopIndex + startIndex) / 2);
+
+        while (records[middle][attribute] !== value && startIndex < stopIndex) {
+            //adjust search area
+            if (value < records[middle][attribute])
+                stopIndex = middle - 1;
+            else if (value > records[middle][attribute])
+                startIndex = middle + 1;
+
+            //recalculate middle
+            middle = Math.floor((stopIndex + startIndex) / 2);
+        }
+
+        //make sure it's the right value
+        return (records[middle][attribute] !== value) ? -1 : middle;
+    }
 }

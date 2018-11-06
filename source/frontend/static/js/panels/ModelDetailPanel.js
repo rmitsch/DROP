@@ -288,7 +288,7 @@ export default class ModelDetailPanel extends Panel
         // 2. Append new chart containers, draw scatterplots.
         // -------------------------------------------------------
 
-        let numDimensions   = this._data._model_metadata[this._data._modelID].n_components;
+        let numDimensions   = this._data._allModelMetadata[this._data._modelID].n_components;
         let numScatterplots = ((numDimensions - 1) * (numDimensions)) / 2;
 
         // Generate all combinations of dimension indices.
