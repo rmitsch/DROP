@@ -30,6 +30,7 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, useBin
 
     // Store references to dataset and variant attributes.
     _chart.dataset = dataset;
+    _chart.binCount = dataset._binCountSSP;
     _chart.variantAttribute = variantAttribute;
     _chart.useBinning = useBinning;
 
@@ -424,17 +425,20 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, useBin
         // for performance optimization before plotting them.
         // ---------------------------------------------------------------------------------
 
+        console.log(_chart.effectiveHeight());
+        let pointRadius = _chart.effectiveHeight() / _chart.binCount / 4;
+
         // then plot points - avoid unnecessary canvas state changes.
         let dataPoints = {
             filtered: {
                 color: _chart.getColor(data[0]),
-                radius: canvasElementSize(data[0], true),
+                radius: pointRadius, // canvasElementSize(data[0], true),
                 opacity: _nonemptyOpacity,
                 coordinates: []
             },
             notFiltered: {
                 color: _emptyColor,
-                radius: canvasElementSize(data[0], false),
+                radius: pointRadius, // canvasElementSize(data[0], false),
                 opacity: _chart.excludedOpacity(),
                 coordinates: []
             }
