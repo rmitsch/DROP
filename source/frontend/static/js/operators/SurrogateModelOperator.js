@@ -1,7 +1,7 @@
 import Operator from "./Operator.js";
 import SurrogateModelPanel from "../panels/SurrogateModelPanel.js";
-import SurrogateModelChart from "../charts/SurrogateModelChart.js";
 import SurrogateModelSettingsPanel from "../panels/settings/SurrogateModelSettingsPanel.js";
+import Utils from "../Utils.js";
 
 
 /**
@@ -33,6 +33,10 @@ export default class SurrogateModelOperator extends Operator
         // Save which model (influences inference model and visualization)
         // should be used as surrogate - e. g. decision tree.
         this._modelType = modelType;
+
+        // Initialize _filteredIDs with all available IDs.
+        for (let record of stage._datasets["modelMetadata"]._data)
+            this._filteredIDs.add(record.id);
 
         // Construct all necessary panels.
         this.constructPanels();
@@ -82,20 +86,24 @@ export default class SurrogateModelOperator extends Operator
         let treeDepth       = options.treeDepth;
         let idString        = "";
 
-        console.log("eid.l = ", embeddingIDs.size)
-        for (let id of embeddingIDs)
-            idString += id + ",";
-        idString = idString.substring(0, idString.length - 1);
+        // Ignore if no change since last filter() call.
+        if (!(Utils.compareSets(embeddingIDs, this._filteredIDs))) {
+            this._filteredIDs = embeddingIDs;
 
-        fetch("/get_surrogate_model_data?modeltype=tree&objs=" + objectiveString + "&depth=" + treeDepth + "&ids=" + idString,
-            {
-                headers: { "Content-Type": "application/json; charset=utf-8"},
-                method: "GET"
-            })
-            .then(res => res.json())
-            // -------------------------------------------------
-            // 3. Update surrogate model chart with new data.
-            // -------------------------------------------------
-            .then(results => this._panels["Global Surrogate Model"].processSettingsChange(results));
+            for (let id of embeddingIDs)
+                idString += id + ",";
+            idString = idString.substring(0, idString.length - 1);
+
+            fetch("/get_surrogate_model_data?modeltype=tree&objs=" + objectiveString + "&depth=" + treeDepth + "&ids=" + idString,
+                {
+                    headers: { "Content-Type": "application/json; charset=utf-8"},
+                    method: "GET"
+                })
+                .then(res => res.json())
+                // -------------------------------------------------
+                // 3. Update surrogate model chart with new data.
+                // -------------------------------------------------
+                .then(results => this._panels["Global Surrogate Model"].processSettingsChange(results));
+        }
     }
 }
