@@ -167,15 +167,18 @@ def get_surrogate_model_data():
     """
     Yields structural data for surrogate model.
     GET parameters:
-        - Model type can be specified with GET param. "modeltype" (currently only decision tree with "tree").
-        - Objectives with objs=alpha,beta,...
-        - Max. depth of decision tree with depth=x.
+        - "modeltype": Model type can be specified with GET param (currently only decision tree with "tree").
+        - "objs": Objectives with objs=alpha,beta,...
+        - "depth": Max. depth of decision tree with depth=x.
+        - "ids": List of embedding IDs to consider, with ids=1,2,3,... Note: If "ids" is not specified, all embeddings
+          are used to construct surrogate model.
     :return: Jsonified structure of surrogate model for DR metadata.
     """
     metadata_template = app.config["METADATA_TEMPLATE"]
     surrogate_model_type = request.args["modeltype"]
     objective_names = request.args["objs"].split(",")
     depth = int(request.args["depth"])
+    ids = request.args.get("ids")
 
     # ------------------------------------------------------
     # 1. Check for mistakes in parameters.
@@ -189,15 +192,24 @@ def get_surrogate_model_data():
             return "Objective " + obj_name + " is not supported.", 400
 
     # ------------------------------------------------------
+    # 2. Pre-select embeddings to use for surrogate model.
+    # ------------------------------------------------------
+
+    ids = list(map(int, ids.split(","))) if ids is not None else None
+    features_df = app.config["EMBEDDING_METADATA"]["features_preprocessed"]
+    labels_df = app.config["EMBEDDING_METADATA"]["labels"]
+
+    if ids is not None:
+        features_df = features_df.iloc[ids]
+        labels_df = labels_df.iloc[ids]
+
+    # ------------------------------------------------------
     # 2. Build regressor.
     # ------------------------------------------------------
 
     # Fit decision tree.
     tree = DecisionTreeRegressor(max_depth=depth)
-    tree.fit(
-        app.config["EMBEDDING_METADATA"]["features_preprocessed"],
-        app.config["EMBEDDING_METADATA"]["labels"]
-    )
+    tree.fit(features_df, labels_df)
 
     # ------------------------------------------------------
     # 3. Extract tree structure and return result.
@@ -205,7 +217,7 @@ def get_surrogate_model_data():
 
     # Extract tree structure and return as JSON.
     tree_structure = Utils.extract_decision_tree_structure(
-        tree, app.config["EMBEDDING_METADATA"]["features_preprocessed"].columns, [objective_names]
+        tree, features_df.columns, [objective_names]
     )
     return jsonify(tree_structure)
 

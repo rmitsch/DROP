@@ -82,6 +82,7 @@ export default class FilterReduceOperator extends Operator
 
     filter(embeddingIDs)
     {
-        console.log("Filtering FRO")
+        // Note: Nothing to do here, since FilterReduceOperator is (currently) the only operator providing the ability
+        // to filter records.
     }
 }

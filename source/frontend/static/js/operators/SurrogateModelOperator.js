@@ -77,6 +77,25 @@ export default class SurrogateModelOperator extends Operator
 
     filter(embeddingIDs)
     {
-        console.log("Filtering SMO")
+        let options         = SurrogateModelSettingsPanel.getOptionValues();
+        let objectiveString = options.objectives;
+        let treeDepth       = options.treeDepth;
+        let idString        = "";
+
+        console.log("eid.l = ", embeddingIDs.size)
+        for (let id of embeddingIDs)
+            idString += id + ",";
+        idString = idString.substring(0, idString.length - 1);
+
+        fetch("/get_surrogate_model_data?modeltype=tree&objs=" + objectiveString + "&depth=" + treeDepth + "&ids=" + idString,
+            {
+                headers: { "Content-Type": "application/json; charset=utf-8"},
+                method: "GET"
+            })
+            .then(res => res.json())
+            // -------------------------------------------------
+            // 3. Update surrogate model chart with new data.
+            // -------------------------------------------------
+            .then(results => this._panels["Global Surrogate Model"].processSettingsChange(results));
     }
 }

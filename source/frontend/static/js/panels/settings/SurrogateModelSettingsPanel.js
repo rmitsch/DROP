@@ -77,20 +77,18 @@ export default class SurrogateModelSettingsPanel extends SettingsPanel
         };
     }
 
-    _applyOptionChanges()
+    /**
+     * Extracts currently chosen settings for surrogate model.
+     * @returns {{treeDepth, objectives: *}}
+     */
+    static getOptionValues()
     {
-        // -------------------------------------------------
-        // 1. Extract option values.
-        // -------------------------------------------------
-
         let treeDepth   = $("#surrogate-settings-tree-depth-range")[0].value;
         let objectives  = $("#surrogate-settings-target-objective-select").val();
 
-        console.log("wtf")
-
-        // Make sure at least one objective has been chosen.
+        // If no objective has been chosen: Use all.
         if (objectives.length === 0)
-            throw new RangeError("SurrogateModelSettingsPanel._applyOptionChanges(): No objective has been chosen.");
+            objectives = ["runtime", "r_nx", "b_nx", "stress", "classification_accuracy", "separability_metric"];
 
         // Concatenate objectives.
         let objectiveString = objectives[0];
@@ -98,6 +96,19 @@ export default class SurrogateModelSettingsPanel extends SettingsPanel
             for (let i = 1; i < objectives.length; i++)
                 objectiveString += "," + objectives[i];
         }
+
+        return {treeDepth: treeDepth, objectives: objectiveString}
+    }
+
+    _applyOptionChanges()
+    {
+        // -------------------------------------------------
+        // 1. Extract option values.
+        // -------------------------------------------------
+
+        let options         = SurrogateModelSettingsPanel.getOptionValues();
+        let objectiveString = options.objectives;
+        let treeDepth       = options.treeDepth;
 
         // -------------------------------------------------
         // 2. Fetch new surrogate model data.
