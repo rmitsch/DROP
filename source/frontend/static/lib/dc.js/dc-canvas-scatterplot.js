@@ -24,6 +24,7 @@
  * @param {Boolean} useBinning Determines whether points should be plotted in (hexagonal) bins.
  * @returns {dc.scatterPlot}
  */
+
 dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, useBinning = false) {
     var _chart = dc.coordinateGridMixin({});
     var _symbol = d3.svg.symbol();
@@ -241,18 +242,28 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, useBin
 
         // Store association between data points' coordinates and their IDs (ID -> coordinates).
         let dataPointCoordinates = {};
+        let coordinatesToDataPoints = {};
 
         data.forEach(function (d, i) {
             // Store coordinates.
             let x = _chart.x()(_chart.keyAccessor()(d));
             let y = _chart.y()(_chart.valueAccessor()(d));
+            let xRound = Math.round(x);
+            let yRound = Math.round(y);
 
             // Only add datapoint to set of coordinates to draw if it's a filtered one.
             let isFiltered = !_chart.filter() || _chart.filter().isFiltered([d.key[0], d.key[1]]);
             if (isFiltered) {
+                if (!(xRound in coordinatesToDataPoints))
+                    coordinatesToDataPoints[xRound] = {};
+                if (!(yRound in coordinatesToDataPoints[xRound]))
+                    coordinatesToDataPoints[xRound][yRound] = new Set();
+
                 for (let datapoint of d.value.items) {
+                    coordinatesToDataPoints[xRound][yRound].add(datapoint.id);
+
                     // Round coordinates to increase performance (avoid sub-pixel coordinates).
-                    dataPointCoordinates[datapoint.id] = [Math.round(x), Math.round(y)];
+                    dataPointCoordinates[datapoint.id] = [xRound, yRound];
                 }
             }
         });
@@ -262,8 +273,7 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, useBin
         // ---------------------------------------
 
         // Only draw lines if series data for this attribute exists.
-        // If not: Probably objective-objective pairing - connection has to be determined on-the-fly/on-demand (not
-        // implemented yet).
+        // If not: Probably objective-objective pairing.
 
         if (_chart.dataset !== null &&
             _chart.dataset !== undefined &&
@@ -272,12 +282,12 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, useBin
             context.save();
 
             // Set global drawing options for lines.
-            context.lineWidth   = 0.075;
+            context.lineWidth   = _chart.effectiveHeight() / _chart.binCount / 4 / 2;
             context.strokeStyle = "#1f77b4";
-            context.globalAlpha = 0.1; // .0275
+            context.globalAlpha = 0.5; // .0275
 
             // Draw lines between points of a series.
-            let extrema = plotLines(context, dataPointCoordinates);
+            let extrema = plotLines(context, dataPointCoordinates, coordinatesToDataPoints);
 
             // Draw pareto frontiers.
             // Set global drawing options for lines.
@@ -301,78 +311,66 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, useBin
      * Draws lines between points in a series.
      * @param context
      * @param dataPointCoordinates
+     * @param coordinatesToDataPoints
      * @returns {{}} extrema Dictionary holding extrema for all values of variant attribute.
      */
-    function plotLines(context, dataPointCoordinates)
+    function plotLines(context, dataPointCoordinates, coordinatesToDataPoints)
     {
-        // Fetch mapping from dataset ID to series.
-        let idToSeries = _chart.dataset._seriesMappingByHyperparameter[_chart.variantAttribute];
-        // Get number of datapoints in series.
-        // Caution: Assumes that all series have the same number of points.
-        const numberOfRecordsInSeries = Object.keys(idToSeries.recordToSeriesMapping).length / idToSeries.seriesCount;
         // Collect best- and worst-performing parametrizations for all variations of variant parameter.
         let extrema = {};
 
+        // context.lineWidth   = _chart.effectiveHeight() / _chart.binCount / 4 / 2;
+        // context.strokeStyle = "#1f77b4";
+        // context.globalAlpha = 0.5; // .0275
+
+        // -------------------------------------------------------------------------------------------------
         // Draw lines between points belonging to the same series.
         // Note: For quadratic interpolation see
         // https://stackoverflow.com/questions/7054272/how-to-draw-smooth-curve-through-n-points-using-javascript-html5-canvas.
+        // -------------------------------------------------------------------------------------------------
+
         context.beginPath();
-        for (let i = 0; i < idToSeries.seriesCount; i++) {
-            // Retrieve datasets in this series.
-            let records = [];
-            for (let j = 0; j < idToSeries.seriesToRecordMapping[i].length; j++) {
-                // Get data element by its ID.
-                let record = _chart.dataset.getDataByID(
-                    // Retrieve j-th element's ID from i-th series' ID mapping dictionary.
-                    idToSeries.seriesToRecordMapping[i][j]
-                );
 
-                // Only add record if point is available (i. e. in active set of datapoints).
-                if (record.id in dataPointCoordinates)
-                    records.push(record);
-            }
+        // Sort records in series (list of dictionaries) by attribute.
+        // We don't know whether the attribute is numeric or not, so we don't use arithmetic operations to directly
+        // determine the sort order. See
+        // https://stackoverflow.com/questions/1129216/sort-array-of-objects-by-string-property-value-in-javascript.
+        let sortFunction = function(a, b) {
+            return (
+                a[_chart.variantAttribute] > b[_chart.variantAttribute]) ? 1 :
+                ((b[_chart.variantAttribute] > a[_chart.variantAttribute]) ? -1: 0
+            );
+        };
+        let xCoords             = Object.keys(coordinatesToDataPoints).sort(sortFunction);
+        const lineWidthFactor   = 3;
 
-            // Sort records in series (list of dictionaries) )by attribute.
-            // We don't know whether the attribute is numeric or not, so we don't use arithmetic operations to directly
-            // determine the sort order. See
-            // https://stackoverflow.com/questions/1129216/sort-array-of-objects-by-string-property-value-in-javascript.
-            records.sort(function(a, b) {
-                return (
-                    a[_chart.variantAttribute] > b[_chart.variantAttribute]) ? 1 : (
-                        (b[_chart.variantAttribute] > a[_chart.variantAttribute]) ? -1 : 0
-                    );
-            });
+        // Draw lines between each two adjacent grouping of points, i. e. two points with differing x/y coordinates.
+        for (let xIndex1 = 0; xIndex1 < xCoords.length; xIndex1++) {
+            let x1          = xCoords[xIndex1];
+            let yCoords1    = Object.keys(coordinatesToDataPoints[x1]).sort(sortFunction);
 
-            // From first to pen-ultimate point in series: Draw line from one point to the next.
-            for (let j = 0; j < records.length; j++) {
-                // Get coordinates.
-                let coordinatesStart    = dataPointCoordinates[records[j].id];
+            for (let yIndex1 = 0; yIndex1 < yCoords1.length; yIndex1++) {
+                let y1 = yCoords1[yIndex1];
 
-                // Only draw lines if loop hasn't arrived at last point.
-                if (j < records.length - 1) {
-                    let coordinatesEnd  = dataPointCoordinates[records[j + 1].id];
+                for (let xIndex2 = xIndex1 + 1; xIndex2 < xCoords.length; xIndex2++) {
+                    let x2          = xCoords[xIndex2];
+                    let yCoords2    = Object.keys(coordinatesToDataPoints[x2]).sort(sortFunction);
 
-                    // Draw line between start and end point (if end point was available).
-                    context.moveTo(coordinatesStart[0], coordinatesStart[1]);
-                    context.lineTo(coordinatesEnd[0], coordinatesEnd[1]);
-                }
+                    for (let yIndex2 = yIndex1; yIndex2 < yCoords2.length; yIndex2 ++) {
+                        let y2              = yCoords2[yIndex2];
+                        let set1            = coordinatesToDataPoints[x1][y1];
+                        let set2            = coordinatesToDataPoints[x2][y2];
 
-                // Add information about possible extrema (for determining pareto frontiers)..
-                let variantAttributeValue = records[j][variantAttribute];
-                if (!(variantAttributeValue in extrema)) {
-                    extrema[variantAttributeValue] = {min: coordinatesStart, max: coordinatesStart};
-                }
-                else {
-                    if (coordinatesStart[1] < extrema[variantAttributeValue].min[1]) {
-                        extrema[variantAttributeValue].min = coordinatesStart;
-                    }
-                    else if (coordinatesStart[1] > extrema[variantAttributeValue].max[1]) {
-                        extrema[variantAttributeValue].max = coordinatesStart;
+                        context.globalAlpha = lineWidthFactor * Math.min(set1.size, set2.size) / _chart.dataset._data.length;
+                        context.moveTo(x1, y1);
+                        context.lineTo(x2, y2);
                     }
                 }
             }
         }
+        
         context.stroke();
+
 
         return extrema;
     }
@@ -425,7 +423,6 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, useBin
         // for performance optimization before plotting them.
         // ---------------------------------------------------------------------------------
 
-        console.log(_chart.effectiveHeight());
         let pointRadius = _chart.effectiveHeight() / _chart.binCount / 4;
 
         // then plot points - avoid unnecessary canvas state changes.
@@ -471,8 +468,6 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, useBin
         context.beginPath();
         // b. Plot points.
         for (let coordinate of dataPoints.filtered.coordinates) {
-
-            // console.log(coordinate);
             context.moveTo(coordinate[0], coordinate[1]);
             context.arc(
                 coordinate[0],

@@ -230,4 +230,19 @@ export default class Utils
         for (let a of as) if (!bs.has(a)) return false;
         return true;
     }
+
+    /**
+     * Calculates overlap of two sets.
+     * @param set1
+     * @param set2
+     * @returns {{intersection: Set<any>, relativeOverlap: number}}
+     */
+    static calculateSetOverlap(set1, set2)
+    {
+        let intersection = new Set([...set1].filter(x => set2.has(x)));
+        return {
+            intersection: intersection,
+            relativeOverlap: intersection.length / (set1.length + set2.length) * 2
+        }
+    }
 }
