@@ -21,19 +21,21 @@
  * Interaction with a chart will only trigger events and redraws within the chart's group.
  * @param {DRMetaDataset} dataset
  * @param {String} variantAttribute
+ * @param {String} objective
  * @param {Boolean} useBinning Determines whether points should be plotted in (hexagonal) bins.
  * @returns {dc.scatterPlot}
  */
 
-dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, useBinning = false) {
+dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, objective, useBinning = false) {
     var _chart = dc.coordinateGridMixin({});
     var _symbol = d3.svg.symbol();
 
     // Store references to dataset and variant attributes.
-    _chart.dataset = dataset;
-    _chart.binCount = dataset._binCountSSP;
+    _chart.dataset          = dataset;
+    _chart.binCount         = dataset._binCountSSP;
     _chart.variantAttribute = variantAttribute;
-    _chart.useBinning = useBinning;
+    _chart.objective        = objective;
+    _chart.useBinning       = useBinning;
 
     // Store last highlighted coordinates.
     _chart.lastHighlightedPosition = null;
@@ -257,10 +259,10 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, useBin
                 if (!(xRound in coordinatesToDataPoints))
                     coordinatesToDataPoints[xRound] = {};
                 if (!(yRound in coordinatesToDataPoints[xRound]))
-                    coordinatesToDataPoints[xRound][yRound] = new Set();
+                    coordinatesToDataPoints[xRound][yRound] = {ids: new Set(), attr_x: _chart.keyAccessor()(d), attr_y: _chart.valueAccessor()(d)};
 
                 for (let datapoint of d.value.items) {
-                    coordinatesToDataPoints[xRound][yRound].add(datapoint.id);
+                    coordinatesToDataPoints[xRound][yRound].ids.add(datapoint.id);
 
                     // Round coordinates to increase performance (avoid sub-pixel coordinates).
                     dataPointCoordinates[datapoint.id] = [xRound, yRound];
@@ -287,11 +289,11 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, useBin
             context.globalAlpha = 0.5; // .0275
 
             // Draw lines between points of a series.
-            let extrema = plotLines(context, dataPointCoordinates, coordinatesToDataPoints);
+            let extrema = plotLines(context, coordinatesToDataPoints);
 
             // Draw pareto frontiers.
             // Set global drawing options for lines.
-            context.lineWidth   = 1;
+            context.lineWidth   = 2;
             context.strokeStyle = "red";
             context.globalAlpha = 1;
             plotParetoFrontiers(context, extrema);
@@ -310,18 +312,13 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, useBin
     /**
      * Draws lines between points in a series.
      * @param context
-     * @param dataPointCoordinates
      * @param coordinatesToDataPoints
      * @returns {{}} extrema Dictionary holding extrema for all values of variant attribute.
      */
-    function plotLines(context, dataPointCoordinates, coordinatesToDataPoints)
+    function plotLines(context, coordinatesToDataPoints)
     {
         // Collect best- and worst-performing parametrizations for all variations of variant parameter.
         let extrema = {};
-
-        // context.lineWidth   = _chart.effectiveHeight() / _chart.binCount / 4 / 2;
-        // context.strokeStyle = "#1f77b4";
-        // context.globalAlpha = 0.5; // .0275
 
         // -------------------------------------------------------------------------------------------------
         // Draw lines between points belonging to the same series.
@@ -341,36 +338,42 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, useBin
                 ((b[_chart.variantAttribute] > a[_chart.variantAttribute]) ? -1: 0
             );
         };
-        let xCoords             = Object.keys(coordinatesToDataPoints).sort(sortFunction);
-        const lineWidthFactor   = 3;
+        let xCoords = Object.keys(coordinatesToDataPoints).sort(sortFunction);
 
         // Draw lines between each two adjacent grouping of points, i. e. two points with differing x/y coordinates.
         for (let xIndex1 = 0; xIndex1 < xCoords.length; xIndex1++) {
             let x1          = xCoords[xIndex1];
             let yCoords1    = Object.keys(coordinatesToDataPoints[x1]).sort(sortFunction);
+            extrema[x1]     = {min: Infinity, max: -Infinity};
 
             for (let yIndex1 = 0; yIndex1 < yCoords1.length; yIndex1++) {
-                let y1 = yCoords1[yIndex1];
+                let y1 = parseInt(yCoords1[yIndex1]);
 
-                for (let xIndex2 = xIndex1 + 1; xIndex2 < xCoords.length; xIndex2++) {
-                    let x2          = xCoords[xIndex2];
+                // Update extrema for Pareto frontier.
+                if (y1 < extrema[x1].min)
+                    extrema[x1].min = y1;
+                else if (y1 > extrema[x1].max)
+                    extrema[x1].max = y1;
+
+                // Cycle through all possible combinations to points at next x value / bin.
+                if (xIndex1 + 1 < xCoords.length) {
+                    let x2          = xCoords[xIndex1 + 1];
                     let yCoords2    = Object.keys(coordinatesToDataPoints[x2]).sort(sortFunction);
 
                     for (let yIndex2 = yIndex1; yIndex2 < yCoords2.length; yIndex2 ++) {
                         let y2              = yCoords2[yIndex2];
-                        let set1            = coordinatesToDataPoints[x1][y1];
-                        let set2            = coordinatesToDataPoints[x2][y2];
+                        let set1            = coordinatesToDataPoints[x1][y1].ids;
+                        let set2            = coordinatesToDataPoints[x2][y2].ids;
 
-                        context.globalAlpha = lineWidthFactor * Math.min(set1.size, set2.size) / _chart.dataset._data.length;
+                        context.globalAlpha = Math.sqrt(Math.min(set1.size, set2.size) / _chart.dataset._data.length);
                         context.moveTo(x1, y1);
                         context.lineTo(x2, y2);
                     }
                 }
             }
         }
-        
-        context.stroke();
 
+        context.stroke();
 
         return extrema;
     }
@@ -396,14 +399,14 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, useBin
 
             // Draw line for pareto-optimal/-pessimal points.
             context.beginPath();
-            context.moveTo(extrema[key].min[0], extrema[key].min[1]);
-            context.lineTo(extrema[nextKey].min[0], extrema[nextKey].min[1]);
+            context.moveTo(parseInt(key), extrema[key].min);
+            context.lineTo(parseInt(nextKey), extrema[nextKey].min);
             context.stroke();
 
             // Draw lines for pareto-pessimal/-optimal points.
             context.beginPath();
-            context.moveTo(extrema[key].max[0], extrema[key].max[1]);
-            context.lineTo(extrema[nextKey].max[0], extrema[nextKey].max[1]);
+            context.moveTo(parseInt(key), extrema[key].max);
+            context.lineTo(parseInt(nextKey), extrema[nextKey].max);
             context.stroke();
         }
     }

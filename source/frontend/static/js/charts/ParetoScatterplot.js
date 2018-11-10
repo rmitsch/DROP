@@ -51,6 +51,7 @@ export default class ParetoScatterplot extends Scatterplot
             this._panel._operator._target,
             this._dataset,
             this._axes_attributes.x,
+            this._axes_attributes.y,
             this._useBinning
         );
 
