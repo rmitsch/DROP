@@ -243,30 +243,39 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
         // ---------------------------------------
 
         // Store association between data points' coordinates and their IDs (ID -> coordinates).
-        let dataPointCoordinates = {};
-        let coordinatesToDataPoints = {};
+        let dataPointCoordinates            = {};
+        let coordinatesToFilteredDataPoints = {};
 
         data.forEach(function (d, i) {
-            // Store coordinates.
-            let x = _chart.x()(_chart.keyAccessor()(d));
-            let y = _chart.y()(_chart.valueAccessor()(d));
-            let xRound = Math.round(x);
-            let yRound = Math.round(y);
+            let x       = _chart.x()(_chart.keyAccessor()(d));
+            let y       = _chart.y()(_chart.valueAccessor()(d));
+            let xRound  = Math.round(x);
+            let yRound  = Math.round(y);
 
-            // Only add datapoint to set of coordinates to draw if it's a filtered one.
+            // Update coordinate store.
+            if (!(xRound in coordinatesToFilteredDataPoints))
+                coordinatesToFilteredDataPoints[xRound] = {};
+            if (!(yRound in coordinatesToFilteredDataPoints[xRound]))
+                coordinatesToFilteredDataPoints[xRound][yRound] = {
+                    ids: new Set(),
+                    idsUnfiltered: new Set(),
+                    attr_x: _chart.keyAccessor()(d),
+                    attr_y: _chart.valueAccessor()(d)
+                };
+
+            // Add datapoint to set of filtered/unfiltered coordinates.
             let isFiltered = !_chart.filter() || _chart.filter().isFiltered([d.key[0], d.key[1]]);
             if (isFiltered) {
-                if (!(xRound in coordinatesToDataPoints))
-                    coordinatesToDataPoints[xRound] = {};
-                if (!(yRound in coordinatesToDataPoints[xRound]))
-                    coordinatesToDataPoints[xRound][yRound] = {ids: new Set(), attr_x: _chart.keyAccessor()(d), attr_y: _chart.valueAccessor()(d)};
-
                 for (let datapoint of d.value.items) {
-                    coordinatesToDataPoints[xRound][yRound].ids.add(datapoint.id);
+                    coordinatesToFilteredDataPoints[xRound][yRound].ids.add(datapoint.id);
 
                     // Round coordinates to increase performance (avoid sub-pixel coordinates).
                     dataPointCoordinates[datapoint.id] = [xRound, yRound];
                 }
+            }
+            else {
+                for (let datapoint of d.value.items)
+                    coordinatesToFilteredDataPoints[xRound][yRound].idsUnfiltered.add(datapoint.id);
             }
         });
 
@@ -289,7 +298,7 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
             context.globalAlpha = 0.5; // .0275
 
             // Draw lines between points of a series.
-            let extrema = plotLines(context, coordinatesToDataPoints);
+            let extrema = plotLines(context, coordinatesToFilteredDataPoints);
 
             // Draw pareto frontiers.
             // Set global drawing options for lines.
@@ -306,7 +315,7 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
         // ---------------------------------------
 
         if (!_chart.useBinning)
-            plotPointsOnCanvas(context, data, dataPointCoordinates);
+            plotPointsOnCanvas(context, data, dataPointCoordinates, coordinatesToFilteredDataPoints);
     }
 
     /**
@@ -347,27 +356,29 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
             extrema[x1]     = {min: Infinity, max: -Infinity};
 
             for (let yIndex1 = 0; yIndex1 < yCoords1.length; yIndex1++) {
-                let y1 = parseInt(yCoords1[yIndex1]);
+                let y1      = parseInt(yCoords1[yIndex1]);
+                let set1    = coordinatesToDataPoints[x1][y1].ids;
 
                 // Update extrema for Pareto frontier.
-                if (y1 < extrema[x1].min)
+                if (set1.size > 0 && y1 < extrema[x1].min)
                     extrema[x1].min = y1;
-                else if (y1 > extrema[x1].max)
+                else if (set1.size > 0 && y1 > extrema[x1].max)
                     extrema[x1].max = y1;
 
                 // Cycle through all possible combinations to points at next x value / bin.
-                if (xIndex1 + 1 < xCoords.length) {
+                if (set1.size > 0 && xIndex1 + 1 < xCoords.length) {
                     let x2          = xCoords[xIndex1 + 1];
                     let yCoords2    = Object.keys(coordinatesToDataPoints[x2]).sort(sortFunction);
 
                     for (let yIndex2 = yIndex1; yIndex2 < yCoords2.length; yIndex2 ++) {
-                        let y2              = yCoords2[yIndex2];
-                        let set1            = coordinatesToDataPoints[x1][y1].ids;
-                        let set2            = coordinatesToDataPoints[x2][y2].ids;
+                        let y2      = yCoords2[yIndex2];
+                        let set2    = coordinatesToDataPoints[x2][y2].ids;
 
-                        context.globalAlpha = Math.sqrt(Math.min(set1.size, set2.size) / _chart.dataset._data.length);
-                        context.moveTo(x1, y1);
-                        context.lineTo(x2, y2);
+                        if (set2.size > 0) {
+                            context.globalAlpha = Math.sqrt(Math.min(set1.size, set2.size) / _chart.dataset._data.length);
+                            context.moveTo(x1, y1);
+                            context.lineTo(x2, y2);
+                        }
                     }
                 }
             }
@@ -416,8 +427,9 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
      * @param context
      * @param data
      * @param filteredDatapointCoordinates
+     * @param coordinatesToDataPoints
      */
-    function plotPointsOnCanvas(context, data, filteredDatapointCoordinates)
+    function plotPointsOnCanvas(context, data, filteredDatapointCoordinates, coordinatesToDataPoints)
     {
         context.save();
 
@@ -444,21 +456,30 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
             }
         };
 
-        data.forEach(function (d, i) {
-            for (let datapoint of d.value.items) {
-                // Round coordinates to increase performance (avoid sub-pixel coordinates).
-                if (datapoint.id in filteredDatapointCoordinates)
-                    dataPoints.filtered.coordinates.push(
-                        filteredDatapointCoordinates[datapoint.id]
-                    );
-                else {
-                    dataPoints.notFiltered.coordinates.push([
-                        _chart.x()(_chart.keyAccessor()(d)),
-                        _chart.y()(_chart.valueAccessor()(d))
-                    ]);
-                }
+        // data.forEach(function (d, i) {
+        //     for (let datapoint of d.value.items) {
+        //         // Round coordinates to increase performance (avoid sub-pixel coordinates).
+        //         if (datapoint.id in filteredDatapointCoordinates)
+        //             dataPoints.filtered.coordinates.push(
+        //                 filteredDatapointCoordinates[datapoint.id]
+        //             );
+        //         else {
+        //             dataPoints.notFiltered.coordinates.push([
+        //                 _chart.x()(_chart.keyAccessor()(d)),
+        //                 _chart.y()(_chart.valueAccessor()(d))
+        //             ]);
+        //         }
+        //     }
+        // });
+
+        for (let x in coordinatesToDataPoints) {
+            for (let y in coordinatesToDataPoints[x]) {
+                if (coordinatesToDataPoints[x][y].ids.size > 0)
+                    dataPoints.filtered.coordinates.push([parseInt(x), parseInt(y)]);
+                if (coordinatesToDataPoints[x][y].idsUnfiltered.size > 0)
+                    dataPoints.notFiltered.coordinates.push([parseInt(x), parseInt(y)]);
             }
-        });
+        }
 
         // ---------------------------------------------------------------------------------
         // 2. Plot points.
