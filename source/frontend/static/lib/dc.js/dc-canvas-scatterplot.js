@@ -243,7 +243,6 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
         // ---------------------------------------
 
         // Store association between data points' coordinates and their IDs (ID -> coordinates).
-        let dataPointCoordinates            = {};
         let coordinatesToFilteredDataPoints = {};
 
         data.forEach(function (d, i) {
@@ -264,18 +263,10 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
                 };
 
             // Add datapoint to set of filtered/unfiltered coordinates.
-            let isFiltered = !_chart.filter() || _chart.filter().isFiltered([d.key[0], d.key[1]]);
-            if (isFiltered) {
-                for (let datapoint of d.value.items) {
-                    coordinatesToFilteredDataPoints[xRound][yRound].ids.add(datapoint.id);
-
-                    // Round coordinates to increase performance (avoid sub-pixel coordinates).
-                    dataPointCoordinates[datapoint.id] = [xRound, yRound];
-                }
-            }
-            else {
-                for (let datapoint of d.value.items)
-                    coordinatesToFilteredDataPoints[xRound][yRound].idsUnfiltered.add(datapoint.id);
+            let isFiltered  = !_chart.filter() || _chart.filter().isFiltered([d.key[0], d.key[1]]);
+            let setName     = isFiltered ? "ids" : "idsUnfiltered";
+            for (let datapoint of d.value.items) {
+                coordinatesToFilteredDataPoints[xRound][yRound][setName].add(datapoint.id);
             }
         });
 
@@ -284,11 +275,12 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
         // ---------------------------------------
 
         // Only draw lines if series data for this attribute exists.
-        // If not: Probably objective-objective pairing.
-
+        // If not: Objective-objective pairing.
         if (_chart.dataset !== null &&
             _chart.dataset !== undefined &&
-            _chart.variantAttribute in _chart.dataset._seriesMappingByHyperparameter
+            !_chart.useBinning &&
+            // Check if variant attribute is hyperparameter.
+            _chart.dataset._metadata.hyperparameters.some(hp => hp.name === _chart.variantAttribute)
         ) {
             context.save();
 
@@ -315,7 +307,7 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
         // ---------------------------------------
 
         if (!_chart.useBinning)
-            plotPointsOnCanvas(context, data, dataPointCoordinates, coordinatesToFilteredDataPoints);
+            plotPointsOnCanvas(context, data, coordinatesToFilteredDataPoints);
     }
 
     /**
@@ -426,10 +418,9 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
      * Plots all points in scatterplot.
      * @param context
      * @param data
-     * @param filteredDatapointCoordinates
      * @param coordinatesToDataPoints
      */
-    function plotPointsOnCanvas(context, data, filteredDatapointCoordinates, coordinatesToDataPoints)
+    function plotPointsOnCanvas(context, data, coordinatesToDataPoints)
     {
         context.save();
 
@@ -455,22 +446,6 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
                 coordinates: []
             }
         };
-
-        // data.forEach(function (d, i) {
-        //     for (let datapoint of d.value.items) {
-        //         // Round coordinates to increase performance (avoid sub-pixel coordinates).
-        //         if (datapoint.id in filteredDatapointCoordinates)
-        //             dataPoints.filtered.coordinates.push(
-        //                 filteredDatapointCoordinates[datapoint.id]
-        //             );
-        //         else {
-        //             dataPoints.notFiltered.coordinates.push([
-        //                 _chart.x()(_chart.keyAccessor()(d)),
-        //                 _chart.y()(_chart.valueAccessor()(d))
-        //             ]);
-        //         }
-        //     }
-        // });
 
         for (let x in coordinatesToDataPoints) {
             for (let y in coordinatesToDataPoints[x]) {
