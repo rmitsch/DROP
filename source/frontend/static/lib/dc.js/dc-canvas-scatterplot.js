@@ -287,7 +287,6 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
             // Check if variant attribute is hyperparameter.
             _chart.dataset._metadata.hyperparameters.some(hp => hp.name === variantAttribute)
         ) {
-            console.log(variantAttribute);
             context.save();
 
             // Set global drawing options for lines.
@@ -347,6 +346,7 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
         };
         let xCoords = Object.keys(coordinatesToDataPoints).sort(sortFunction);
 
+        let print = _chart.variantAttribute === "b_nx";
         // Draw lines between each two adjacent grouping of points, i. e. two points with differing x/y coordinates.
         for (let xIndex1 = 0; xIndex1 < xCoords.length; xIndex1++) {
             let x1          = xCoords[xIndex1];
@@ -373,7 +373,7 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
                         let set2    = coordinatesToDataPoints[x2][y2].ids;
 
                         if (set2.size > 0) {
-                            context.globalAlpha = Math.sqrt(Math.min(set1.size, set2.size) / _chart.dataset._data.length);
+                            context.globalAlpha = 1; //1000 * (Math.min(set1.size, set2.size) / _chart.dataset._data.length);
                             context.moveTo(x1, y1);
                             context.lineTo(x2, y2);
                         }
@@ -401,6 +401,7 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
             return +a - +b;
         });
 
+        // console.log(extrema);
         // Go through points in sorted order, draw pareto-optimal and -pessimal (sic) frontiers.
         for (let i = 0; i < sortedExtremaKeys.length - 1; i++) {
             let key     = sortedExtremaKeys[i];
@@ -417,6 +418,8 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
             context.moveTo(parseInt(key), extrema[key].max);
             context.lineTo(parseInt(nextKey), extrema[nextKey].max);
             context.stroke();
+
+            // console.log(parseInt(key), extrema[key].min, " to ", parseInt(nextKey), extrema[nextKey].min);
         }
     }
 

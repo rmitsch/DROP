@@ -22,8 +22,8 @@ export default class DRMetaDataset extends Dataset
 
         this._dataIndicesByID   = {};
         this._metadata          = metadata;
-        this._binCount          = binCount;
-        this._binCountSSP       = 10;
+        this._binCount          = 10;
+        this._binCountSSP       = binCount;
         // Maps for translation of categorical variables into numerical ones.
         this._categoricalToNumericalValues = {};
         this._numericalToCategoricalValues = {};
@@ -33,9 +33,6 @@ export default class DRMetaDataset extends Dataset
 
         // Update record metadata before further preprocessing.
         this._updateRecordMetadata();
-
-        // todo Bin data for scatterplots, base all dimensions and groups on binned dataset.
-        this._crossfilterData = {};
 
         // Set up containers for crossfilter data.
         this._crossfilter = crossfilter(this._data);
@@ -48,6 +45,8 @@ export default class DRMetaDataset extends Dataset
 
         // Set up binary dimensions (for scatterplots).
         this._initBinaryDimensionsAndGroups(true);
+
+        console.log(this._metadata)
     }
 
     /**
@@ -66,6 +65,10 @@ export default class DRMetaDataset extends Dataset
         for (let hyp of this._metadata.hyperparameters)
             distinctHypValues[hyp.name] = new Set();
         for (let i = 0; i < this._data.length; i++) {
+            // todo Hotfix for angle problem - should be not necessary after new data generation has run through.
+            if (this._data[i]["angle"] === 0 || this._data[i]["angle"] === 35)
+                this._data[i]["angle"] = 0.35;
+
             this._dataIndicesByID[this._data[i].id] = i;
             for (let hyp of this._metadata.hyperparameters)
                 distinctHypValues[hyp.name].add(this._data[i][hyp.name]);
@@ -74,6 +77,7 @@ export default class DRMetaDataset extends Dataset
         for (let hyp of this._metadata.hyperparameters) {
             hyp.values = Array.from(distinctHypValues[hyp.name]).sort();
         }
+
 
         // Create numerical representations of categorical hyperparameters.
         this._discretizeCategoricalHyperparameters();
@@ -230,40 +234,57 @@ export default class DRMetaDataset extends Dataset
     }
 
     /**
+     * Adds fields with binned values to record.
+     * @param record
+     * @param attributes
+     * @param binnedFieldSuffix
+     * @param binCount
+     * @private
+     */
+    _addBinnedValuesToRecord(record, attributes, binnedFieldSuffix, binCount)
+    {
+        for (let i = 0; i < attributes.length; i++) {
+            let attribute   = attributes[i];
+            const binWidth  = this._cf_intervals[attribute] / binCount;
+            let extrema     = this._cf_extrema[attribute];
+
+            let value = record[attribute];
+            if (value <= extrema.min) {
+                value = extrema.min;
+            }
+
+            else if (value >= extrema.max) {
+                value = extrema.max - binWidth;
+            }
+
+            // Adjust for extrema.
+            let binnedValue = binWidth !== 0 ? Math.floor((value - extrema.min) / binWidth) * binWidth : 0;
+            binnedValue += extrema.min;
+
+            if (binnedValue >= extrema.max)
+                binnedValue = extrema.max - binWidth;
+
+            record[attribute + binnedFieldSuffix] = binnedValue;
+        }
+    }
+
+    /**
      * Initializes singular dimensions w.r.t. histograms.
      */
-    _initHistogramDimensionsAndGroups()
-    {
-        let hyperparameters             = Utils.unfoldHyperparameterObjectList(this._metadata.hyperparameters);
-        let attributes                  = hyperparameters.concat(this.metadata.objectives);
-        let instance                    = this;
-        let histogramAttribute          = null;
-        let categoricalHyperparameters  = this._extractCategoricalHyperparameters();
+    _initHistogramDimensionsAndGroups() {
+        let hyperparameters = Utils.unfoldHyperparameterObjectList(this._metadata.hyperparameters);
+        let attributes = hyperparameters.concat(this.metadata.objectives);
+
+        // Bin data for current attribute (i. e. hyperparameter or objective).
+        for (let j = 0; j < this._data.length; j++) {
+            // Add fields with binned values for histograms and SSPs.
+            this._addBinnedValuesToRecord(this._data[j], attributes, "#histogram", this._binCount);
+            this._addBinnedValuesToRecord(this._data[j], this.metadata.objectives, "#ssp", this._binCount);
+        }
 
         for (let i = 0; i < attributes.length; i++) {
-            let attribute       = attributes[i];
-            histogramAttribute  = attribute + "#histogram";
-            let binWidth        = instance._cf_intervals[attribute] / this._binCount;
-            let extrema         = this._cf_extrema[attribute];
-            let isCategorical   = categoricalHyperparameters.has(attribute);
-
-            // Bin data for current attribute (i. e. hyperparameter or objective).
-            for (let j = 0; j < this._data.length; j++) {
-                let value   = this._data[j][attribute];
-                if (value <= extrema.min)
-                    value = extrema.min;
-                else if (value >= extrema.max)
-                    value = extrema.max - binWidth;
-
-                // Adjust for extrema.
-                // Note: .round replaced with .floor. To test.
-                let binnedValue = binWidth !== 0 ? Math.floor((value - extrema.min) / binWidth) * binWidth : 0;
-                binnedValue += extrema.min;
-                if (binnedValue >= extrema.max)
-                    binnedValue = extrema.max - binWidth;
-
-                this._data[j][histogramAttribute] = binnedValue;
-            }
+            const attribute             = attributes[i];
+            const histogramAttribute    = attributes[i] + "#histogram";
 
             // If this is a numerical hyperparameter or an objective: Returned binned width.
             if (i < hyperparameters.length &&
@@ -272,13 +293,13 @@ export default class DRMetaDataset extends Dataset
             ) {
                 // Dimension with rounded values (for histograms).
                 this._cf_dimensions[histogramAttribute] = this._crossfilter.dimension(
-                    function (d) { return d[histogramAttribute]; }
+                    function (d) {
+                        return d[histogramAttribute];
+                    }
                 );
 
                 // Create group for histogram.
-                this._cf_groups[histogramAttribute] = this._generateGroupWithCounts(
-                    histogramAttribute, [histogramAttribute]
-                );
+                this._cf_groups[histogramAttribute] = this._generateGroupWithCounts(histogramAttribute);
 
                 // Calculate extrema.
                 this._calculateExtremaForAttribute(attribute, "#histogram", "numerical");
@@ -287,7 +308,9 @@ export default class DRMetaDataset extends Dataset
             // Else if this is a categorical hyperparameter: Return value itself.
             else {
                 this._cf_dimensions[histogramAttribute] = this._crossfilter.dimension(
-                    function (d) { return d[attribute]; }
+                    function (d) {
+                        return d[attribute];
+                    }
                 );
 
                 // Create group for histogram.
@@ -330,7 +353,7 @@ export default class DRMetaDataset extends Dataset
                 ) {
                     // Create combined dimension (for scatterplot).
                     this._cf_dimensions[combinedKey] = this._crossfilter.dimension(
-                        function(d) { return [d[processedAttribute1], d[obj + "#histogram"]]; }
+                        function(d) { return [d[processedAttribute1], d[obj + "#ssp"]]; }
                     );
 
                     // Mirror dimension to transposed key.

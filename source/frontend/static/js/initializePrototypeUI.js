@@ -82,7 +82,7 @@ $(document).ready(function() {
 
                         // Store object in JSON.
                         // Session.set(datasetStorageID, dataset);
-                        localStorage.setItem("someVarKey", dataset);
+                        // localStorage.setItem("someVarKey", dataset);
                     }
 
 
