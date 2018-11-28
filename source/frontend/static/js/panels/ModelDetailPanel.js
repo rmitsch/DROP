@@ -346,6 +346,8 @@ export default class ModelDetailPanel extends Panel
             false
         );
 
+        console.log(cf_config.extrema);
+
         // Render scatterplot.
         scatterplot
             .height(scatterplotSize.height)

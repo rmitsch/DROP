@@ -274,14 +274,20 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
         // 1. Draw lines.
         // ---------------------------------------
 
+        // Remove '*' if this is a categorical attribute.
+        let variantAttribute = _chart.variantAttribute.includes("*") ?
+            _chart.variantAttribute.substring(0, _chart.variantAttribute.length - 1) :
+            _chart.variantAttribute;
+
         // Only draw lines if series data for this attribute exists.
         // If not: Objective-objective pairing.
         if (_chart.dataset !== null &&
             _chart.dataset !== undefined &&
             !_chart.useBinning &&
             // Check if variant attribute is hyperparameter.
-            _chart.dataset._metadata.hyperparameters.some(hp => hp.name === _chart.variantAttribute)
+            _chart.dataset._metadata.hyperparameters.some(hp => hp.name === variantAttribute)
         ) {
+            console.log(variantAttribute);
             context.save();
 
             // Set global drawing options for lines.
