@@ -169,7 +169,11 @@ export default class DissonanceChart extends Chart
             .height(300)
             .width(300)
             .dimension(dimensions[attribute + "#sort"])
-            .group(dataset._cf_groups[attribute])
+            .group(Utils.fillDissonanceHeatmapGroup(
+                dataset._cf_groups[attribute],
+                {min: 0, max: dataset._binCounts.x},
+                {min: 0, max: dataset._binCounts.y}
+            ))
             .colorAccessor(function(d)  { return d.value; })
             .colors(
                 d3.scale
@@ -177,7 +181,7 @@ export default class DissonanceChart extends Chart
                     .domain(this._colorDomain)
                     .range(this._colorScheme)
             )
-            .keyAccessor(function(d)    { return d.key[0]; })
+            .keyAccessor(function(d)    { return d.key[0];  })
             .valueAccessor(function(d)  { return d.key[1]; })
             .title(function(d)          { return ""; })
             // Supress column/row label output.
@@ -198,6 +202,7 @@ export default class DissonanceChart extends Chart
 
         // Forward cell selection to filter mechanism in DissonanceDataset.
         this._dissonanceHeatmap.boxOnClick(function (d) {
+            console.log(d);
             dc.events.trigger(function () {
                 // dataset.addToHeatmapCellSelection(d.key)
                 // scope._dissonanceHeatmap.filter(d.key);
@@ -398,7 +403,8 @@ export default class DissonanceChart extends Chart
             this._horizontalHistogram.group(dataset.sortHistogramGroup(
                 dataset._cf_groups["samplesInModels#measure"],
                 dataset._sortSettings.horizontal,
-                orderCriterion.x
+                orderCriterion.x,
+                {min: 0, max: this._dataset._binCounts.x}
             ));
             this._horizontalHistogram.render();
             this._verticalHistogram.render();
@@ -409,17 +415,24 @@ export default class DissonanceChart extends Chart
             this._verticalHistogram.group(dataset.sortHistogramGroup(
                 dataset._cf_groups["samplesInModels#" + this._dataset._supportedDRModelMeasure],
                 dataset._sortSettings.vertical,
-                orderCriterion.y
+                orderCriterion.y,
+                {min: 0, max: this._dataset._binCounts.y}
             ));
             this._verticalHistogram.render();
             this._horizontalHistogram.render();
         }
 
         // In all cases: heatmap has to be re-ordered.
-        this._dissonanceHeatmap.group(dataset.sortHeatmapGroup(
-            dataset._cf_groups["samplesInModelsMeasure:sampleDRModelMeasure"],
-            dataset._sortSettings.heatmap
-        ));
+        this._dissonanceHeatmap.group(
+            Utils.fillDissonanceHeatmapGroup(
+                dataset.sortHeatmapGroup(
+                    dataset._cf_groups["samplesInModelsMeasure:sampleDRModelMeasure"],
+                    dataset._sortSettings.heatmap
+                ),
+                {min: 0, max: dataset._binCounts.x},
+                {min: 0, max: dataset._binCounts.y}
+            )
+        );
         this._dissonanceHeatmap.render();
     }
 

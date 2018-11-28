@@ -245,4 +245,33 @@ export default class Utils
             relativeOverlap: intersection.length / (set1.length + set2.length) * 2
         }
     }
+
+    /**
+     * Fills up groups for dissonance heatmap with 0 values, if not a group for every value exists yet.
+     * @param group
+     * @param rowIntervals
+     * @param colIntervals
+     * @returns {{all: all}}
+     */
+    static fillDissonanceHeatmapGroup(group, rowIntervals, colIntervals)
+    {
+        return {
+            all: function () {
+                let res = JSON.parse(JSON.stringify(group.all()));
+                let cellCoords = new Set();
+
+                for (let it of res)
+                    cellCoords.add(it.key[0] + ":" + it.key[1]);
+
+                for (let i = rowIntervals.min; i < rowIntervals.max; i++) {
+                    for (let j = colIntervals.min; j < colIntervals.max; j++) {
+                        const key = i + ":" + j;
+                        if (!(cellCoords.has(key)))
+                            res.push({key: [i, j], value: 0});
+                    }
+                }
+                return res;
+            }
+        }
+    }
 }

@@ -25,6 +25,10 @@ export default class DissonanceDataset extends Dataset
         this._drModelMetadata           = drModelMetadata;
         this._supportedDRModelMeasure   = supportedDRModelMeasure;
 
+        // Initialize extrema. Note: Assumes our metrics are [0, 1]-normalized.
+        this._colExtrema      = {min: 0, max: 1};
+        this._rowExtrema      = {min: 0, max: 1};
+
         // Store sort settings.
         this._sortSettings              =  this._initializeSortingSettings();
         // Define supported sorting criterions.
@@ -149,7 +153,6 @@ export default class DissonanceDataset extends Dataset
 
             // Find extrema.
             this._calculateSingularExtremaByAttribute(attribute);
-
         }
     }
 
@@ -161,12 +164,13 @@ export default class DissonanceDataset extends Dataset
         let rowAttribute    = this._supportedDRModelMeasure;
         // Extrema can be set to 0/1, since we expect both measures to be between 0 and 1.
         // Note that this holds iff measure is explicitly standardized to 0 <= x <= 1.
-        let colExtrema      = this._cf_extrema[colAttribute];
-        let rowExtrema      = this._cf_extrema[rowAttribute];
+        this._colExtrema    = {min: 0, max: 1}; //this._cf_extrema[colAttribute];
+        this._rowExtrema    = {min: 0, max: 1}; //this._cf_extrema[rowAttribute];
+
         // Workaround: min has to be 0 - probably error in backend calculation.
-        rowExtrema.min = 0;
-        let rowBinWidth     = (rowExtrema.max - rowExtrema.min) / this._binCounts.y;
-        let colBinWidth     = (colExtrema.max - colExtrema.min) / this._binCounts.x;
+        this._rowExtrema.min = 0;
+        let rowBinWidth     = (this._rowExtrema.max - this._rowExtrema.min) / this._binCounts.y;
+        let colBinWidth     = (this._colExtrema.max - this._colExtrema.min) / this._binCounts.x;
 
         // 1. Create dimension for sample-in-model measure vs. sample's DR model measure.
         this._cf_dimensions[attribute] = this._crossfilter.dimension(
@@ -175,18 +179,18 @@ export default class DissonanceDataset extends Dataset
             function(d) {
                 // (a) Get row number.
                 let rowValue = d[rowAttribute];
-                if (rowValue <= rowExtrema.min)
-                    rowValue = rowExtrema.min;
-                else if (rowValue >= rowExtrema.max) {
-                    rowValue = rowExtrema.max - rowBinWidth;
+                if (rowValue <= scope._rowExtrema.min)
+                    rowValue = scope._rowExtrema.min;
+                else if (rowValue >= scope._rowExtrema.max) {
+                    rowValue = scope._rowExtrema.max - rowBinWidth;
                 }
 
                 // (b) Get column number.
                 let colValue = d[colAttribute];
-                if (colValue <= colExtrema.min)
-                    colValue = colExtrema.min;
-                else if (colValue >= colExtrema.max) {
-                    colValue = colExtrema.max - colBinWidth;
+                if (colValue <= scope._colExtrema.min)
+                    colValue = scope._colExtrema.min;
+                else if (colValue >= scope._colExtrema.max) {
+                    colValue = scope._colExtrema.max - colBinWidth;
                 }
 
                 let binnedColValue  = colValue / colBinWidth;
@@ -211,7 +215,7 @@ export default class DissonanceDataset extends Dataset
         this._calculateHistogramExtremaForAttribute(attribute);
 
         // 4. Implement sorting mechanism in dc.js/crossfilter.js framework.
-        this._initHeatmapSortingMechanism(attribute);
+        // this._initHeatmapSortingMechanism(attribute);
     }
 
     /**
@@ -395,24 +399,50 @@ export default class DissonanceDataset extends Dataset
     }
 
     /**
+     * Fills up gaps in collection of bins.
+     * @param originalBins
+     * @param interval
+     * @returns {any}
+     * @private
+     */
+    _fillGapsInHistogramBins(originalBins, interval)
+    {
+        let bins        = JSON.parse(JSON.stringify(originalBins));
+        let gapIndices  = new Set();
+
+        for (let i = interval.min; i < interval.max; i++)
+            gapIndices.add(i);
+        for (let bin of bins)
+            gapIndices.delete(bin.key);
+        for (let gapIndex of gapIndices)
+            bins.push({key: gapIndex, value: 0});
+
+        return bins;
+    }
+
+    /**
      * Sorts histogram group by specified criterion (e. g. "asc", "desc" or "natural").
      * @param group
      * @param settings Corresponding settings object.
      * @param sortCriterion
+     * @param interval
      * @returns {{all: all}}
      * @private
      */
-    sortHistogramGroup(group, settings, sortCriterion)
+    sortHistogramGroup(group, settings, sortCriterion, interval)
     {
         // ----------------------------------------------
         // Sort specified groups and update internal
         // information.
         // ----------------------------------------------
 
+        let scope = this;
+
         return {
             all: function() {
-                let unsortedData                    = group.all();
+                let unsortedData                    = scope._fillGapsInHistogramBins(group.all(), interval);
                 let sortedData                      = JSON.parse(JSON.stringify(unsortedData));
+
                 settings.sortOrderToNaturalOrder    = {};
                 settings.naturalOrderToSortOrder    = {};
                 settings.criterion                  = sortCriterion;
