@@ -45,8 +45,6 @@ export default class DRMetaDataset extends Dataset
 
         // Set up binary dimensions (for scatterplots).
         this._initBinaryDimensionsAndGroups(true);
-
-        console.log(this._metadata)
     }
 
     /**

@@ -214,7 +214,8 @@ export default class ModelDetailDataset extends Dataset
         let numDimensions   = this._allModelMetadata[this._modelID].n_components;
 
         // Create singular dimensions.
-        for (let i = 0; i < numDimensions; i++) {
+        console.log("nd: ", numDimensions > 1 ? numDimensions : 2)
+        for (let i = 0; i < (numDimensions > 1 ? numDimensions : 2); i++) {
             config.dimensions[i] = cf.dimension(
                 function(d) { return d[i]; }
             );

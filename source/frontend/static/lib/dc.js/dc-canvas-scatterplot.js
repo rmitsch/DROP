@@ -275,9 +275,12 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
         // ---------------------------------------
 
         // Remove '*' if this is a categorical attribute.
-        let variantAttribute = _chart.variantAttribute.includes("*") ?
-            _chart.variantAttribute.substring(0, _chart.variantAttribute.length - 1) :
-            _chart.variantAttribute;
+        let variantAttribute = _chart.variantAttribute;
+        if (variantAttribute !== null) {
+            variantAttribute = variantAttribute.includes("*") ?
+                _chart.variantAttribute.substring(0, _chart.variantAttribute.length - 1) :
+                _chart.variantAttribute;
+        }
 
         // Only draw lines if series data for this attribute exists.
         // If not: Objective-objective pairing.
@@ -346,7 +349,6 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
         };
         let xCoords = Object.keys(coordinatesToDataPoints).sort(sortFunction);
 
-        let print = _chart.variantAttribute === "b_nx";
         // Draw lines between each two adjacent grouping of points, i. e. two points with differing x/y coordinates.
         for (let xIndex1 = 0; xIndex1 < xCoords.length; xIndex1++) {
             let x1          = xCoords[xIndex1];
@@ -401,7 +403,6 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
             return +a - +b;
         });
 
-        // console.log(extrema);
         // Go through points in sorted order, draw pareto-optimal and -pessimal (sic) frontiers.
         for (let i = 0; i < sortedExtremaKeys.length - 1; i++) {
             let key     = sortedExtremaKeys[i];
@@ -418,8 +419,6 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
             context.moveTo(parseInt(key), extrema[key].max);
             context.lineTo(parseInt(nextKey), extrema[nextKey].max);
             context.stroke();
-
-            // console.log(parseInt(key), extrema[key].min, " to ", parseInt(nextKey), extrema[nextKey].min);
         }
     }
 
@@ -438,19 +437,19 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
         // for performance optimization before plotting them.
         // ---------------------------------------------------------------------------------
 
-        let pointRadius = _chart.effectiveHeight() / _chart.binCount / 4;
+        const pointRadius = _chart.variantAttribute == null && _chart.useBinning == null ?
+            _chart.effectiveHeight() / _chart.binCount / 4 : _symbolSize;
 
-        // then plot points - avoid unnecessary canvas state changes.
         let dataPoints = {
             filtered: {
                 color: _chart.getColor(data[0]),
-                radius: pointRadius, // canvasElementSize(data[0], true),
+                radius: pointRadius, // canvasElementSize(data[0], true)
                 opacity: _nonemptyOpacity,
                 coordinates: []
             },
             notFiltered: {
                 color: _emptyColor,
-                radius: pointRadius, // canvasElementSize(data[0], false),
+                radius: pointRadius, // canvasElementSize(data[0], true)
                 opacity: _chart.excludedOpacity(),
                 coordinates: []
             }

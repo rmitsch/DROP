@@ -290,6 +290,7 @@ export default class ModelDetailPanel extends Panel
 
         let numDimensions   = this._data._allModelMetadata[this._data._modelID].n_components;
         let numScatterplots = ((numDimensions - 1) * (numDimensions)) / 2;
+        numScatterplots     = numScatterplots >= 1 ? numScatterplots : 1;
 
         // Generate all combinations of dimension indices.
         for (let i = 0; i < numDimensions; i++) {
@@ -321,15 +322,15 @@ export default class ModelDetailPanel extends Panel
      */
     _generateScatterplot(currIndices, scatterplotSize)
     {
+        const numDimensions     = this._data._allModelMetadata[this._data._modelID].n_components;
         let cf_config           = this._data.crossfilterData["low_dim_projection"];
-        let i                   = currIndices[0];
-        let j                   = currIndices[1];
-        let key                 = i + ":" + j;
-        let scope               = this;
+        const i                 = currIndices[0];
+        const j                 = currIndices[1];
+        const key               = i + ":" + j;
         let drMetaDataset       = this._operator._drMetaDataset;
-        let dataPadding         = {
+        const dataPadding       = {
             x: cf_config.intervals[i] * 0.1,
-            y: cf_config.intervals[j] * 0.1
+            y: numDimensions > 1 ? cf_config.intervals[j] * 0.1 : 0.1
         };
 
         let scatterplotContainer = Utils.spawnChildDiv(
@@ -346,7 +347,13 @@ export default class ModelDetailPanel extends Panel
             false
         );
 
-        console.log(cf_config.extrema);
+        console.log("i, j: ", i, " ", j);
+        console.log("dataPadding: ", dataPadding);
+        console.log("scatterplotSize: ", scatterplotSize);
+        console.log("cf_config.extrema: ", cf_config.extrema);
+        console.log("cf_config.intervals: ", cf_config.intervals);
+        console.log("cf_config.groups[key].all(): ", cf_config.groups[key].all());
+        console.log("cf_config.dimensions[key].top(): ", cf_config.dimensions[key].top(Infinity))
 
         // Render scatterplot.
         scatterplot
@@ -378,7 +385,6 @@ export default class ModelDetailPanel extends Panel
             .excludedOpacity(0.7)
             .excludedColor("#ccc")
             .symbolSize(3)
-            // Filter on end of brushing action, not meanwhile (performance suffers otherwise).
             .filterOnBrushEnd(true)
             .mouseZoomable(true)
             .margins({top: 25, right: 25, bottom: 25, left: 35});
