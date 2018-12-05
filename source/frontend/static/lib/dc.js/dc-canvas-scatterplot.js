@@ -26,6 +26,7 @@
  * @returns {dc.scatterPlot}
  */
 
+
 dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, objective, useBinning = false) {
     var _chart = dc.coordinateGridMixin({});
     var _symbol = d3.svg.symbol();
@@ -242,6 +243,7 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
         // 0. Get datapoints' coordinates.
         // ---------------------------------------
 
+        const seriesMapping = _chart.dataset.seriesMappingByHyperparameter[_chart.variantAttribute];
         // Store association between data points' coordinates and their IDs (ID -> coordinates).
         let coordinatesToFilteredDataPoints = {};
 
@@ -259,14 +261,21 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
                     ids: new Set(),
                     idsUnfiltered: new Set(),
                     attr_x: _chart.keyAccessor()(d),
-                    attr_y: _chart.valueAccessor()(d)
+                    attr_y: _chart.valueAccessor()(d),
+                    seriesIDs: new Set(),
+                    seriesIDsUnfiltered: new Set()
                 };
 
             // Add datapoint to set of filtered/unfiltered coordinates.
-            let isFiltered  = !_chart.filter() || _chart.filter().isFiltered([d.key[0], d.key[1]]);
-            let setName     = isFiltered ? "ids" : "idsUnfiltered";
+            const isFiltered    = !_chart.filter() || _chart.filter().isFiltered([d.key[0], d.key[1]]);
+            const setName       = isFiltered ? "ids" : "idsUnfiltered";
+            const seriesSetName = isFiltered ? "seriesIDs" : "seriesIDsUnfiltered";
+            let currCollection  = coordinatesToFilteredDataPoints[xRound][yRound];
             for (let datapoint of d.value.items) {
-                coordinatesToFilteredDataPoints[xRound][yRound][setName].add(datapoint.id);
+                currCollection[setName].add(datapoint.id);
+
+                if (seriesMapping !== undefined)
+                    currCollection[seriesSetName].add(seriesMapping.recordToSeriesMapping[datapoint.id]);
             }
         });
 
@@ -302,10 +311,10 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
 
             // Draw pareto frontiers.
             // Set global drawing options for lines.
-            context.lineWidth   = 2;
-            context.strokeStyle = "red";
-            context.globalAlpha = 1;
-            plotParetoFrontiers(context, extrema);
+            // context.lineWidth   = 1.5;
+            // context.strokeStyle = "red";
+            // context.globalAlpha = 1;
+            // plotParetoFrontiers(context, extrema);
 
             context.restore();
         }
@@ -327,7 +336,10 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
     function plotLines(context, coordinatesToDataPoints)
     {
         // Collect best- and worst-performing parametrizations for all variations of variant parameter.
-        let extrema = {};
+        let extrema         = {};
+        const seriesCount   = _chart.dataset.seriesMappingByHyperparameter[_chart.variantAttribute].seriesCount;
+        const recordCount   = _chart.dataset._data.length;
+        const alphaPrior    = 1.0;
 
         // -------------------------------------------------------------------------------------------------
         // Draw lines between points belonging to the same series.
@@ -357,7 +369,7 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
 
             for (let yIndex1 = 0; yIndex1 < yCoords1.length; yIndex1++) {
                 let y1      = parseInt(yCoords1[yIndex1]);
-                let set1    = coordinatesToDataPoints[x1][y1].ids;
+                let set1    = coordinatesToDataPoints[x1][y1].seriesIDs;
 
                 // Update extrema for Pareto frontier.
                 if (set1.size > 0 && y1 < extrema[x1].min)
@@ -370,12 +382,15 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
                     let x2          = xCoords[xIndex1 + 1];
                     let yCoords2    = Object.keys(coordinatesToDataPoints[x2]).sort(sortFunction);
 
-                    for (let yIndex2 = yIndex1; yIndex2 < yCoords2.length; yIndex2 ++) {
-                        let y2      = yCoords2[yIndex2];
-                        let set2    = coordinatesToDataPoints[x2][y2].ids;
+                    for (let yIndex2 = 0; yIndex2 < yCoords2.length; yIndex2 ++) {
+                        let y2              = yCoords2[yIndex2];
+                        let set2            = coordinatesToDataPoints[x2][y2].seriesIDs;
+                        const intersection  = new Set([...set1].filter(x => set2.has(x)));
 
-                        if (set2.size > 0) {
-                            context.globalAlpha = 1; //1000 * (Math.min(set1.size, set2.size) / _chart.dataset._data.length);
+                        if (intersection.size > 0) {
+                            context.globalAlpha = alphaPrior * intersection.size / recordCount;
+                            // console.log(intersection.size / seriesCount)
+                            context.lineWidth = 1;
                             context.moveTo(x1, y1);
                             context.lineTo(x2, y2);
                         }

@@ -23,7 +23,7 @@ export default class DRMetaDataset extends Dataset
         this._dataIndicesByID   = {};
         this._metadata          = metadata;
         this._binCount          = 10;
-        this._binCountSSP       = binCount;
+        this._binCountSSP       = 5;
         // Maps for translation of categorical variables into numerical ones.
         this._categoricalToNumericalValues = {};
         this._numericalToCategoricalValues = {};
@@ -45,6 +45,11 @@ export default class DRMetaDataset extends Dataset
 
         // Set up binary dimensions (for scatterplots).
         this._initBinaryDimensionsAndGroups(true);
+
+        // Create series mapping.
+        // Since for the intended use case (i. e. DROP) it is to be expected to need series variant w.r.t. each possible
+        // hyperparameter, in makes sense to calculate all of them beforehand.
+        this._seriesMappingByHyperparameter = this._generateSeriesMappingForHyperparameters();
     }
 
     /**
@@ -76,9 +81,84 @@ export default class DRMetaDataset extends Dataset
             hyp.values = Array.from(distinctHypValues[hyp.name]).sort();
         }
 
-
         // Create numerical representations of categorical hyperparameters.
         this._discretizeCategoricalHyperparameters();
+    }
+
+    /**
+     * Generates attribute-variant series for all hyperparameters.
+     * Note that there are no predefined series for hyperparameter-based series, since they don't allow for natural
+     * (i. e. with exactly one variant parameter) bindings. They could instead be connected by any number of common
+     * properties, such as arbitrary hyperparameter settings, fuzzy value condition etc. (which are hence to be
+     * calculate lazily on demand and on-the-fly).
+     * @returns {{}}
+     * @private
+     */
+    _generateSeriesMappingForHyperparameters()
+    {
+        let idToSeriesMappingByAttribute = {};
+
+        // Loop through all hyperparameters, generate series for each of them.
+        for (let attributeIndex in this._metadata.hyperparameters) {
+            let variantAttribute = this._metadata.hyperparameters[attributeIndex].name;
+            // Generate series for this variant attribute.
+            idToSeriesMappingByAttribute[variantAttribute] = this._mapRecordsToSeries(variantAttribute);
+
+            // If attribute is categorical: Also create series for its numerical representation.
+            if (this._categoricalHyperparameterSet.has(variantAttribute))
+                // Use already created series for categorical representation of this attribute.
+                idToSeriesMappingByAttribute[variantAttribute + "*"] = idToSeriesMappingByAttribute[variantAttribute];
+        }
+
+        return idToSeriesMappingByAttribute;
+    }
+
+    /**
+     * Maps records in this dataset to series w. r. t. to a invariant variable.
+     * @param variantAttribute Attribute whose value is to be varied (while all others stay the same).
+     * @returns {{}}
+     * @private
+     */
+    _mapRecordsToSeries(variantAttribute)
+    {
+        let recordIDsToSeriesMap                = {};
+        let seriesToRecordIDsMap                = {};
+        let constantParameterSetsToSeriesMap    = {};
+        let seriesCounter                       = 0;
+
+        // Loop through all records.
+        for (let record of this._data) {
+            // Key holds stringified represenatation of constant parameters.
+            let key = "";
+
+            // Chain together key for this record.
+            for (let attributeIndex in this._metadata.hyperparameters) {
+                let attribute = this._metadata.hyperparameters[attributeIndex].name;
+                if (attribute !== variantAttribute) {
+                    key += record[this._metadata.hyperparameters[attributeIndex].name] + "_";
+                }
+            }
+            key = key.slice(0, -1);
+
+            // If key/constant parameter set doesn't exist yet: Create new series.
+            if (!(key in constantParameterSetsToSeriesMap)) {
+                // Link parameter set to series ID.
+                constantParameterSetsToSeriesMap[key] = seriesCounter++;
+                // Create new entry in map for linking series IDs to record IDs.
+                seriesToRecordIDsMap[constantParameterSetsToSeriesMap[key]] = [];
+            }
+            // Link record ID to series ID.
+            recordIDsToSeriesMap[record.id] = constantParameterSetsToSeriesMap[key];
+            // Link series ID to IDs of records.
+            seriesToRecordIDsMap[constantParameterSetsToSeriesMap[key]].push(record.id);
+        }
+
+        return {
+            recordToSeriesMapping: recordIDsToSeriesMap,
+            seriesToRecordMapping: seriesToRecordIDsMap,
+            seriesCount: seriesCounter,
+            variantAttribute: variantAttribute
+        };
     }
 
     /**
@@ -277,7 +357,7 @@ export default class DRMetaDataset extends Dataset
         for (let j = 0; j < this._data.length; j++) {
             // Add fields with binned values for histograms and SSPs.
             this._addBinnedValuesToRecord(this._data[j], attributes, "#histogram", this._binCount);
-            this._addBinnedValuesToRecord(this._data[j], this.metadata.objectives, "#ssp", this._binCount);
+            this._addBinnedValuesToRecord(this._data[j], this.metadata.objectives, "#ssp", this._binCountSSP);
         }
 
         for (let i = 0; i < attributes.length; i++) {
@@ -527,5 +607,10 @@ export default class DRMetaDataset extends Dataset
         }
 
         return instance;
+    }
+
+    get seriesMappingByHyperparameter()
+    {
+        return this._seriesMappingByHyperparameter;
     }
 }

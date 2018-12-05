@@ -355,7 +355,7 @@ export default class FilterReduceChartsPanel extends Panel
 
     resize()
     {
-        let chartContainerHeight = $(
+        const chartContainerHeight = $(
             "#" + this._containerDivIDs[Object.keys(this._containerDivIDs)[0]]
         ).height();
         let metadata = this._operator.dataset.metadata;
@@ -364,15 +364,16 @@ export default class FilterReduceChartsPanel extends Panel
         $(".chart-placeholder").css("height", chartHeight + "px");
 
         // Resize charts.
+        // todo Fix loss of heatmap interactivity here.
         for (let chartName in this._charts) {
             this._charts[chartName].resize(chartHeight);
         }
 
         // Reposition chart column and row titles.
         for (let i = 0; i < metadata.objectives.length; i++) {
-            $("#filter-reduce-title-" + metadata.objectives[i]).css("top", (i + 1) * chartHeight - 20);
+            $("#filter-reduce-title-" + metadata.objectives[i]).css({"top": (-25 + (chartHeight + 5) * (i + 1))  + "px"});
         }
-        $(".filter-reduce-labels-container").css("margin-top", (chartHeight) + "px");
+        $(".filter-reduce-labels-container").css("margin-top", (chartHeight + 10) + "px");
         $(".filter-reduce-row-label").css("margin-bottom", (chartHeight - 6) + "px");
         $(".filter-reduce-row-label-text").css("padding-top", (chartHeight / 2) + "px");
     }

@@ -66,7 +66,6 @@ export default class ParetoScatterplot extends Scatterplot
             x: intervals[this._axes_attributes.x] * this._style.paddingFactor,
             y: intervals[this._axes_attributes.y] * this._style.paddingFactor
         };
-        console.log(dataPadding)
 
         // Configure chart.
         this._cf_chart
@@ -202,12 +201,13 @@ export default class ParetoScatterplot extends Scatterplot
                 max: this._dataset._cf_extrema[this._axes_attributes.y].max + dataPadding.y,
             }
         };
-        // Calculate translation factors.
+
+        // Calculate translations for binning so that value extrema match coordinate extrema.
         let translationFactors = {
             x: width / (this._dataset._cf_intervals[this._axes_attributes.x] + dataPadding.x * 2),
             y: height / (this._dataset._cf_intervals[this._axes_attributes.y] + dataPadding.y * 2),
         };
-        // Calculate translations for binning so that value extrema match coordinate extrema.
+
         let translateIntoCoordinates = function(d, axis) {
             return (
                 d[instance._axes_attributes[axis]] - extrema[axis].min
@@ -267,7 +267,8 @@ export default class ParetoScatterplot extends Scatterplot
             .attr("fill", d => colors(d.length) );
     }
 
-    resize(height = -1, width = -1) {
+    resize(height = -1, width = -1)
+    {
         if (height !== -1)
             this._cf_chart.height(height);
         if (width !== -1)
@@ -279,6 +280,8 @@ export default class ParetoScatterplot extends Scatterplot
         if (this._useBinning) {
             this._hexHeatmapContainerID = Utils.spawnChildDiv(this._target, null, 'pareto-scatterplot-hexheatmap').id;
             this._drawHexagonalHeatmap();
+            // Update z-index to allow selection in underlying map.
+            $("#" + this._hexHeatmapContainerID).css("z-index", -1);
         }
     }
 }

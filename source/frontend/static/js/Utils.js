@@ -242,7 +242,7 @@ export default class Utils
         let intersection = new Set([...set1].filter(x => set2.has(x)));
         return {
             intersection: intersection,
-            relativeOverlap: intersection.length / (set1.length + set2.length) * 2
+            relativeOverlap: intersection.size / (set1.size + set2.size) * 2
         }
     }
 
