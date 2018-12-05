@@ -114,7 +114,7 @@ span.filter-reduce-row-label-text {
 .filter-reduce-table .dataTables_wrapper .dataTables_filter {
     position: relative;
     float: left;
-    z-index: -1;
+    z-index: 0;
     top: -1px;
     margin-left: 20px;
 }
