@@ -62,7 +62,11 @@ export default class ParetoScatterplot extends Scatterplot
         let dimensions  = this._dataset._cf_dimensions;
         let key         = this._axes_attributes.x + ":" + this._axes_attributes.y;
         // Use padding so that first/last bar are not cut off in chart.
-        let dataPadding = intervals[this._axes_attributes.x] * this._style.paddingFactor;
+        let dataPadding = {
+            x: intervals[this._axes_attributes.x] * this._style.paddingFactor,
+            y: intervals[this._axes_attributes.y] * this._style.paddingFactor
+        };
+        console.log(dataPadding)
 
         // Configure chart.
         this._cf_chart
@@ -71,12 +75,12 @@ export default class ParetoScatterplot extends Scatterplot
             .width(instance._style.width - 8)
             .useCanvas(true)
             .x(d3.scale.linear().domain([
-                extrema[instance._axes_attributes.x].min - dataPadding,
-                extrema[instance._axes_attributes.x].max + dataPadding
+                extrema[instance._axes_attributes.x].min - dataPadding.x,
+                extrema[instance._axes_attributes.x].max + dataPadding.x
             ]))
             .y(d3.scale.linear().domain([
-                extrema[instance._axes_attributes.y].min,
-                extrema[instance._axes_attributes.y].max
+                extrema[instance._axes_attributes.y].min - dataPadding.y,
+                extrema[instance._axes_attributes.y].max + dataPadding.y
             ]))
             .xAxisLabel(instance._style.showAxisLabels.x ? instance._axes_attributes.x : null)
             .yAxisLabel(instance._style.showAxisLabels.y ? instance._axes_attributes.y : null)
@@ -96,7 +100,7 @@ export default class ParetoScatterplot extends Scatterplot
             // Filter on end of brushing action, not meanwhile (performance drops massively otherwise).
             .filterOnBrushEnd(true)
             .mouseZoomable(false)
-            .margins({top: 0, right: 0, bottom: 25, left: 25})
+            .margins({ top: 0, right: 0, bottom: 16, left: 25 })
             .on('preRedraw', function(chart) {
                 // If binning is used: Redraw heatmap.
                 if (instance._useBinning) {
@@ -183,7 +187,8 @@ export default class ParetoScatterplot extends Scatterplot
         let records     = this._dataset._cf_dimensions[key].top(Infinity);
         let dataPadding = {
             x: this._dataset._cf_intervals[this._axes_attributes.x] * this._style.paddingFactor,
-            y: this._dataset._cf_intervals[this._axes_attributes.y] * this._style.paddingFactor
+            // Why does factor 1.5 work better for alignment than 1.0?
+            y: this._dataset._cf_intervals[this._axes_attributes.y] * this._style.paddingFactor * 1.5
         };
 
         // Prepare data necessary for binning. Take padding values into account to ensure matching with histograms.

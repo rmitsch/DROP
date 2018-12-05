@@ -110,13 +110,16 @@ export default class FilterReduceChartsPanel extends Panel
         let hyperparameters = Utils.unfoldHyperparameterObjectList(dataset.metadata.hyperparameters);
         let attributes = hyperparameters.concat(dataset.metadata.objectives);
         for (let i = 0; i < attributes.length; i++) {
-            let attribute   = attributes[i];
-            let histogram   = null;
+            let attribute               = attributes[i];
+            let histogram               = null;
+            let updatedStyle            = $.extend(true, {}, style);
 
             // If attributes is objective or numerical hyperparameter: Spawn NumericalHistogram.
-            // This is hacky and I should be ashamed of myself.
-            if (i < hyperparameters.length &&
-                dataset.metadata.hyperparameters[i].type === "numeric" ||
+            if (
+                (
+                    i < hyperparameters.length &&
+                    dataset.metadata.hyperparameters[i].type === "numeric"
+                ) ||
                 i >= hyperparameters.length
             ) {
                 // Generate numerical histogram.
@@ -125,7 +128,7 @@ export default class FilterReduceChartsPanel extends Panel
                     this,
                     [attribute],
                     dataset,
-                    style,
+                    updatedStyle,
                     // Place chart in previously generated container div.
                     this._histogramDivIDs[attribute]
                 );
@@ -139,7 +142,7 @@ export default class FilterReduceChartsPanel extends Panel
                     this,
                     [attribute],
                     dataset,
-                    style,
+                    updatedStyle,
                     // Place chart in previously generated container div.
                     this._histogramDivIDs[attribute]
                 );
@@ -315,7 +318,7 @@ export default class FilterReduceChartsPanel extends Panel
             );
             // Place column title accordingly.
             let numberOfPlaceholders = Math.max(i - hyperparameters.length + 1, 0);
-            $("#" + titleDiv.id).css({"top": (-25 + 69 * numberOfPlaceholders)  + "px"});
+            $("#" + titleDiv.id).css({"top": (-25 + 70 * numberOfPlaceholders)  + "px"});
 
             // If this is a histogram for an objective-objective plot: Fill slots with placeholders to move obj.-obj.
             // to push histograms onto the diagonale.
@@ -357,7 +360,7 @@ export default class FilterReduceChartsPanel extends Panel
         ).height();
         let metadata = this._operator.dataset.metadata;
 
-        let chartHeight = Math.floor(chartContainerHeight / (this._operator.dataset.metadata.objectives.length + 1.5));
+        let chartHeight = Math.floor((chartContainerHeight - 20) / (this._operator.dataset.metadata.objectives.length + 1));
         $(".chart-placeholder").css("height", chartHeight + "px");
 
         // Resize charts.

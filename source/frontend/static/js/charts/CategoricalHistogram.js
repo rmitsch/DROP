@@ -49,7 +49,7 @@ export default class CategoricalHistogram extends Histogram
             .dimension(dimensions[key])
             .group(this._dataset.cf_groups[key])
             .renderHorizontalGridLines(true)
-            .margins({top: 0, right: 10, bottom: 25, left: 25})
+            .margins({top: 0, right: 10, bottom: 16, left: 25})
             .gap(1)
             // Call cross-operator filter method on stage instance after filter event.
             .on("filtered", event => this.propagateFilterChange(this, key));
