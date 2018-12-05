@@ -348,6 +348,7 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
         // -------------------------------------------------------------------------------------------------
 
         context.beginPath();
+        context.lineWidth = 1;
 
         // Sort records in series (list of dictionaries) by attribute.
         // We don't know whether the attribute is numeric or not, so we don't use arithmetic operations to directly
@@ -362,6 +363,7 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
         let xCoords = Object.keys(coordinatesToDataPoints).sort(sortFunction);
 
         // Draw lines between each two adjacent grouping of points, i. e. two points with differing x/y coordinates.
+        let lineVals = [];
         for (let xIndex1 = 0; xIndex1 < xCoords.length; xIndex1++) {
             let x1          = xCoords[xIndex1];
             let yCoords1    = Object.keys(coordinatesToDataPoints[x1]).sort(sortFunction);
@@ -388,15 +390,29 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
                         const intersection  = new Set([...set1].filter(x => set2.has(x)));
 
                         if (intersection.size > 0) {
-                            context.globalAlpha = alphaPrior * intersection.size / recordCount;
-                            // console.log(intersection.size / seriesCount)
-                            context.lineWidth = 1;
-                            context.moveTo(x1, y1);
-                            context.lineTo(x2, y2);
+                            // context.globalAlpha = lineWidth;
+                            lineVals.push([
+                                // alphaPrior * intersection.size * 2 / (set1.size + set2.size), //seriesCount,
+                                alphaPrior * intersection.size / seriesCount,
+                                parseInt(x1),
+                                y1,
+                                parseInt(x2),
+                                parseInt(y2)
+                            ]);
+                            // context.moveTo(x1, y1);
+                            // context.lineTo(x2, y2);
                         }
                     }
                 }
             }
+        }
+
+        // For optimization of drawing: Sort by globalAlpha values, thereby minimizing setting .globalAlpha.
+        for (let lineValSet of lineVals) {
+            context.globalAlpha = lineValSet[0];
+            // console.log(lineValSet[0], base, alphaPrior * lineValSet[0] / base);
+            context.moveTo(lineValSet[1], lineValSet[2]);
+            context.lineTo(lineValSet[3], lineValSet[4]);
         }
 
         context.stroke();

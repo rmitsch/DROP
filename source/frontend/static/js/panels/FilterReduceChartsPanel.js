@@ -364,7 +364,6 @@ export default class FilterReduceChartsPanel extends Panel
         $(".chart-placeholder").css("height", chartHeight + "px");
 
         // Resize charts.
-        // todo Fix loss of heatmap interactivity here.
         for (let chartName in this._charts) {
             this._charts[chartName].resize(chartHeight);
         }
