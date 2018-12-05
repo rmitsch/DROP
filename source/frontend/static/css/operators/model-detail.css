@@ -25,6 +25,17 @@
     font-size: 11px;
 }
 
+.model-detail-scatterplot, .model-detail-scatterplot-placeholder {
+    margin-right: 10px;
+}
+
+.model-detail-scatterplot-row {
+    display: block;
+    width: calc(100% - 10px);
+    padding-left: 10px;
+    padding-bottom: 5px;
+}
+
 .reduced-padding {
     padding-top: 0;
 }

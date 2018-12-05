@@ -288,22 +288,31 @@ export default class ModelDetailPanel extends Panel
         // 2. Append new chart containers, draw scatterplots.
         // -------------------------------------------------------
 
-        let numDimensions   = this._data._allModelMetadata[this._data._modelID].n_components;
-        let numScatterplots = ((numDimensions - 1) * (numDimensions)) / 2;
-        numScatterplots     = numScatterplots >= 1 ? numScatterplots : 1;
+        const numDimensions     = this._data._allModelMetadata[this._data._modelID].n_components;
+        let numPlotsInRow       = Math.max(numDimensions - 1, 1);
+        const scatterplotWidth  = chartContainerDiv.width() / numPlotsInRow - 15;
+        const scatterplotHeight = chartContainerDiv.height() / numPlotsInRow - 10;
 
         // Generate all combinations of dimension indices.
-        for (let i = 0; i < numDimensions; i++) {
+        for (let i = 0; i < Math.max(numDimensions - 1, 1); i++) {
+            let chartRowDiv = Utils.spawnChildDiv(
+                this._divStructure.scatterplotPaneID,
+                "model-detail-scatterplot-row-" + i,
+                "model-detail-scatterplot-row"
+            );
+            $("#" + chartRowDiv.id).css('height', (scatterplotHeight + 5) + 'px');
+
             // Consider that we want to draw a scatterplot with the added "fake"/zero axis if we have a dataset with a
             // one-dim. embedding.
-            for (let j = i + 1; j < (numDimensions > 1 ? numDimensions : 2); j++) {
+            for (let j = i + 1; j < Math.max(numDimensions, 2); j++) {
                 // Generate scatterplot.
                 let scatterplot = this._generateScatterplot(
                     [i, j],
                     {
-                        height: chartContainerDiv.height() / numScatterplots - numScatterplots * 10,
-                        width: chartContainerDiv.width() / numScatterplots - numScatterplots * 10
-                    }
+                        height: scatterplotHeight,
+                        width: scatterplotWidth
+                    },
+                    chartRowDiv.id
                 );
 
                 // Render chart.
@@ -317,10 +326,11 @@ export default class ModelDetailPanel extends Panel
      * @param currIndices Array of length 2 holding current indices (i, j). Used to generate keys for access to
      * crossfilter dimensions and groups and to generate unique div IDs.
      * @param scatterplotSize Size of scatterplot. Has .height and .width.
+     * @param parentDivID
      * @returns {dc.scatterPlot} Generated scatter plt.
      * @private
      */
-    _generateScatterplot(currIndices, scatterplotSize)
+    _generateScatterplot(currIndices, scatterplotSize, parentDivID)
     {
         const numDimensions     = this._data._allModelMetadata[this._data._modelID].n_components;
         let cf_config           = this._data.crossfilterData["low_dim_projection"];
@@ -334,10 +344,11 @@ export default class ModelDetailPanel extends Panel
         };
 
         let scatterplotContainer = Utils.spawnChildDiv(
-            this._divStructure.scatterplotPaneID,
+            parentDivID,
             "model-detail-scatterplot-" + i + "-" + j,
             "model-detail-scatterplot"
         );
+        $("#" + scatterplotContainer.id).css('left', (i * (scatterplotSize.width + 10)) + 'px');
 
         let scatterplot = dc.scatterPlot(
             "#" + scatterplotContainer.id,
@@ -346,14 +357,6 @@ export default class ModelDetailPanel extends Panel
             null,
             false
         );
-
-        console.log("i, j: ", i, " ", j);
-        console.log("dataPadding: ", dataPadding);
-        console.log("scatterplotSize: ", scatterplotSize);
-        console.log("cf_config.extrema: ", cf_config.extrema);
-        console.log("cf_config.intervals: ", cf_config.intervals);
-        console.log("cf_config.groups[key].all(): ", cf_config.groups[key].all());
-        console.log("cf_config.dimensions[key].top(): ", cf_config.dimensions[key].top(Infinity))
 
         // Render scatterplot.
         scatterplot
@@ -381,13 +384,16 @@ export default class ModelDetailPanel extends Panel
             .existenceAccessor(function(d) {
                 return d.value.count > 0;
             })
-            .excludedSize(2)
+            .excludedSize(1)
             .excludedOpacity(0.7)
             .excludedColor("#ccc")
-            .symbolSize(3)
+            .symbolSize(2)
             .filterOnBrushEnd(true)
             .mouseZoomable(true)
-            .margins({top: 25, right: 25, bottom: 25, left: 35});
+            .margins({top: 5, right: 0, bottom: 0, left: 0});
+
+        scatterplot.yAxis().ticks(5);
+        scatterplot.xAxis().ticks(5);
 
         return scatterplot;
     }
