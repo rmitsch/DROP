@@ -203,7 +203,7 @@ class InputDataset:
         :return: If exists: Dataset name. If does not exist: None.
         """
 
-        if parameter in ("vis", "wine", "swiss_roll", "mnist"):
+        if parameter in ("vis", "wine", "swiss_roll", "mnist", "happiness"):
             return parameter
 
         return None

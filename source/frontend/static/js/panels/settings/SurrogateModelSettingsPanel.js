@@ -54,7 +54,6 @@ export default class SurrogateModelSettingsPanel extends SettingsPanel
         settingsHTML += "<select multiple id='surrogate-settings-target-objective-select'>" +
             "  <option value='runtime'>Runtime</option>" +
             "  <option value='r_nx'>R<sub>nx</sub></option>" +
-            "  <option value='b_nx'>B<sub>nx</sub></option>" +
             "  <option value='stress'>Stress</option>" +
             "  <option value='classification_accuracy'>Classification accuracy</option>" +
             "  <option value='separability_metric'>Separability metric</option>" +

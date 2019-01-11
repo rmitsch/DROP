@@ -43,7 +43,7 @@ export default class PrototypeStage extends Stage
 
         // Fetch (test) dataset for surrogate model first, then initialize panels.
         let surrModelJSON = fetch(
-            "/get_surrogate_model_data?modeltype=tree&objs=r_nx,b_nx&depth=4",
+            "/get_surrogate_model_data?modeltype=tree&objs=r_nx&depth=4",
             {
                 headers: { "Content-Type": "application/json; charset=utf-8"},
                 method: "GET"

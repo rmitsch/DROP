@@ -23,7 +23,13 @@ $(document).ready(function() {
     $("#load-dataset-link").click(function() {
         let baseURL = location.protocol + '//' + location.hostname + (location.port ? ':'+location.port: '');
         // Get content of dropdowns, preprocess for backend.
-        let datasetNameTranslation = {Wine: "wine", MNIST: "mnist", "Swiss Roll": "swiss_roll", "VIS Papers": "vis"};
+        let datasetNameTranslation = {
+            Wine: "wine",
+            MNIST: "mnist",
+            "Swiss Roll": "swiss_roll",
+            "VIS Papers": "vis",
+            Happiness: "happiness"
+        };
         let drkTranslation = {"t-SNE": "tsne", UMAP: "umap", SVD: "svd"};
         // Load new page.
         window.location.href =
@@ -112,12 +118,14 @@ $(document).ready(function() {
 function processGETParameters()
 {
     // Read GET parameters.
-    let datasetName     = Utils.findGETParameter("dataset") === null ? "wine" : Utils.findGETParameter("dataset");
+    let datasetName     = Utils.findGETParameter("dataset") === null ? "happiness" : Utils.findGETParameter("dataset");
     let drKernelName    = Utils.findGETParameter("drk") === null ? "tsne" : Utils.findGETParameter("drk");
     let forceReload     = Utils.findGETParameter("force") === null ? "false" : Utils.findGETParameter("force");
 
     // Update displayed value of dropdown based on current URL parameters.
-    let datasetNameTranslation = {wine: "Wine", mnist: "MNIST", swiss_roll: "Swiss Roll", vis: "VIS Papers"};
+    let datasetNameTranslation = {
+        wine: "Wine", mnist: "MNIST", swiss_roll: "Swiss Roll", vis: "VIS Papers", happiness: "Happiness"
+    };
     let drkTranslation = {tsne: "t-SNE", umap: "UMAP", svd: "SVD"};
     $("#datasetLink").html(datasetNameTranslation[datasetName]);
     $("#drkernelLink").html(drkTranslation[drKernelName]);

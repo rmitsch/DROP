@@ -44,10 +44,10 @@ def init_flask_app():
     }
 
     # Store name of current dataset and kernel. Note that these values is only changed at call of /get_metadata.
-    # Use t-SNE on wine dataset as default.
+    # Use t-SNE on happiness dataset as default.
     flask_app.config["DATASET_NAME"] = None
     flask_app.config["DR_KERNEL_NAME"] = "tsne"
-    flask_app.config["FULL_FILE_NAME"] = "wine"
+    flask_app.config["FULL_FILE_NAME"] = "happiness"
 
     # For storage of global, unrestricted model used by LIME for local explanations.
     # Has one global regressor for each possible objective.
@@ -132,6 +132,9 @@ def get_metadata():
             features_df=app.config["EMBEDDING_METADATA"]["features_preprocessed"]
         )
 
+        df = df.drop(["b_nx"], axis=1)
+        print(df)
+
         # Return JSON-formatted embedding data.
         return jsonify(df.to_json(orient='index'))
 
@@ -152,7 +155,7 @@ def get_metadata_template():
         "objectives": [
             "runtime",
             "r_nx",
-            "b_nx",
+            # "b_nx",
             "stress",
             "classification_accuracy",
             "separability_metric"
@@ -250,8 +253,7 @@ def get_sample_dissonance():
 
         for model_pointwise_quality_leaf in h5file.walk_nodes("/pointwise_quality/", classname="CArray"):
             model_id = int(model_pointwise_quality_leaf._v_name[5:])
-            # Gather all pointwise qualities in file.
-            pointwise_qualities[model_id] = model_pointwise_quality_leaf.read().flatten()
+            pointwise_qualities[model_id - 1] = model_pointwise_quality_leaf.read().flatten()
 
         # Close file.
         h5file.close()
@@ -260,6 +262,8 @@ def get_sample_dissonance():
         df = pandas.DataFrame(pointwise_qualities)
         df["model_id"] = df.index
         df = df.melt("model_id", var_name='sample_id', value_name="measure")
+        # Rectify 0-indexing.
+        df.model_id = df.model_id + 1
 
         # Return jsonified version of model x sample quality matrix.
         return df.to_json(orient='records')

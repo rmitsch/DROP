@@ -23,7 +23,7 @@ export default class DRMetaDataset extends Dataset
         this._dataIndicesByID   = {};
         this._metadata          = metadata;
         this._binCount          = 10;
-        this._binCountSSP       = 1000;
+        this._binCountSSP       = 10;
 
         // Maps for translation of categorical variables into numerical ones.
         this._categoricalToNumericalValues = {};
@@ -69,10 +69,6 @@ export default class DRMetaDataset extends Dataset
         for (let hyp of this._metadata.hyperparameters)
             distinctHypValues[hyp.name] = new Set();
         for (let i = 0; i < this._data.length; i++) {
-            // todo Hotfix for angle problem - should be not necessary after new data generation has run through.
-            if (this._data[i]["angle"] === 0 || this._data[i]["angle"] === 35)
-                this._data[i]["angle"] = 0.35;
-
             this._dataIndicesByID[this._data[i].id] = i;
             for (let hyp of this._metadata.hyperparameters)
                 distinctHypValues[hyp.name].add(this._data[i][hyp.name]);

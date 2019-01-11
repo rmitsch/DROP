@@ -5,7 +5,7 @@ import os
 from tables import *
 from tqdm import tqdm
 
-import backend.objectives.topology_preservation_objectives.CorankingMatrix as CorankingMatrix
+from backend.objectives.topology_preservation_objectives.CorankingMatrix import CorankingMatrix
 from backend.data_generation.PersistenceThread import PersistenceThread
 from backend.data_generation.datasets import *
 from backend.data_generation.dimensionality_reduction import DimensionalityReductionKernel
@@ -19,8 +19,8 @@ def generate_instance(instance_dataset_name: str):
     :param instance_dataset_name:
     :return:
     """
-    if instance_dataset_name not in ("wine", "swiss_roll", "mnist", "vis"):
-        raise ValueError('Dataset ' + instance_dataset_name + ' not supported.')
+    assert instance_dataset_name in ("wine", "swiss_roll", "mnist", "vis", "happiness"), \
+        'Dataset ' + instance_dataset_name + ' not supported.'
 
     if instance_dataset_name == "wine":
         return WineDataset()
@@ -30,6 +30,9 @@ def generate_instance(instance_dataset_name: str):
         return MNISTDataset()
     elif instance_dataset_name == "vis":
         return VISPaperDataset()
+    elif instance_dataset_name == "happiness":
+        return HappinessDataset()
+
 
 # Create logger.
 logger = Utils.create_logger()
@@ -39,7 +42,7 @@ logger = Utils.create_logger()
 ######################################################
 
 # Define name of dataset to use (appended to file name).
-dataset_name = sys.argv[1] if len(sys.argv) > 1 else "wine"
+dataset_name = sys.argv[1] if len(sys.argv) > 1 else "happiness"
 # Define DR method to use.
 dim_red_kernel_name = sys.argv[2] if len(sys.argv) > 2 else "TSNE"
 
@@ -57,6 +60,7 @@ logger.info("Creating dataset.")
 
 # Load dataset.
 high_dim_dataset = generate_instance(instance_dataset_name=dataset_name)
+
 # Persist dataset's records.
 high_dim_dataset.persist_records(directory=os.getcwd() + "/../data")
 
@@ -90,7 +94,7 @@ high_dim_neighbourhood_rankings = {
 # Shuffle list with parameter sets so that they are kinda evenly distributed.
 shuffle(parameter_sets)
 # Determine number of workers.
-n_jobs = psutil.cpu_count(logical=True) - 1
+n_jobs = 1 # psutil.cpu_count(logical=True) - 1
 threads = []
 # Shared list holding results.
 results = []

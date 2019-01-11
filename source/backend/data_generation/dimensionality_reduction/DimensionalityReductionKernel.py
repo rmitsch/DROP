@@ -144,6 +144,7 @@ class DimensionalityReductionKernel:
         ###############################################
         # 1. Load already existent parameter sets.
         ###############################################
+
         if os.path.isfile(data_file_path):
             h5file = open_file(filename=data_file_path, mode="r+")
             # Note: We don't use the model ID here, since that would never lead to comparison hits.

@@ -12,7 +12,7 @@
     display: inline-block;
     height: calc(100% - 25px - 10px);
     min-width: 20px;
-    width: 7.3%;
+    width: 7.9%;
     margin-top: 25px;
     position: relative;
 }
@@ -46,7 +46,7 @@
 
 .chart-placeholder {
     height: 65px;
-    width: 7.3%;
+    width: 7.9%;
     margin-bottom: 5px;
 }
 

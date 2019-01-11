@@ -3,3 +3,4 @@ from backend.data_generation.datasets.MNISTDataset import MNISTDataset
 from backend.data_generation.datasets.SwissRollDataset import SwissRollDataset
 from backend.data_generation.datasets.VISPaperDataset import VISPaperDataset
 from backend.data_generation.datasets.WineDataset import WineDataset
+from backend.data_generation.datasets.HappinessDataset import HappinessDataset
