@@ -65,7 +65,8 @@ class DimensionalityReductionThread(threading.Thread):
             )
 
             # Scale projection data for later use.
-            scaled_low_dim_projection = low_dimensional_projection #StandardScaler().fit_transform(low_dimensional_projection)
+            scaled_low_dim_projection = low_dimensional_projection
+            # StandardScaler().fit_transform(low_dimensional_projection)
 
             ###################################################
             # 2. Calculate objectives.

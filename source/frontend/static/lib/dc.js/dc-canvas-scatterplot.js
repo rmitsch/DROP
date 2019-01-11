@@ -389,14 +389,6 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
                         const intersection  = new Set([...set1].filter(x => set2.has(x)));
 
                         if (intersection.size > 0) {
-
-                            if (_chart.variantAttribute === "n_components" && _chart.objective === "runtime")
-                                console.log(
-                                    x1, y1, " -> ", x2, y2, "with ", intersection.size, "/", seriesCount, " = ",
-                                    intersection.size / (seriesCount),
-                                    Math.ceil(intersection.size / seriesCount * 10) / 10
-                                );
-
                             lineVals.push([
                                 Math.ceil(intersection.size / seriesCount * 12) / 12,
                                 parseInt(x1),

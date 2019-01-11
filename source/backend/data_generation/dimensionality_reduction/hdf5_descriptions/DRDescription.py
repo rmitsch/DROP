@@ -17,4 +17,4 @@ class DRDescription(IsDescription):
     stress = Float32Col(pos=5)
     classification_accuracy = Float32Col(pos=6)
     separability_metric = Float32Col(pos=7)
-    runtime = Int8Col(pos=8)
+    runtime = Float32Col(pos=8)
