@@ -339,7 +339,6 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
         let extrema         = {};
         const seriesCount   = _chart.dataset.seriesMappingByHyperparameter[_chart.variantAttribute].seriesCount;
         const recordCount   = _chart.dataset._data.length;
-        const alphaPrior    = 1.0;
 
         // -------------------------------------------------------------------------------------------------
         // Draw lines between points belonging to the same series.
@@ -390,33 +389,37 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
                         const intersection  = new Set([...set1].filter(x => set2.has(x)));
 
                         if (intersection.size > 0) {
-                            // context.globalAlpha = lineWidth;
+
+                            if (_chart.variantAttribute === "n_components" && _chart.objective === "runtime")
+                                console.log(
+                                    x1, y1, " -> ", x2, y2, "with ", intersection.size, "/", seriesCount, " = ",
+                                    intersection.size / (seriesCount),
+                                    Math.ceil(intersection.size / seriesCount * 10) / 10
+                                );
+
                             lineVals.push([
-                                // alphaPrior * intersection.size * 2 / (set1.size + set2.size), //seriesCount,
-                                alphaPrior * intersection.size / seriesCount,
+                                Math.ceil(intersection.size / seriesCount * 12) / 12,
                                 parseInt(x1),
                                 y1,
                                 parseInt(x2),
                                 parseInt(y2)
                             ]);
-                            // context.moveTo(x1, y1);
-                            // context.lineTo(x2, y2);
                         }
                     }
                 }
             }
         }
 
-        // For optimization of drawing: Sort by globalAlpha values, thereby minimizing setting .globalAlpha.
+        // todo For optimization of drawing: Sort by globalAlpha values, thereby minimizing setting .globalAlpha.
         for (let lineValSet of lineVals) {
+            context.beginPath();
+            // context.lineWidth = lineValSet[0];
             context.globalAlpha = lineValSet[0];
-            // console.log(lineValSet[0], base, alphaPrior * lineValSet[0] / base);
             context.moveTo(lineValSet[1], lineValSet[2]);
             context.lineTo(lineValSet[3], lineValSet[4]);
+            context.stroke();
         }
-
-        context.stroke();
-
+        context.restore();
         return extrema;
     }
 
