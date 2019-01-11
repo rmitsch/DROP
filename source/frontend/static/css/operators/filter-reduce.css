@@ -91,6 +91,7 @@ span.filter-reduce-row-label-text {
 
 .filter-reduce-info {
     top: 55px;
+    z-index: 0;
 }
 
 .filter-reduce-info .title {

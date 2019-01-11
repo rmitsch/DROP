@@ -130,7 +130,6 @@ export default class ModelDetailDataset extends Dataset
      */
     _configureLIMECrossfilter()
     {
-        // todo Continue here: Create dimensions/groups necessary for heatmap.
         // Keep in mind that heatmap cells/labels have to be linked to rule data, incl. comparator;
         // while heatmap only shows rule weight.
         let config = this._crossfilterData.lime;
