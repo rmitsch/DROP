@@ -7,6 +7,7 @@ from MulticoreTSNE import MulticoreTSNE
 import umap
 
 from . import hdf5_descriptions
+from typing import Tuple
 
 
 class DimensionalityReductionKernel:
@@ -128,13 +129,13 @@ class DimensionalityReductionKernel:
         return None
 
     @staticmethod
-    def generate_parameter_sets_for_testing(data_file_path: str, dim_red_kernel_name: str):
+    def generate_parameter_sets_for_testing(data_file_path: str, dim_red_kernel_name: str) -> Tuple[list, int]:
         """
         Generates parameter sets for testing. Intervals and records are hardcoded.
         Ignores records already in specified file.
         :param data_file_path: Path to file holding all records generated so far.
         :param dim_red_kernel_name: Name of dimensionality reduction kernel used for file.
-        :return:
+        :return: List of parameter sets; number of parameter sets in total (including already generated ones).
         """
 
         parameter_sets = []
@@ -192,7 +193,7 @@ class DimensionalityReductionKernel:
             # Keep track of number of generated parameter sets.
             current_id += 1
 
-        return parameter_sets
+        return parameter_sets, len(parameter_sets) + len(existent_parameter_sets)
 
     @staticmethod
     def get_metric_values(dim_red_kernel_name: str):

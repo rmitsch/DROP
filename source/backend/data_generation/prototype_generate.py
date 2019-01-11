@@ -47,7 +47,7 @@ dataset_name = sys.argv[1] if len(sys.argv) > 1 else "happiness"
 dim_red_kernel_name = sys.argv[2] if len(sys.argv) > 2 else "TSNE"
 
 # Get all parameter configurations (to avoid duplicate model generations).
-parameter_sets = DimensionalityReductionKernel.generate_parameter_sets_for_testing(
+parameter_sets, num_param_sets = DimensionalityReductionKernel.generate_parameter_sets_for_testing(
     data_file_path=os.getcwd() + "/../data/drop_" + dataset_name + "_" + dim_red_kernel_name.lower() + ".h5",
     dim_red_kernel_name=dim_red_kernel_name
 )
@@ -102,6 +102,7 @@ results = []
 # Split parameter sets amongst workers.
 logger.info("Generating dimensionality reduction models with " + str(n_jobs) + " threads.")
 num_parameter_sets = int(len(parameter_sets) / n_jobs)
+
 for i in range(0, n_jobs):
     first_index = num_parameter_sets * i
     # Add normal number of parameter sets, if this isn't the last job. Otherwise add all remaining sets.
@@ -124,6 +125,7 @@ threads.append(
     PersistenceThread(
         results=results,
         expected_number_of_results=len(parameter_sets),
+        total_number_of_results=num_param_sets,
         dataset_name=dataset_name,
         dim_red_kernel_name=dim_red_kernel_name,
         checking_interval=10

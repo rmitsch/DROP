@@ -2,14 +2,13 @@ import threading
 import time
 
 from tables import *
-
+import tables
 import os
-
 from tqdm import tqdm
-
 from backend.data_generation.dimensionality_reduction import DimensionalityReductionKernel
 from backend.data_generation.dimensionality_reduction.hdf5_descriptions import TSNEDescription
 from backend.utils import Utils
+
 
 class PersistenceThread(threading.Thread):
     """
@@ -20,6 +19,7 @@ class PersistenceThread(threading.Thread):
             self,
             results: list,
             expected_number_of_results: int,
+            total_number_of_results: int,
             dataset_name: str,
             dim_red_kernel_name: str,
             checking_interval: int = 20
@@ -28,6 +28,7 @@ class PersistenceThread(threading.Thread):
         Initializes thread for ensuring persistence of t-SNE results calculated by other threads.
         :param results: List of calculated results.
         :param expected_number_of_results: Expected number of datasets to be produced.
+        :param total_number_of_results: Number of all results, including already generated ones.
         :param dataset_name: Suffix of dataset to be created.
         :param dim_red_kernel_name: Name of dimensionality reduction kernel used.
         :param checking_interval: Intervals in seconds in which thread checks for new models.
@@ -36,15 +37,19 @@ class PersistenceThread(threading.Thread):
 
         self._results = results
         self._expected_number_of_results = expected_number_of_results
+        self._total_number_of_results = total_number_of_results
         self._dataset_name = dataset_name
         self._dim_red_kernel_name = dim_red_kernel_name
         self._checking_interval = checking_interval
+        self._ids_to_process = None
 
         # Fetch .h5 file handle.
         self._h5file = self._open_pytables_file()
 
         # Display progress bar.
-        self._progress_bar = tqdm(total=expected_number_of_results)
+        self._progress_bar = tqdm(
+            total=total_number_of_results, initial=total_number_of_results - expected_number_of_results
+        )
 
     def run(self):
         """
@@ -76,9 +81,8 @@ class PersistenceThread(threading.Thread):
                     # 1. Add metadata (hyperparameter + objectives).
                     ######################################################
 
-                    # Calculate ID to persist based on running ID as assigned by generation procedure plus offset
-                    # necessary due to datasets already existing in target file for dataset.
-                    valid_model_id = self.model_id_offset + result["parameter_set"]["id"]
+                    # Fetch next viable model ID.
+                    valid_model_id = self._ids_to_process.pop()
 
                     # Generic metadata.
                     metadata_row["id"] = valid_model_id
@@ -143,26 +147,21 @@ class PersistenceThread(threading.Thread):
         print(self._h5file)
         self._h5file.close()
 
-    def _open_pytables_file(self):
+    def _open_pytables_file(self) -> tables.file.File:
         """
         Creates new pytables/.h5 file for dataset with specified name.
         :return: File handle of newly created .h5 file.
         """
 
-        # Used to store how many models are already stored in file.
-        self.model_id_offset = 0
-
+        self._ids_to_process = {i for i in range(0, self._total_number_of_results)}
         file_name = os.getcwd() + "/../data/drop_" + self._dataset_name + "_" + self._dim_red_kernel_name.lower() + ".h5"
+
         # If file exists: Return handle to existing file (assuming file is not corrupt).
         if os.path.isfile(file_name):
             h5file = open_file(filename=file_name, mode="r+")
             # Determine highest ID of available nodes.
             for low_dim_leaf in h5file.walk_nodes("/projection_coordinates/", classname="CArray"):
-                model_id = int(low_dim_leaf._v_name[5:])
-                self.model_id_offset = model_id if model_id > self.model_id_offset else self.model_id_offset
-
-            # Set offset to first ID of new model.
-            self.model_id_offset += 1
+                self._ids_to_process.remove(int(low_dim_leaf._v_name[5:]))
 
             return h5file
 
