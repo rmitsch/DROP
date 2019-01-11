@@ -17,6 +17,9 @@ class InputDataset:
     Contains actual data as well information on ground truth.
     """
 
+    # Target domain performance value in original high-dimensional space.
+    high_dim_TDP = None
+
     def __init__(self, data=None, preprocessed_features=None, classification_accuracy=None):
         """
         Defines variables to be used in inheriting classes.
@@ -38,7 +41,7 @@ class InputDataset:
 
         # Calculate accuracy.
         self._classification_accuracy = classification_accuracy if classification_accuracy is not None \
-            else self.calculate_classification_accuracy()
+            else self.compute_TDP()
 
     @abc.abstractmethod
     def _load_data(self):
@@ -105,12 +108,13 @@ class InputDataset:
         """
         pass
 
-    def calculate_classification_accuracy(self, features: numpy.ndarray = None):
+    def compute_TDP(self, features: numpy.ndarray = None, relative: bool = False):
         """
-        Calculates classification accuracy with original dataset.
-        Random forests are used as default classifier. Can be overwritten by children - important for comparison: Use
-        same procedure for classification in both original and reduced dataset.
-        :param features: Data to be used for classification. Labels are extract from original dataset.
+        Calculates target domain performance for specified feature matrix.
+        Random forests are used as default model. Can be overwritten by children - important for comparison: Use
+        same procedure for prediction in both original and reduced dataset.
+        :param features: Data to be used for prediction. Labels are extract from original dataset.
+        :parma relative: Indicates to compute RTDP instead of TDP.
         :return:
         """
 
@@ -142,7 +146,7 @@ class InputDataset:
             # Measure accuracy.
             accuracy += (predicted_labels == labels[test_indices]).sum() / len(predicted_labels)
 
-        return accuracy / n_splits
+        return accuracy / n_splits if not relative else accuracy / n_splits / InputDataset.high_dim_TDP
 
     def compute_distance_matrix(self, metric: str):
         """
@@ -153,9 +157,10 @@ class InputDataset:
 
         return cdist(self.preprocessed_features(), self.preprocessed_features(), metric)
 
-    def compute_separability_metric(self, features: numpy.ndarray):
+    def compute_separability_metric(self, features: numpy.ndarray) -> float:
         """
         Computes separability metric for this dataset.
+        Note: Assumes classification as domain task.
         :param features: Coordinates of low-dimensional projection.
         :return: Normalized score between 0 and 1 indicating how well labels are separated in low-dim. projection.
         """
@@ -190,8 +195,9 @@ class InputDataset:
         # Silhouette score fails with only one label. Workaround: Set silhouette score to worst possible value in this
         # case. Actual solution: Force at least two clusters - diff. clustering algorithm?
         # See https://github.com/rmitsch/DROP/issues/49.
-        except ValueError as e:
+        except ValueError:
             silhouette_score = -1
+
         # Normalize to 0 <= x <= 1.
         return (silhouette_score + 1) / 2.0
 

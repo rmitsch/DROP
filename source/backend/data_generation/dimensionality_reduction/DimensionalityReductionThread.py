@@ -125,8 +125,8 @@ class DimensionalityReductionThread(threading.Thread):
             # 2. c. Information-preserving metrics.
             ############################################
 
-            classification_accuracy = self._input_dataset.calculate_classification_accuracy(
-                features=scaled_low_dim_projection
+            rtdp = self._input_dataset.compute_TDP(
+                features=scaled_low_dim_projection, relative=True
             )
 
             ############################################
@@ -147,7 +147,7 @@ class DimensionalityReductionThread(threading.Thread):
                 "r_nx": r_nx,
                 "b_nx": b_nx,
                 "stress": stress,
-                "classification_accuracy": classification_accuracy,
+                "classification_accuracy": rtdp,
                 "separability_metric": separability_metric,
                 "pointwise_quality_values": q_nx_i
             }

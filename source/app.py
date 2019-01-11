@@ -132,11 +132,8 @@ def get_metadata():
             features_df=app.config["EMBEDDING_METADATA"]["features_preprocessed"]
         )
 
-        df = df.drop(["b_nx"], axis=1)
-        print(df)
-
         # Return JSON-formatted embedding data.
-        return jsonify(df.to_json(orient='index'))
+        return jsonify(df.drop(["b_nx"], axis=1).to_json(orient='index'))
 
     else:
         return "File/kernel does not exist.", 400
@@ -262,8 +259,6 @@ def get_sample_dissonance():
         df = pandas.DataFrame(pointwise_qualities)
         df["model_id"] = df.index
         df = df.melt("model_id", var_name='sample_id', value_name="measure")
-        # Rectify 0-indexing.
-        df.model_id = df.model_id + 1
 
         # Return jsonified version of model x sample quality matrix.
         return df.to_json(orient='records')
