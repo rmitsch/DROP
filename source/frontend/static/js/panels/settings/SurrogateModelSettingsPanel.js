@@ -87,7 +87,7 @@ export default class SurrogateModelSettingsPanel extends SettingsPanel
 
         // If no objective has been chosen: Use all.
         if (objectives.length === 0)
-            objectives = ["runtime", "r_nx", "b_nx", "stress", "classification_accuracy", "separability_metric"];
+            objectives = ["runtime", "r_nx", "stress", "classification_accuracy", "separability_metric"];
 
         // Concatenate objectives.
         let objectiveString = objectives[0];
