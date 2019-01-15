@@ -311,10 +311,10 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
 
             // Draw pareto frontiers.
             // Set global drawing options for lines.
-            // context.lineWidth   = 1.5;
-            // context.strokeStyle = "red";
-            // context.globalAlpha = 1;
-            // plotParetoFrontiers(context, extrema);
+            context.lineWidth   = 1;
+            context.strokeStyle = "red";
+            context.globalAlpha = 1;
+            plotParetoFrontiers(context, extrema);
 
             context.restore();
         }
@@ -362,7 +362,7 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
         let xCoords = Object.keys(coordinatesToDataPoints).sort(sortFunction);
 
         // Draw lines between each two adjacent grouping of points, i. e. two points with differing x/y coordinates.
-        let lineVals = [];
+        let lineVals = {};
         for (let xIndex1 = 0; xIndex1 < xCoords.length; xIndex1++) {
             let x1          = xCoords[xIndex1];
             let yCoords1    = Object.keys(coordinatesToDataPoints[x1]).sort(sortFunction);
@@ -389,12 +389,12 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
                         const intersection  = new Set([...set1].filter(x => set2.has(x)));
 
                         if (intersection.size > 0) {
-                            lineVals.push([
-                                Math.ceil(intersection.size / seriesCount * 12) / 12,
-                                parseInt(x1),
-                                y1,
-                                parseInt(x2),
-                                parseInt(y2)
+                            let alpha = Math.ceil(intersection.size / seriesCount * 5) / 5;
+
+                            if (!(alpha in lineVals))
+                                lineVals[alpha] = [];
+                            lineVals[alpha].push([
+                                alpha, parseInt(x1), y1, parseInt(x2), parseInt(y2)
                             ]);
                         }
                     }
@@ -402,16 +402,20 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
             }
         }
 
-        // todo For optimization of drawing: Sort by globalAlpha values, thereby minimizing setting .globalAlpha.
-        for (let lineValSet of lineVals) {
-            context.beginPath();
-            // context.lineWidth = lineValSet[0];
-            context.globalAlpha = lineValSet[0];
-            context.moveTo(lineValSet[1], lineValSet[2]);
-            context.lineTo(lineValSet[3], lineValSet[4]);
-            context.stroke();
+        console.log(lineVals)
+        for (const alpha in lineVals) {
+            context.globalAlpha = alpha;
+
+            for (const lineValSet of lineVals[alpha]) {
+                // context.globalAlpha = alpha;
+                context.beginPath();
+                context.moveTo(lineValSet[1], lineValSet[2]);
+                context.lineTo(lineValSet[3], lineValSet[4]);
+                context.stroke();
+            }
         }
         context.restore();
+
         return extrema;
     }
 
