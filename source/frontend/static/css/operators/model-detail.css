@@ -68,8 +68,8 @@
 }
 
 .model-detail-table {
-    height: 200px;
     padding-left: 10px;
+    font-size: 14px;
 }
 
 #model-details-lime-pane {

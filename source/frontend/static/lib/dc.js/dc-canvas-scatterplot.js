@@ -402,12 +402,10 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
             }
         }
 
-        console.log(lineVals)
         for (const alpha in lineVals) {
             context.globalAlpha = alpha;
 
             for (const lineValSet of lineVals[alpha]) {
-                // context.globalAlpha = alpha;
                 context.beginPath();
                 context.moveTo(lineValSet[1], lineValSet[2]);
                 context.lineTo(lineValSet[3], lineValSet[4]);

@@ -30,7 +30,7 @@ def init_flask_app():
     )
 
     # Define version.
-    flask_app.config["VERSION"] = "0.9"
+    flask_app.config["VERSION"] = "0.9.1"
 
     # Store metadata template. Is assembled once in /get_metadata.
     flask_app.config["METADATA_TEMPLATE"] = None
@@ -324,7 +324,7 @@ def get_dr_model_details():
         # Fetch record names/titles, labels, original features.
         "original_dataset": pandas.read_csv(
             filepath_or_buffer=os.getcwd() + "/../data/" + app.config["DATASET_NAME"] + "_records.csv",
-            delimiter=';',
+            delimiter=',',
             quotechar='"'
         ).to_json(orient='index'),
 

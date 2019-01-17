@@ -109,6 +109,14 @@ export default class ParetoScatterplot extends Scatterplot
             // Call cross-operator filter method on stage instance after filter event.
             .on("filtered", event => this.propagateFilterChange(this, key));
 
+        // todo Mouseover for SVG how?
+        this._cf_chart.selectAll('circle').on('mouseover', function() {
+            d3.select(this).attr('fill', '#00c');
+            console.log("mouseover")
+        }).on('mouseout', function() {
+            d3.select(this).attr('fill', 'orange')
+        });
+
         // Set number of ticks for y-axis.
         this._cf_chart.yAxis().ticks(instance._style.numberOfTicks.y);
         this._cf_chart.xAxis().ticks(instance._style.numberOfTicks.x);
