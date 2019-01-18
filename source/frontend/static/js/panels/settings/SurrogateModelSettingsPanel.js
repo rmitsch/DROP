@@ -64,8 +64,6 @@ export default class SurrogateModelSettingsPanel extends SettingsPanel
         // 2. Create title and options container.
         // -----------------------------------
 
-        // Note: Listener for table icon is added by FilterReduceOperator, since it requires information about the table
-        // panel.
         $("#" + this._target).html(
             "<div class='settings-content'>" + settingsHTML + "</div>" +
             "<button class='pure-button pure-button-primary settings-update-button' id='" + scope._applyChangesButtonID + "'>Apply changes</button>"

@@ -50,20 +50,22 @@ export default class SettingsPanel extends Panel
      */
     _setClickListener(iconID)
     {
-        let scope = this;
+        let scope   = this;
+        const stage = $("#" + this._operator._stage._target);
 
         // Set listener for opening settings panel.
         $("#" + iconID).click(function() {
             $("#" + scope._target).dialog({
                 title: scope._name,
-                width: $("#" + scope._operator._stage._target).width() / 4,
-                height: $("#" + scope._operator._stage._target).height() / 2
+                width: stage.width() / 4,
+                height: stage.height() / 2
             });
         });
 
         // Set listener for parsing options and applying changes.
         $("#" + this._applyChangesButtonID).click(function() {
             scope._applyOptionChanges();
+            $("#" + scope._target).dialog("close");
         });
     }
 

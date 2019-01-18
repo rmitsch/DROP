@@ -69,15 +69,13 @@ export default class SurrogateModelPanel extends Panel
         // Create title and options container.
         // -----------------------------------
 
-        // Note: Listener for table icon is added by FilterReduceOperator, since it requires information about the table
-        // panel.
         let infoDiv = Utils.spawnChildDiv(this._target, null, "panel-info");
         $("#" + infoDiv.id).html(
             "<span class='title'>" + scope._name + "</span>" +
             "<a id='surrogate-info-settings-icon' href='#'>" +
             "    <img src='./static/img/icon_settings.png' class='info-icon' alt='Settings' width='20px'>" +
             "</a>"
-        )
+        );
 
         return {
             chartContainerID: chartContainer.id
