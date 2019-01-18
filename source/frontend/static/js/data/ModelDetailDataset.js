@@ -34,8 +34,8 @@ export default class ModelDetailDataset extends Dataset
         // Gather attributes available for original record.
         this._originalRecordAttributes  = [];
         for (let key in modelDataJSON.original_dataset[0]) {
-            if (key !== "record_name")
-                this._originalRecordAttributes.push(key);
+            // if (key !== "record_name")
+            this._originalRecordAttributes.push(key);
         }
 
         //--------------------------------------

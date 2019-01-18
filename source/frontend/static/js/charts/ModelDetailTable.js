@@ -20,6 +20,16 @@ export default class ModelDetailTable extends Chart
         // ----------------------------------------
 
         super(name, panel, attributes, dataset, style, parentDivID);
+        console.log(this._attributes)
+
+        for (let i = 0; i < this._attributes.length; i++) {
+            if (this._attributes[i] === "record_name") {
+                let tmp = this._attributes[0];
+                this._attributes[0] = this._attributes[i];
+                this._attributes[i] = tmp;
+                break;
+            }
+        }
 
         // Update involved CSS classes.
         $("#" + this._target).addClass("model-detail-table");
@@ -108,6 +118,7 @@ export default class ModelDetailTable extends Chart
         // todo: On (double-)click: Highlight point in chart.
         $("#" + tableID + " tbody").on('dblclick', 'td', function (e) {
         });
+        // todo: On click: B+L.
     }
 
     _createDivStructure()
@@ -122,6 +133,7 @@ export default class ModelDetailTable extends Chart
         let tableHeader = "<thead><tr><th>ID</th>";
         // Append all hyperparameter to table.
         for (let i = 0; i < this._attributes.length; i++) {
+            console.log(this._attributes[i]);
             tableHeader += "<th>" + this._attributes[i] + "</th>";
         }
         tableHeader += "</tr></thead>";

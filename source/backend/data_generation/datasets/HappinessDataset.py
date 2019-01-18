@@ -55,7 +55,6 @@ class HappinessDataset(InputDataset):
             features_df = self._df.copy(deep=True)
             features_df["record_name"] = features_df.index.values
             features_df = features_df.rename(columns={"happiness_level": "target_label"})
-            features_df = features_df.drop(["happiness_score", "happiness_rank"], axis=1)
             features_df.to_csv(path_or_buf=filepath, index=False)
 
     def compute_TDP(self, features: np.ndarray = None, relative: bool = False):
