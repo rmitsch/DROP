@@ -20,7 +20,7 @@ class HappinessDataset(InputDataset):
     Extended Kaggle happiness dataset.
     """
 
-    high_dim_TDP = 0.92
+    high_dim_TDP = 0.31
 
     def __init__(self):
         self._df = None
@@ -76,11 +76,11 @@ class HappinessDataset(InputDataset):
             reg.fit(x_train, y_train)
 
             # Measure accuracy.
-            res = reg.predict(x_test)
-            res = np.reshape(res, (res.shape[0], 1))
-            accuracy += sklearn.metrics.explained_variance_score(y_test, res)
+            y_pred = reg.predict(x_test)
+            y_pred = np.reshape(y_pred, (y_pred.shape[0], 1))
+            accuracy += np.sqrt(sklearn.metrics.mean_squared_error(y_test, y_pred))
 
-        return accuracy / n_splits if not relative else accuracy / n_splits / HappinessDataset.high_dim_TDP
+        return accuracy / n_splits if not relative else HappinessDataset.high_dim_TDP / (accuracy / n_splits)
 
     def compute_separability_metric(self, features: np.ndarray) -> float:
         """
@@ -93,7 +93,7 @@ class HappinessDataset(InputDataset):
         # 1. Cluster projection with number of classes.
         clusterer = hdbscan.HDBSCAN(alpha=1.0, metric='euclidean').fit(features)
 
-        # 2. Calculate Silhouette score based on true labels.
+        # 2. Calculate Silhouette score.
         try:
             silhouette_score = sklearn.metrics.silhouette_score(
                 X=self.labels().reshape(-1, 1), metric='euclidean', labels=clusterer.labels_
