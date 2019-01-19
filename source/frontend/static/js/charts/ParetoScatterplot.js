@@ -107,7 +107,11 @@ export default class ParetoScatterplot extends Scatterplot
                 }
             })
             // Call cross-operator filter method on stage instance after filter event.
-            .on("filtered", event => this.propagateFilterChange(this, key));
+            .on("filtered", event => instance.propagateFilterChange(instance, key));
+
+        // Set custom handler for filter events.
+        if (!this._useBinning)
+            this._setFilterHandler();
 
         // todo Mouseover for SVG how?
         this._cf_chart.selectAll('circle').on('mouseover', function() {
@@ -138,6 +142,77 @@ export default class ParetoScatterplot extends Scatterplot
                         instance._dataset.numericalToCategoricalValues[originalAttributeName][tickValue] : "";
             });
         }
+    }
+
+    /**
+     * Resets chart's filter handler to default function.
+     * @private
+     */
+    _setFilterHandler()
+    {
+        let stage           = this._panel._operator._stage;
+        let chart           = this._cf_chart;
+        let seriesMapping   = this.dataset._seriesMappingByHyperparameter[chart.variantAttribute];
+
+        this._cf_chart.filterHandler(function (dimension, filters) {
+            if (filters.length === 0) {
+                // the empty case (no filtering)
+                dimension.filter(null);
+                chart.identifyFilteredRecords();
+            }
+            
+            else {
+                let res = chart.identifyFilteredRecords(
+                    function (d) {
+                        for (let i = 0; i < filters.length; i++) {
+                            let filter = filters[i];
+                            if (filter.isFiltered && filter.isFiltered(d)) {
+                                return true;
+                            }
+                            else if (filter <= d && filter >= d) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+                );
+
+                // Gather set of all filtered IDs.
+                let filteredIDs         = new Set();
+                let filteredSeriesIDs   = new Set();
+
+                for (const x in res) {
+                    for (const y in res[x]) {
+                        // https://stackoverflow.com/questions/32000865/simplest-way-to-merge-es6-maps-sets
+                        filteredIDs = new Set(function*() {
+                            yield* filteredIDs; yield* res[x][y].ids;
+                        }());
+                        filteredSeriesIDs = new Set(function*() {
+                            yield* filteredSeriesIDs; yield* res[x][y].seriesIDs;
+                        }());
+                    }
+                }
+
+                // If modifying key down: Also select all records in same series as currently selected points.
+                if (stage.shiftDown) {
+                    let addedIDs = new Set();
+                    for (let seriesID of filteredSeriesIDs) {
+                        for (let id of seriesMapping.seriesToRecordMapping[seriesID]) {
+                            filteredIDs.add(id);
+                            addedIDs.add(id);
+                        }
+                    }
+
+                    // Update chart's set of filtered points for rendering.
+                    chart.addFilteredRecords(addedIDs);
+                }
+
+
+                dimension.filterFunction(d => filteredIDs.has(d[2]));
+            }
+
+            return filters;
+        });
     }
 
     highlight(id, source)

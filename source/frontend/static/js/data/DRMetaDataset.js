@@ -184,7 +184,7 @@ export default class DRMetaDataset extends Dataset
             "r_nx": useHTMLFormatting ? "R<sub>nx</sub>" : "R_nx",
             "b_nx": useHTMLFormatting ? "B<sub>nx</sub>" : "B_nx",
             "stress": "Stress",
-            "classification_accuracy": "Accuracy",
+            "classification_accuracy": "RDP",
             "separability_metric": "Silhouette",
             "runtime": "Runtime"
         }
@@ -428,7 +428,7 @@ export default class DRMetaDataset extends Dataset
                 ) {
                     // Create combined dimension (for scatterplot).
                     this._cf_dimensions[combinedKey] = this._crossfilter.dimension(
-                        function(d) { return [d[processedAttribute1], d[obj + "#ssp"]]; }
+                        function(d) { return [d[processedAttribute1], d[obj + "#ssp"], d["id"]]; }
                     );
 
                     // Mirror dimension to transposed key.

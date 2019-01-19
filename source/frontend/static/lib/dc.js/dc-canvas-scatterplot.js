@@ -32,11 +32,12 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
     var _symbol = d3.svg.symbol();
 
     // Store references to dataset and variant attributes.
-    _chart.dataset          = dataset;
-    _chart.binCount         = dataset._binCountSSP;
-    _chart.variantAttribute = variantAttribute;
-    _chart.objective        = objective;
-    _chart.useBinning       = useBinning;
+    _chart.dataset                          = dataset;
+    _chart.binCount                         = dataset._binCountSSP;
+    _chart.variantAttribute                 = variantAttribute;
+    _chart.objective                        = objective;
+    _chart.useBinning                       = useBinning;
+    _chart.coordinatesToFilteredDataPoints  = null;
 
     // Store last highlighted coordinates.
     _chart.lastHighlightedPosition = null;
@@ -225,28 +226,64 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
     };
 
     /**
-     * Plots data on canvas element. If argument provided, assumes legend is currently being highlighted and modifies
-     * opacity/size of symbols accordingly
-     *
-     * CAUTION: This implementation was tuned for usage in https://github.com/rmitsch/drop.
-     * There are hardcoded changes, meaning this version of dc.js can NOT be updated without losing the added/changed
-     * functionality.
-     *
-     * @param legendHighlightDatum {Object} Datum provided to legendHighlight method
+     * Add set of filtered records (e. g. records that were filtered as consequence of a series selection instead of a
+     * datapoint selection) to _chart.coordinatesToFilteredDataPoints.
+     * @param recordIDs Set of record IDs.
      */
-    function plotOnCanvas(legendHighlightDatum) {
-        var context = _chart.context();
-        context.clearRect(0, 0, (context.canvas.width + 2) * 1, (context.canvas.height + 2) * 1);
-        var data = _chart.data();
-
-        // ---------------------------------------
-        // 0. Get datapoints' coordinates.
-        // ---------------------------------------
-
+    _chart.addFilteredRecords = function (recordIDs)
+    {
         const seriesMapping = _chart.dataset.seriesMappingByHyperparameter[_chart.variantAttribute];
         // Store association between data points' coordinates and their IDs (ID -> coordinates).
-        let coordinatesToFilteredDataPoints = {};
+        _chart.coordinatesToFilteredDataPoints = {};
 
+        // Get datapoints' coordinates.
+        for (let id of recordIDs) {
+            let record  = _chart.dataset.getDataByID(id);
+            let d       = {key: [record[_chart.variantAttribute], record[_chart.objective], id]};
+
+            let x       = _chart.x()(_chart.keyAccessor()(d));
+            let y       = _chart.y()(_chart.valueAccessor()(d));
+            let xRound  = Math.round(x);
+            let yRound  = Math.round(y);
+
+            // Update coordinate store.
+            if (!(xRound in _chart.coordinatesToFilteredDataPoints))
+                _chart.coordinatesToFilteredDataPoints[xRound] = {};
+            if (!(yRound in _chart.coordinatesToFilteredDataPoints[xRound]))
+                _chart.coordinatesToFilteredDataPoints[xRound][yRound] = {
+                    ids: new Set(),
+                    idsUnfiltered: new Set(),
+                    attr_x: _chart.keyAccessor()(d),
+                    attr_y: _chart.valueAccessor()(d),
+                    seriesIDs: new Set(),
+                    seriesIDsUnfiltered: new Set()
+                };
+
+            // Add datapoint to set of filtered coordinates.
+            let currCollection  = _chart.coordinatesToFilteredDataPoints[xRound][yRound];
+            currCollection["ids"].add(id);
+            if (seriesMapping !== undefined)
+                currCollection["seriesIDs"].add(seriesMapping.recordToSeriesMapping[id]);
+        }
+
+        return _chart.coordinatesToFilteredDataPoints;
+    };
+
+    /**
+     * Identifies filtered records.
+     * @memberof dc.scatterPlot
+     * @param checkIfFiltered Function for checking if datapoints are filtered. Uses native filter() functionality if
+     * this argument is null.
+     * @returns {{}}
+     */
+    _chart.identifyFilteredRecords = function (checkIfFiltered = null)
+    {
+        const data = _chart.data();
+        const seriesMapping = _chart.dataset.seriesMappingByHyperparameter[_chart.variantAttribute];
+        // Store association between data points' coordinates and their IDs (ID -> coordinates).
+        _chart.coordinatesToFilteredDataPoints = {};
+
+        // Get datapoints' coordinates.
         data.forEach(function (d, i) {
             let x       = _chart.x()(_chart.keyAccessor()(d));
             let y       = _chart.y()(_chart.valueAccessor()(d));
@@ -254,10 +291,10 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
             let yRound  = Math.round(y);
 
             // Update coordinate store.
-            if (!(xRound in coordinatesToFilteredDataPoints))
-                coordinatesToFilteredDataPoints[xRound] = {};
-            if (!(yRound in coordinatesToFilteredDataPoints[xRound]))
-                coordinatesToFilteredDataPoints[xRound][yRound] = {
+            if (!(xRound in _chart.coordinatesToFilteredDataPoints))
+                _chart.coordinatesToFilteredDataPoints[xRound] = {};
+            if (!(yRound in _chart.coordinatesToFilteredDataPoints[xRound]))
+                _chart.coordinatesToFilteredDataPoints[xRound][yRound] = {
                     ids: new Set(),
                     idsUnfiltered: new Set(),
                     attr_x: _chart.keyAccessor()(d),
@@ -267,10 +304,12 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
                 };
 
             // Add datapoint to set of filtered/unfiltered coordinates.
-            const isFiltered    = !_chart.filter() || _chart.filter().isFiltered([d.key[0], d.key[1]]);
+            const isFiltered    = checkIfFiltered === null ?
+                !_chart.filter() || _chart.filter().isFiltered([d.key[0], d.key[1]]) :
+                checkIfFiltered([d.key[0], d.key[1]]); // !_chart.filter() ||
             const setName       = isFiltered ? "ids" : "idsUnfiltered";
             const seriesSetName = isFiltered ? "seriesIDs" : "seriesIDsUnfiltered";
-            let currCollection  = coordinatesToFilteredDataPoints[xRound][yRound];
+            let currCollection  = _chart.coordinatesToFilteredDataPoints[xRound][yRound];
             for (let datapoint of d.value.items) {
                 currCollection[setName].add(datapoint.id);
 
@@ -278,6 +317,32 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
                     currCollection[seriesSetName].add(seriesMapping.recordToSeriesMapping[datapoint.id]);
             }
         });
+
+        return _chart.coordinatesToFilteredDataPoints;
+    };
+
+    /**
+     * Plots data on canvas element. If argument provided, assumes legend is currently being highlighted and modifies
+     * opacity/size of symbols accordingly
+     *
+     * CAUTION: This implementation was tuned for usage in https://github.com/rmitsch/drop.
+     * There are hardcoded changes, meaning this version of dc.js can NOT be updated without losing the added/changed
+     * functionality.
+     *
+     * @param legendHighlightDatum {Object} Datum provided to legendHighlight method
+     */
+    function plotOnCanvas(legendHighlightDatum)
+    {
+        var context = _chart.context();
+        context.clearRect(0, 0, (context.canvas.width + 2) * 1, (context.canvas.height + 2) * 1);
+        var data = _chart.data();
+
+        // ---------------------------------------
+        // 0. Get datapoints' coordinates.
+        // ---------------------------------------
+
+        if (_chart.coordinatesToFilteredDataPoints === null)
+            _chart.identifyFilteredRecords();
 
         // ---------------------------------------
         // 1. Draw lines.
@@ -307,7 +372,7 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
             context.globalAlpha = 0.5; // .0275
 
             // Draw lines between points of a series.
-            let extrema = plotLines(context, coordinatesToFilteredDataPoints);
+            let extrema = plotLines(context, _chart.coordinatesToFilteredDataPoints);
 
             // Draw pareto frontiers.
             // Set global drawing options for lines.
@@ -324,7 +389,7 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
         // ---------------------------------------
 
         if (!_chart.useBinning)
-            plotPointsOnCanvas(context, data, coordinatesToFilteredDataPoints);
+            plotPointsOnCanvas(context, data, _chart.coordinatesToFilteredDataPoints);
     }
 
     /**
