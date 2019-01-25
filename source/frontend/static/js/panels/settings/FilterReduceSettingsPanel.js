@@ -38,6 +38,7 @@ export default class FilterReduceSettingsPanel extends SettingsPanel {
             "</datalist>" +
             "<input type='range' min='0.1' max='0.5' step='0.1' list='filter-reduce-tickmarks'>" +
             "</div>";
+
         settingsHTML += "</div>";
 
         // -----------------------------------
@@ -48,11 +49,16 @@ export default class FilterReduceSettingsPanel extends SettingsPanel {
         // panel.
         $("#" + this._target).html(
             "<div class='settings-content'>" + settingsHTML + "</div>" +
-            "<button class='pure-button pure-button-primary settings-update-button'>Apply changes</button>"
+            "<button class='pure-button pure-button-primary settings-update-button' id='" + this._applyChangesButtonID + "'>Apply changes</button>"
         );
 
         return {
             content: this._target
         };
+    }
+
+    _applyOptionChanges()
+    {
+        console.log("applying changes")
     }
 }

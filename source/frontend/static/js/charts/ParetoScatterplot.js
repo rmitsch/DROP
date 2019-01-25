@@ -160,7 +160,7 @@ export default class ParetoScatterplot extends Scatterplot
                 dimension.filter(null);
                 chart.identifyFilteredRecords();
             }
-            
+
             else {
                 let res = chart.identifyFilteredRecords(
                     function (d) {
@@ -206,7 +206,6 @@ export default class ParetoScatterplot extends Scatterplot
                     // Update chart's set of filtered points for rendering.
                     chart.addFilteredRecords(addedIDs);
                 }
-
 
                 dimension.filterFunction(d => filteredIDs.has(d[2]));
             }

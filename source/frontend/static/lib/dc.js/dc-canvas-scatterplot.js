@@ -38,6 +38,10 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
     _chart.objective                        = objective;
     _chart.useBinning                       = useBinning;
     _chart.coordinatesToFilteredDataPoints  = null;
+    var lineOptions                         = {
+      useLogs: false,
+      binFraction: 10
+    };
 
     // Store last highlighted coordinates.
     _chart.lastHighlightedPosition = null;
@@ -403,7 +407,6 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
         // Collect best- and worst-performing parametrizations for all variations of variant parameter.
         let extrema         = {};
         const seriesCount   = _chart.dataset.seriesMappingByHyperparameter[_chart.variantAttribute].seriesCount;
-        const recordCount   = _chart.dataset._data.length;
 
         // -------------------------------------------------------------------------------------------------
         // Draw lines between points belonging to the same series.
@@ -413,6 +416,9 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
 
         context.beginPath();
         context.lineWidth = 1;
+        let binFraction = lineOptions.binFraction;
+        let useLogs     = lineOptions.useLogs;
+        const baseLog   = Math.log10(1 / seriesCount);
 
         // Sort records in series (list of dictionaries) by attribute.
         // We don't know whether the attribute is numeric or not, so we don't use arithmetic operations to directly
@@ -454,7 +460,12 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
                         const intersection  = new Set([...set1].filter(x => set2.has(x)));
 
                         if (intersection.size > 0) {
-                            let alpha = Math.ceil(intersection.size / seriesCount * 5) / 5;
+                            let alpha = Math.ceil(binFraction * (
+                                useLogs ?
+                                    1 - Math.log10((intersection.size + 1) / seriesCount) / baseLog :
+                                    intersection.size / seriesCount
+                                )
+                            ) / binFraction;
 
                             if (!(alpha in lineVals))
                                 lineVals[alpha] = [];
