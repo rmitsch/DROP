@@ -20,7 +20,6 @@ export default class ModelDetailTable extends Chart
         // ----------------------------------------
 
         super(name, panel, attributes, dataset, style, parentDivID);
-        console.log(this._attributes)
 
         for (let i = 0; i < this._attributes.length; i++) {
             if (this._attributes[i] === "record_name") {

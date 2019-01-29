@@ -145,7 +145,7 @@ export default class ParetoScatterplot extends Scatterplot
     }
 
     /**
-     * Resets chart's filter handler to default function.
+     * Configure's chart's filter handler so that series selection can be processed.
      * @private
      */
     _setFilterHandler()

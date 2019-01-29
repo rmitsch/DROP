@@ -38,7 +38,7 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
     _chart.objective                        = objective;
     _chart.useBinning                       = useBinning;
     _chart.coordinatesToFilteredDataPoints  = null;
-    _chart.lineOptions                      = {
+    var lineOptions                         = {
       useLogs: false,
       binFraction: 10
     };
@@ -310,7 +310,7 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
             // Add datapoint to set of filtered/unfiltered coordinates.
             const isFiltered    = checkIfFiltered === null ?
                 !_chart.filter() || _chart.filter().isFiltered([d.key[0], d.key[1]]) :
-                checkIfFiltered([d.key[0], d.key[1]]); // !_chart.filter() ||
+                checkIfFiltered([d.key[0], d.key[1], d.key[2]]); // !_chart.filter() ||
             const setName       = isFiltered ? "ids" : "idsUnfiltered";
             const seriesSetName = isFiltered ? "seriesIDs" : "seriesIDsUnfiltered";
             let currCollection  = _chart.coordinatesToFilteredDataPoints[xRound][yRound];
@@ -416,8 +416,8 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
 
         context.beginPath();
         context.lineWidth = 1;
-        let binFraction = _chart.lineOptions.binFraction;
-        let useLogs     = _chart.lineOptions.useLogs;
+        let binFraction = lineOptions.binFraction;
+        let useLogs     = lineOptions.useLogs;
         const baseLog   = Math.log10(1 / seriesCount);
 
         // Sort records in series (list of dictionaries) by attribute.
@@ -565,6 +565,18 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
                     dataPoints.notFiltered.coordinates.push([parseInt(x), parseInt(y)]);
             }
         }
+
+                let res = coordinatesToDataPoints;
+                        let filteredIDs = new Set();
+                for (const x in res) {
+                    for (const y in res[x]) {
+                        // https://stackoverflow.com/questions/32000865/simplest-way-to-merge-es6-maps-sets
+                        filteredIDs = new Set(function*() {
+                            yield* filteredIDs; yield* res[x][y].ids;
+                        }());
+                    }
+                }
+                console.log(filteredIDs.size)
 
         // ---------------------------------------------------------------------------------
         // 2. Plot points.

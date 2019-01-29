@@ -244,7 +244,7 @@ export default class ModelDetailDataset extends Dataset
 
                 // Create combined dimension (for scatterplot).
                 config.dimensions[combinedKey] = cf.dimension(
-                    function(d) { return [d[i], d[j]]; }
+                    function(d) { return [d[i], d[j], d.id]; }
                 );
                 // Mirror dimension to transposed key.
                 config.dimensions[transposedKey] = config.dimensions[combinedKey];

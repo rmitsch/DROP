@@ -288,6 +288,7 @@ export default class ModelDetailPanel extends Panel
         // 2. Append new chart containers, draw scatterplots.
         // -------------------------------------------------------
 
+        this._charts["scatterplots"] = {};
         const numDimensions     = this._data._allModelMetadata[this._data._modelID].n_components;
         let numPlotsInRow       = Math.max(numDimensions - 1, 1);
         const scatterplotWidth  = chartContainerDiv.width() / numPlotsInRow - 15;
@@ -317,7 +318,12 @@ export default class ModelDetailPanel extends Panel
 
                 // Render chart.
                 scatterplot.render();
+                this._charts.scatterplots[i + ":" + j] = scatterplot;
             }
+        }
+
+        for (let scatterplotPos in this._charts.scatterplots) {
+            this._setFilterHandler(this._charts.scatterplots[scatterplotPos], scatterplotPos);
         }
     }
 
@@ -354,6 +360,7 @@ export default class ModelDetailPanel extends Panel
             "#" + scatterplotContainer.id,
             this._target,
             drMetaDataset,
+            null,
             null,
             false
         );
@@ -396,6 +403,60 @@ export default class ModelDetailPanel extends Panel
         scatterplot.xAxis().ticks(5);
 
         return scatterplot;
+    }
+
+    /**
+     * Sets chart's filter handler.
+     * @param chart
+     * @param pos
+     * @private
+     */
+    _setFilterHandler(chart, pos)
+    {
+        let scatterplots = this._charts.scatterplots;
+
+        chart.filterHandler(function (dimension, filters) {
+            if (filters.length === 0) {
+                dimension.filter(null);
+                for (let scatterplotPos in scatterplots)
+                    scatterplots[scatterplotPos].identifyFilteredRecords(d => true);
+            }
+
+            else {
+                let res = chart.identifyFilteredRecords(
+                    function (d) {
+                        for (let i = 0; i < filters.length; i++) {
+                            let filter = filters[i];
+                            if (filter.isFiltered && filter.isFiltered(d)) {
+                                return true;
+                            }
+                            else if (filter <= d && filter >= d) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+                );
+
+                let filteredIDs = new Set();
+                for (const x in res) {
+                    for (const y in res[x]) {
+                        // https://stackoverflow.com/questions/32000865/simplest-way-to-merge-es6-maps-sets
+                        filteredIDs = new Set(function*() {
+                            yield* filteredIDs; yield* res[x][y].ids;
+                        }());
+                    }
+                }
+                dimension.filterFunction(d => filteredIDs.has(d[2]));
+
+                for (let scatterplotPos in scatterplots) {
+                    if (pos !== scatterplotPos)
+                        scatterplots[scatterplotPos].identifyFilteredRecords(d => filteredIDs.has(d[2]));
+                }
+            }
+
+            return filters;
+        });
     }
 
     /**
@@ -444,6 +505,7 @@ export default class ModelDetailPanel extends Panel
                 let chartDiv            = Utils.spawnChildDiv(chartContainerDiv.id, null, "model-detail-sparkline");
 
                 // Draw chart.
+                // todo add exact values here
                 $("#" + chartDiv.id).sparkline(
                     record.data,
                     {
