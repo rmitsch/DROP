@@ -150,15 +150,16 @@ export default class ParetoScatterplot extends Scatterplot
      */
     _setFilterHandler()
     {
+        let instance        = this;
         let stage           = this._panel._operator._stage;
         let chart           = this._cf_chart;
         let seriesMapping   = this.dataset._seriesMappingByHyperparameter[chart.variantAttribute];
 
         this._cf_chart.filterHandler(function (dimension, filters) {
             if (filters.length === 0) {
-                // the empty case (no filtering)
-                dimension.filter(null);
                 chart.identifyFilteredRecords();
+                dimension.filter(null);
+                instance._panel.updateIDsToFilterInSSPs(null, instance._name);
             }
 
             else {
@@ -207,6 +208,8 @@ export default class ParetoScatterplot extends Scatterplot
                     chart.addFilteredRecords(addedIDs);
                 }
 
+                // Update filtered IDs in other SSPs; update dimension's filter check.
+                instance._panel.updateIDsToFilterInSSPs(filteredIDs, instance._name);
                 dimension.filterFunction(d => filteredIDs.has(d[2]));
             }
 

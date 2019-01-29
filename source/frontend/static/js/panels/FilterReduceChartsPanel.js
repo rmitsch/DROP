@@ -392,4 +392,32 @@ export default class FilterReduceChartsPanel extends Panel
             }
         }
     }
+
+    /**
+     * Updates ID filtering in SSPs after selection.
+     * Necessary after change to ID-based filtering introduced to enable series-based selection.
+     * Candidate for refactoring - ID handling could be simplified. Considered low-priority at this stag though.
+     * @param filteredIDs
+     * @param scatterplotID
+     */
+    updateIDsToFilterInSSPs(filteredIDs, scatterplotID)
+    {
+        console.log(filteredIDs !== null)
+        // Consider only SSPs.
+        for (const chartName in this._charts) {
+            // Consider only SSPs without binning, i. e. HP-objective plots.
+            if (!chartName.includes("histogram")) {
+                const chartAttributes = chartName.split(":");
+                if (
+                    chartName !== scatterplotID &&
+                    chartAttributes.length === 2 &&
+                    chartAttributes[0] !== chartAttributes[1]
+                ) {
+                    this._charts[chartName]._cf_chart.identifyFilteredRecords(
+                        d => filteredIDs !== null ? filteredIDs.has(d[2]) : true
+                    );
+                }
+            }
+        }
+    }
 }

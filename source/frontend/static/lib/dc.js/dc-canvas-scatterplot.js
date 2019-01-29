@@ -566,18 +566,6 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
             }
         }
 
-                let res = coordinatesToDataPoints;
-                        let filteredIDs = new Set();
-                for (const x in res) {
-                    for (const y in res[x]) {
-                        // https://stackoverflow.com/questions/32000865/simplest-way-to-merge-es6-maps-sets
-                        filteredIDs = new Set(function*() {
-                            yield* filteredIDs; yield* res[x][y].ids;
-                        }());
-                    }
-                }
-                console.log(filteredIDs.size)
-
         // ---------------------------------------------------------------------------------
         // 2. Plot points.
         // ---------------------------------------------------------------------------------
