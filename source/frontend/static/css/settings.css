@@ -42,7 +42,8 @@ datalist option {
     top: -15px;
 }
 
-#filter-reduce-settings-line-width {
+#filter-reduce-settings-line-opacity-bin-fraction,
+#filter-reduce-settings-line-opacity-log-scaling {
     position: relative;
     top: -15px;
 }
@@ -57,9 +58,21 @@ datalist option {
 }
 
 datalist#filter-reduce-tickmarks option {
-    width: 22px;
+    width: 33px;
 }
 
+
 .settings-section-header {
-    margin-bottom: 10px;
+    margin-bottom: 30px;
+    font-weight: bold;
+}
+
+#filter-reduce-bin-number,
+#filter-reduce-settings-line-log-scale {
+    position: relative;
+    top: -15px;
+}
+
+.settings-subsection {
+    margin-top: 20px;
 }

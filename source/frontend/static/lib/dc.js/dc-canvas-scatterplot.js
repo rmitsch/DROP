@@ -38,7 +38,7 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
     _chart.objective                        = objective;
     _chart.useBinning                       = useBinning;
     _chart.coordinatesToFilteredDataPoints  = null;
-    var lineOptions                         = {
+    _chart.lineOptions                      = {
       useLogs: false,
       binFraction: 10
     };
@@ -416,8 +416,8 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
 
         context.beginPath();
         context.lineWidth = 1;
-        let binFraction = lineOptions.binFraction;
-        let useLogs     = lineOptions.useLogs;
+        let binFraction = _chart.lineOptions.binFraction;
+        let useLogs     = _chart.lineOptions.useLogs;
         const baseLog   = Math.log10(1 / seriesCount);
 
         // Sort records in series (list of dictionaries) by attribute.
@@ -469,9 +469,7 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
 
                             if (!(alpha in lineVals))
                                 lineVals[alpha] = [];
-                            lineVals[alpha].push([
-                                alpha, parseInt(x1), y1, parseInt(x2), parseInt(y2)
-                            ]);
+                            lineVals[alpha].push([alpha, parseInt(x1), y1, parseInt(x2), parseInt(y2)]);
                         }
                     }
                 }

@@ -376,4 +376,20 @@ export default class FilterReduceChartsPanel extends Panel
         $(".filter-reduce-row-label").css("margin-bottom", (chartHeight - 6) + "px");
         $(".filter-reduce-row-label-text").css("padding-top", (chartHeight / 2) + "px");
     }
+
+    /**
+     * Updates binning configuration for SSP plots.
+     * @param config
+     */
+    updateSSPBinning(config)
+    {
+        for (const chartName in this._charts) {
+            // Consider only SSPs without binning, i. e. HP-objective plots.
+            if (!chartName.includes("histogram")) {
+                const chartAttributes = chartName.split(":");
+                if (chartAttributes.length === 2 && chartAttributes[0] !== chartAttributes[1])
+                    this._charts[chartName].updateSSPBinning(config);
+            }
+        }
+    }
 }

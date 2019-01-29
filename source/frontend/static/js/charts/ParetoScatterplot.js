@@ -366,4 +366,22 @@ export default class ParetoScatterplot extends Scatterplot
             $("#" + this._hexHeatmapContainerID).css("z-index", -1);
         }
     }
+
+    /**
+     * Updates binning options in SSP chart.
+     * @param config
+     */
+    updateSSPBinning(config)
+    {
+        // Ignore if settings are equal. Also ignore if .useBinning === true, i. e. this is a heatmap and not a SSP.
+        if (
+            (
+                config.useLogs !== this._cf_chart.lineOptions.useLogs ||
+                config.binFraction !== this._cf_chart.lineOptions.binFraction
+            ) && !this._useBinning
+        ) {
+            this._cf_chart.lineOptions = config;
+            this._cf_chart.render();
+        }
+    }
 }

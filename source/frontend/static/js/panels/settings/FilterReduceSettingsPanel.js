@@ -17,7 +17,8 @@ export default class FilterReduceSettingsPanel extends SettingsPanel {
         super(name, operator, parentDivID, iconID);
     }
 
-    _createDivStructure() {
+    _createDivStructure()
+    {
         // -----------------------------------
         // 1. Generate HTML for setting
         //    options.
@@ -27,17 +28,19 @@ export default class FilterReduceSettingsPanel extends SettingsPanel {
 
         // Add range control for tree depth.
         settingsHTML += "<div class='setting-option'>";
-        settingsHTML += "<span id='filter-reduce-settings-line-width'>Line width</span>";
-        settingsHTML += "<div class='range-control'>" +
-            "<datalist id='filter-reduce-tickmarks'>" +
-            "  <option value='0.1' label='0.1'>" +
-            "  <option value='0.2'>" +
-            "  <option value='0.3'>" +
-            "  <option value='0.4'>" +
-            "  <option value='0.5' label='0.5'>" +
-            "</datalist>" +
-            "<input type='range' min='0.1' max='0.5' step='0.1' list='filter-reduce-tickmarks'>" +
-            "</div>";
+
+        settingsHTML += "<div class='settings-section-header'>Line opacity</div>";
+        // Bin fraction.
+        settingsHTML += "<div class='settings-subsection'>";
+        settingsHTML += "<span id='filter-reduce-settings-line-opacity-bin-fraction'>Number of bins</span>";
+        settingsHTML += "<input type='number' id='filter-reduce-bin-number' min='1' max='10000' step='1' value='1'>";
+        settingsHTML += "</div>";
+
+        // Logarithmic scaling
+        settingsHTML += "<div class='settings-subsection'>";
+        settingsHTML += "<span id='filter-reduce-settings-line-opacity-log-scaling'>Use log. scaling</span>";
+        settingsHTML += "<input id='filter-reduce-settings-line-log-scale' type='checkbox' checked>"
+        settingsHTML += "</div>";
 
         settingsHTML += "</div>";
 
@@ -59,6 +62,12 @@ export default class FilterReduceSettingsPanel extends SettingsPanel {
 
     _applyOptionChanges()
     {
-        console.log("applying changes")
+        this._operator.propagateSettingsChanges(
+            {
+                binFraction: parseInt($("#filter-reduce-bin-number").val()),
+                useLogs: $("#filter-reduce-settings-line-log-scale").is(":checked")
+            },
+            this._name
+        )
     }
 }
