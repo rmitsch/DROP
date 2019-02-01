@@ -21,10 +21,6 @@
     display: none;
 }
 
-.model-detail-sparkline-container {
-    font-size: 11px;
-}
-
 .model-detail-scatterplot, .model-detail-scatterplot-placeholder {
     margin-right: 10px;
 }
@@ -52,7 +48,9 @@
     align-items: center;
     margin-left: 10px;
     margin-bottom: 5px;
-    width: 150px;
+    font-size: 11px;
+    width: 100%;
+    height:20px;
 }
 
 .model-detail-sparkline-container .attr-label {
@@ -65,6 +63,7 @@
 .model-detail-sparkline {
     display: inline-block;
     width: 100px;
+    margin-left: 10px;
 }
 
 .model-detail-table {
@@ -75,4 +74,30 @@
 #model-details-lime-pane {
     height: calc(100% - 50px);
     width: calc(100% - 0px);
+}
+
+table.attributeTable {
+    font-size: 12px;
+}
+
+table.attributeTable tr {
+    padding: 5px;
+    border: 1px solid #ddd;
+    height: 32px;
+}
+
+table.attributeTable td {
+    border: 1px solid #ddd;
+}
+
+table.attributeTable th {
+    color: #fff;
+    padding: 5px;
+    border: 1px solid #ddd;
+    background-color: #3d4a57;
+    height: 20px;
+}
+
+table.attributeTable tr:nth-child(even) {
+    background-color: #f2f2f2;
 }

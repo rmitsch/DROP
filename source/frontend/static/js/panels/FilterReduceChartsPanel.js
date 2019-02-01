@@ -402,7 +402,6 @@ export default class FilterReduceChartsPanel extends Panel
      */
     updateIDsToFilterInSSPs(filteredIDs, scatterplotID)
     {
-        console.log(filteredIDs !== null)
         // Consider only SSPs.
         for (const chartName in this._charts) {
             // Consider only SSPs without binning, i. e. HP-objective plots.

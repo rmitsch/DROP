@@ -3,6 +3,7 @@ import Utils from "../Utils.js";
 import DRMetaDataset from "../data/DRMetaDataset.js";
 import ModelDetailTable from "../charts/ModelDetailTable.js";
 
+
 /**
  * Panel for model detail view.
  */
@@ -106,7 +107,6 @@ export default class ModelDetailPanel extends Panel
             `<div class='model-details-block reduced-padding'>
                 <div class='model-details-title'>Hyperparameters</div>
                 <div id="model-details-block-hyperparameter-content"></div>
-                <hr>
                 <div class='model-details-title'>Objectives</div>
                 <div id="model-details-block-objective-content"></div>
             </div>`
@@ -489,28 +489,50 @@ export default class ModelDetailPanel extends Panel
         // 2. Draw charts.
         // -------------------------------------------------------
 
+        let attributeTable = "" +
+            "<table style='width:100%' class='attributeTable'>" +
+            "<tr>" +
+                "<th>Name</th>" +
+                "<th>Type </th>" +
+                "<th>Value</th>" +
+                "<th>Histogram</th>" +
+            "</tr>";
+
+        // Generate table for attribute charts.
+        let chartDivIDs = {};
+        for (const valueType in values) {
+            for (const attribute of metadataStructure[valueType]) {
+                const key = valueType === "hyperparameters" ? attribute.name : attribute;
+                const value = dataset._allModelMetadata[dataset._modelID][key];
+                chartDivIDs[key] = Utils.uuidv4();
+
+                attributeTable += "<tr>";
+                attributeTable +=   "<td>" + DRMetaDataset.translateAttributeNames()[key] + "</td>";
+                attributeTable +=   "<td>" + (valueType === "hyperparameters" ? "HP" : "O") + "</td>";
+                attributeTable +=   "<td>" + (isNaN(value) ? value : Math.round(value * 1000) / 1000) + "</td>";
+                attributeTable +=   "<td id='" + chartDivIDs[key] + "'></td>";
+                attributeTable += "</tr>";
+            }
+        }
+        hyperparameterContentDiv.html(attributeTable + "</table>");
+
         // Draw hyperparameter charts.
-        for (let valueType in values) {
-            for (let attribute of metadataStructure[valueType]) {
-                let key     = valueType === "hyperparameters" ? attribute.name : attribute;
-                let record  = values[valueType][key];
+        for (const valueType in values) {
+            for (const attribute of metadataStructure[valueType]) {
+                let key             = valueType === "hyperparameters" ? attribute.name : attribute;
+                let record          = values[valueType][key];
 
                 // Append new div for attribute.
-                let chartContainerDiv   = Utils.spawnChildDiv(
-                    valueType === "hyperparameters" ? hyperparameterContentDiv[0].id : objectiveContentDiv[0].id,
-                    null,
-                    "model-detail-sparkline-container",
-                    "<div class='attr-label'>" + DRMetaDataset.translateAttributeNames()[key] + "</div>"
+                let chartContainerDiv = Utils.spawnChildDiv(
+                    chartDivIDs[key], null, "model-detail-sparkline-container"
                 );
-                let chartDiv            = Utils.spawnChildDiv(chartContainerDiv.id, null, "model-detail-sparkline");
 
                 // Draw chart.
-                // todo add exact values here
-                $("#" + chartDiv.id).sparkline(
+                $("#" + chartContainerDiv.id).sparkline(
                     record.data,
                     {
                         type: "bar",
-                        barWidth: Math.min(10, 50 / record.data.length),
+                        barWidth: Math.min(10, 100 / record.data.length),
                         barSpacing: 1,
                         chartRangeMin: 0,
                         height: 20,
@@ -521,6 +543,7 @@ export default class ModelDetailPanel extends Panel
                 );
             }
         }
+
     }
 
     processSettingsChange(delta)
