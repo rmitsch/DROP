@@ -227,6 +227,7 @@ export default class ParetoScatterplot extends Scatterplot
     /**
      * Draws hexagonal heatmap behind scatterplot. Uses existing chart SVG.
      * Source for heatmap code: https://bl.ocks.org/mbostock/4248145.
+     * To refactor - move into HexagonalHeatmap.js.
      * @private
      */
     _drawHexagonalHeatmap()
@@ -261,13 +262,13 @@ export default class ParetoScatterplot extends Scatterplot
         // --------------------------------------
 
         // Determine width - important for bin scaling.
-        let margin  = {top: 0, right: 0, bottom: 0, left: 0};
-        let width   = +svg.attr("width") - margin.left - margin.right;
-        let height  = +svg.attr("height") - margin.top - margin.bottom;
+        const margin  = {top: 0, right: 0, bottom: 0, left: 0};
+        const width   = +svg.attr("width") - margin.left - margin.right;
+        const height  = +svg.attr("height") - margin.top - margin.bottom;
 
         // Fetch all filtered records (crossfilter.all() doesn't consider filtering - why?).
         let instance    = this;
-        let key         = this._axes_attributes.x + ":" + this._axes_attributes.y;
+        const key       = this._axes_attributes.x + ":" + this._axes_attributes.y;
         let records     = this._dataset._cf_dimensions[key].top(Infinity);
         let dataPadding = {
             x: this._dataset._cf_intervals[this._axes_attributes.x] * this._style.paddingFactor,
@@ -314,8 +315,7 @@ export default class ParetoScatterplot extends Scatterplot
             .extent([[0, 0], [width, height]]);
         let cells = hexbin(recordCoords);
 
-        // Find max. value/number of values in cell, if not done yet.
-        // -> Do only once to initialize.
+        // Find max. value/number of values in cell, if not done yet. -> Do only once to initialize.
         if (this._maxCellValue === null) {
             this._maxCellValue = cells.reduce(
                 (currIndex, maxCell, maxCellIndex, allCells) =>
@@ -330,10 +330,11 @@ export default class ParetoScatterplot extends Scatterplot
         let g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
         // Generate color scheme.
-        let colors = d3.scale
-            .linear()
-            .domain([0, this._maxCellValue])
-            .range(["#fff7fb","#ece7f2","#d0d1e6","#a6bddb","#74a9cf","#3690c0","#0570b0","#045a8d","#023858"]);
+        let colors = d3
+            .scaleLinear()
+            .domain([0, Math.log10(this._dataset._cf_dimensions[key].top(Infinity).length)])
+            // .range(["#fff7fb","#ece7f2","#d0d1e6","#a6bddb","#74a9cf","#3690c0","#0570b0","#045a8d","#023858"]);
+            .range(["#fff7fb", "#1f77b4"]);
 
         g.append("clipPath")
             .attr("id", "clip")
@@ -349,7 +350,7 @@ export default class ParetoScatterplot extends Scatterplot
             .enter().append("path")
             .attr("d", hexbin.hexagon())
             .attr("transform", d => "translate(" + d.x + "," + d.y + ")" )
-            .attr("fill", d => colors(d.length) );
+            .attr("fill", d => colors(Math.log10(d.length)) );
     }
 
     resize(height = -1, width = -1)
