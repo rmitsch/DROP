@@ -333,7 +333,6 @@ export default class ParetoScatterplot extends Scatterplot
         let colors = d3
             .scaleLinear()
             .domain([0, Math.log10(this._dataset._cf_dimensions[key].top(Infinity).length)])
-            // .range(["#fff7fb","#ece7f2","#d0d1e6","#a6bddb","#74a9cf","#3690c0","#0570b0","#045a8d","#023858"]);
             .range(["#fff7fb", "#1f77b4"]);
 
         g.append("clipPath")

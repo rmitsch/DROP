@@ -25,7 +25,7 @@ export default class DissonanceChart extends Chart
         // Constant width in pixel heatmap SVG is too large.
         this._heatmapCutoff = 20;
         // Constant for color scheme.
-        this._colorScheme = ["#fff", "#fff7fb","#ece7f2","#d0d1e6","#a6bddb","#74a9cf","#3690c0","#0570b0","#045a8d","#023858"];
+        this._colorScheme = ["#fff7fb","#ece7f2","#d0d1e6","#a6bddb","#74a9cf","#3690c0","#0570b0","#045a8d","#023858", "#082840"];
         // Define color domain.
         this._colorDomain = this._calculateColorDomain();
 
@@ -146,6 +146,22 @@ export default class DissonanceChart extends Chart
     }
 
     /**
+     * Compute colors for heatmap cell.
+     * @param d
+     * @private
+     */
+    _computeColorsForCell(d)
+    {
+        let colors = d3
+            .scaleLinear()
+            // .range(this._colorDomain)
+            .range(["#fff7fb", "#1f77b4"])
+            .domain([0, Math.log10(this._dataset._cf_dimensions.model_id.top(Infinity).length)]);
+
+        return d === 0 ? "#fff" : colors(Math.log10(d));
+    }
+
+    /**
      * Generates dissonance heatmap.
      * @param dcGroupName
      * @private
@@ -175,12 +191,7 @@ export default class DissonanceChart extends Chart
                 {min: 0, max: dataset._binCounts.y}
             ))
             .colorAccessor(function(d)  { return d.value; })
-            .colors(
-                d3.scale
-                    .linear()
-                    .domain(this._colorDomain)
-                    .range(this._colorScheme)
-            )
+            .colors(d => scope._computeColorsForCell(d))
             .keyAccessor(function(d)    { return d.key[0];  })
             .valueAccessor(function(d)  { return d.key[1]; })
             .title(function(d)          { return ""; })
@@ -323,6 +334,10 @@ export default class DissonanceChart extends Chart
         let paletteDiv          = Utils.spawnChildDiv(this._target, null, "color-palette");
 
         // Generate divs inside palette - one for each color.
+        // todo draw continious color scale instead of discrete? if discrete, interpolate between our two colors at
+        // index i.
+        // todo update palette cell labeling - consider log.
+
         let colorToPaletteCellMap = {};
         for (let i = this._colorScheme.length - 1; i >= 0; i--) {
             let color                       = this._colorScheme[i];
