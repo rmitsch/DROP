@@ -40,7 +40,7 @@ export default class DissonanceDataset extends Dataset
 
         // Initialize crossfilter data.
         this._initSingularDimensionsAndGroups();
-        this._initializeBins();
+        // this._initializeBins();
         this._initHistogramDimensionsAndGroups();
         this._initBinaryDimensionsAndGroups();
     }
@@ -163,8 +163,8 @@ export default class DissonanceDataset extends Dataset
         let rowAttribute    = this._supportedDRModelMeasure;
         // Extrema can be set to 0/1, since we expect both measures to be between 0 and 1.
         // Note that this holds iff measure is explicitly standardized to 0 <= x <= 1.
-        this._colExtrema    = {min: 0, max: 1}; //this._cf_extrema[colAttribute];
-        this._rowExtrema    = {min: 0, max: 1}; //this._cf_extrema[rowAttribute];
+        this._colExtrema    = {min: 0, max: 1}; // this._cf_extrema[colAttribute];
+        this._rowExtrema    = {min: 0, max: 1}; // this._cf_extrema[rowAttribute];
 
         // Workaround: min has to be 0 - probably error in backend calculation.
         this._rowExtrema.min = 0;
@@ -184,6 +184,17 @@ export default class DissonanceDataset extends Dataset
                     rowValue = scope._rowExtrema.max - rowBinWidth;
                 }
 
+                // if (d.model_id > 200 && d.model_id < 300) {
+                //     console.log(
+                //         d[rowAttribute],
+                //         scope._rowExtrema,
+                //         scope._cf_extrema[rowAttribute],
+                //         rowValue,
+                //         rowBinWidth,
+                //         +Math.floor(rowValue / rowBinWidth)
+                //     );
+                // }
+
                 // (b) Get column number.
                 let colValue = d[colAttribute];
                 if (colValue <= scope._colExtrema.min)
@@ -192,15 +203,8 @@ export default class DissonanceDataset extends Dataset
                     colValue = scope._colExtrema.max - colBinWidth;
                 }
 
-                let binnedColValue  = colValue / colBinWidth;
-                let binnedRowValue  = rowValue / rowBinWidth;
-
                 // Calculate bin index and use as column/row number.
-                // Use round() instead of floor, if record is a dummy (to ensure proper rounding for bin placmeent).
-                return [
-                    d.model_id !== -1 ? +Math.floor(binnedColValue) : +Math.round(binnedColValue),
-                    d.model_id !== -1 ? +Math.floor(binnedRowValue) : +Math.round(binnedRowValue)
-                ];
+                return [+Math.floor(colValue / colBinWidth), +Math.floor(rowValue / rowBinWidth)];
             }
         );
 
@@ -233,7 +237,6 @@ export default class DissonanceDataset extends Dataset
         // 1. Create group for histogram on x-axis (SIMs).
         // -----------------------------------------------------
 
-        extrema                             =  this._cf_extrema[yAttribute];
         this._binWidths[histogramAttribute] = (extrema.max - extrema.min) / this._binCounts.x;
         binWidth                            = this._binWidths[histogramAttribute];
         sortSettings                        = scope._sortSettings.horizontal;
@@ -280,7 +283,6 @@ export default class DissonanceDataset extends Dataset
         // -----------------------------------------------------
 
         yAttribute                          = this._supportedDRModelMeasure;
-        extrema                             = this._cf_extrema[yAttribute];
         histogramAttribute                  = "samplesInModels#" + yAttribute;
         this._binWidths[histogramAttribute] = (extrema.max - extrema.min) / this._binCounts.y;
         binWidth                            = this._binWidths[histogramAttribute];
@@ -365,7 +367,7 @@ export default class DissonanceDataset extends Dataset
 
     /**
      * Initializes sorting for dissonance heatmap data.
-     * Has to use a few workarounds; hencesome custom code.
+     * Has to use a few workarounds; hence some custom code.
      * @param attribute
      * @param settings Settings object to use.
      * @private

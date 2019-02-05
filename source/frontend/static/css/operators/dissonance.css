@@ -48,7 +48,7 @@
 
 .dissonance-heatmap {
     position: relative;
-    margin-left: 42px;
+    margin-left: 40px;
     top: -9px;
     z-index: 0;
     height: calc(100% - 55px);
@@ -94,7 +94,7 @@
 .dissonance-chart-x-axis-label {
     position: absolute;
     bottom: 18px;
-    margin-left: calc(50% - 90px);
+    margin-left: calc(50% - 120px);
 }
 
 .dissonance-chart-y-axis-label {

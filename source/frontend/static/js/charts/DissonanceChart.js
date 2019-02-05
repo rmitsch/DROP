@@ -24,31 +24,12 @@ export default class DissonanceChart extends Chart
 
         // Constant width in pixel heatmap SVG is too large.
         this._heatmapCutoff = 20;
-        // Constant for color scheme.
-        this._colorScheme = ["#fff7fb","#ece7f2","#d0d1e6","#a6bddb","#74a9cf","#3690c0","#0570b0","#045a8d","#023858", "#082840"];
-        // Define color domain.
-        this._colorDomain = this._calculateColorDomain();
 
         // Generate div structure for child nodes.
         this._divStructure = this._createDivStructure();
 
          // Construct graph.
         this.constructCFChart();
-    }
-
-    /**
-     * Calculates color domain based on existing color scheme and data extrema.
-     * @private
-     */
-    _calculateColorDomain()
-    {
-        let colorDomain = [0];
-        let extrema     = this._dataset._cf_extrema["samplesInModelsMeasure:sampleDRModelMeasure"];
-        for (let i = 1; i < this._colorScheme.length; i++) {
-            colorDomain.push(extrema.max / (this._colorScheme.length - 1) * i);
-        }
-
-        return colorDomain;
     }
 
     constructCFChart()
@@ -79,8 +60,9 @@ export default class DissonanceChart extends Chart
 
     render()
     {
-        let numCols         = this._dataset._binCounts.x;
-        let numRows         = this._dataset._binCounts.y;
+        const numCols         = this._dataset._binCounts.x;
+        const numRows         = this._dataset._binCounts.y;
+
         // Use heatmap width and height as yard stick for histograms.
         let newHeight       = Math.floor(
             ($("#" + this._panel._target).height() - 90) / numRows
@@ -336,18 +318,9 @@ export default class DissonanceChart extends Chart
 
         const numRecords    = this._dataset._cf_dimensions.model_id.top(Infinity).length;
         const numSteps      = Math.floor(Math.log10(numRecords));
-        const stepSize      = numRecords / this._colorScheme.length;
 
         let colorToPaletteCellMap = {};
         for (let i = numSteps - 1; i >= 0; i--) {
-            console.log(
-                numSteps,
-                i * stepSize,
-                Math.pow(10, numSteps - i),
-                numRecords / Math.pow(10, numSteps - i),
-                this._dataset._cf_dimensions.model_id.top(Infinity).length
-            );
-
             let color                       = this._computeColorsForCell(numRecords / Math.pow(10, numSteps - i));
             let cell                        = Utils.spawnChildDiv(paletteDiv.id, null, "color-palette-cell");
             colorToPaletteCellMap[color]    = cell.id;
