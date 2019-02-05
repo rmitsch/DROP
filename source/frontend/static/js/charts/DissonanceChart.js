@@ -146,9 +146,10 @@ export default class DissonanceChart extends Chart
     }
 
     /**
-     * Compute colors for heatmap cell.
+     * Compute colors for heatmap cell. Uses logarithmic scaling.
      * @param d
      * @private
+     * @returns string Color as hex value.
      */
     _computeColorsForCell(d)
     {
@@ -333,28 +334,35 @@ export default class DissonanceChart extends Chart
         let kHistogramDiv       = Utils.spawnChildDiv(this._target, null, "dissonance-variance-chart vertical");
         let paletteDiv          = Utils.spawnChildDiv(this._target, null, "color-palette");
 
-        // Generate divs inside palette - one for each color.
-        // todo draw continious color scale instead of discrete? if discrete, interpolate between our two colors at
-        // index i.
-        // todo update palette cell labeling - consider log.
+        const numRecords    = this._dataset._cf_dimensions.model_id.top(Infinity).length;
+        const numSteps      = Math.floor(Math.log10(numRecords));
+        const stepSize      = numRecords / this._colorScheme.length;
 
         let colorToPaletteCellMap = {};
-        for (let i = this._colorScheme.length - 1; i >= 0; i--) {
-            let color                       = this._colorScheme[i];
+        for (let i = numSteps - 1; i >= 0; i--) {
+            console.log(
+                numSteps,
+                i * stepSize,
+                Math.pow(10, numSteps - i),
+                numRecords / Math.pow(10, numSteps - i),
+                this._dataset._cf_dimensions.model_id.top(Infinity).length
+            );
+
+            let color                       = this._computeColorsForCell(numRecords / Math.pow(10, numSteps - i));
             let cell                        = Utils.spawnChildDiv(paletteDiv.id, null, "color-palette-cell");
             colorToPaletteCellMap[color]    = cell.id;
 
-            // Set color of cell.
-            $("#" + cell.id).css("background-color", color);
+            // Set color and height of cell.
+            const cellDiv = $("#" + cell.id);
+            cellDiv.css("background-color", color);
+            cellDiv.css("height", "20%");
 
             // Create labels indicating color <-> percentage mapping.
-            if (i === this._colorScheme.length - 1 ||
-                i === Math.round(this._colorScheme.length / 2) ||
+            if (i === numSteps - 1 ||
+                i === Math.floor(numSteps / 2) ||
                 i === 0
             ) {
-                let percentage = (this._colorDomain[i] / this._dataset._crossfilter.all().length) * 100;
-                // Spawn label.
-                Utils.spawnChildSpan(cell.id, null, "color-palette-label", Math.round(percentage) + "%");
+                Utils.spawnChildSpan(cell.id, null, "color-palette-label", Math.pow(10, -(numSteps - i) + 2) + "%");
             }
         }
 
@@ -365,7 +373,6 @@ export default class DissonanceChart extends Chart
         let yAxisLabel = Utils.spawnChildDiv(
             this._target, null, "dissonance-chart-y-axis-label", "Embedding quality"
         );
-
 
         return {
             horizontalHistogramDivID: sampleHistogramDiv.id,
