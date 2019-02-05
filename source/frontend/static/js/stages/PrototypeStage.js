@@ -183,6 +183,7 @@ export default class PrototypeStage extends Stage
                 // After split: Render (resize-sensitive) components.
                 scope._operators["SurrogateModel"].render();
                 scope._operators["Dissonance"].render();
+                scope._operators["FilterReduce"].resize();
                 $("#" + embeddingsTableTarget + " .dataTables_scrollBody").css(
                     'height', ($("#" + splitBottomDiv.id).height() - 190) + "px"
                 );
