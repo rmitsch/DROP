@@ -16,6 +16,7 @@ from sklearn.datasets import load_boston
 from backend.data_generation.datasets.InputDataset import InputDataset
 from backend.data_generation.dimensionality_reduction import DimensionalityReductionKernel
 from backend.utils import Utils
+import dcor
 
 
 def init_flask_app():
@@ -30,7 +31,7 @@ def init_flask_app():
     )
 
     # Define version.
-    flask_app.config["VERSION"] = "0.10.0"
+    flask_app.config["VERSION"] = "0.10.1"
 
     # Store metadata template. Is assembled once in /get_metadata.
     flask_app.config["METADATA_TEMPLATE"] = None
@@ -339,6 +340,20 @@ def get_dr_model_details():
     h5file.close()
 
     return jsonify(result)
+
+
+@app.route('/compute_correlation_strength', methods=["GET"])
+def compute_correlation_strength():
+    """
+    Computes correlation strengths between pairs of attributes.
+    Works on currently loaded dataset. Doesn't expect any GET parameters.
+    :return:
+    """
+
+    df = app.config["EMBEDDING_METADATA"]["original"].drop(["num_records"], axis=1)
+    df.metric = df.metric.astype("category").cat.codes
+
+    return df.corr(method=lambda x, y: dcor.distance_correlation(x, y)).to_json(orient='index')
 
 
 # Launch on :2483.

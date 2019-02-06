@@ -123,3 +123,12 @@ span.filter-reduce-row-label-text {
 .filter-reduce-table .dataTables_wrapper .dataTables_filter input {
     width: 120px;
 }
+
+.filter-reduce-correlation-bar {
+    position: absolute;
+    bottom: 20px;
+    left: 127px;
+    height: calc(100% - 22px);
+    width: 3px;
+    border: 1px solid #000;
+}

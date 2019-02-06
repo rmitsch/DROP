@@ -1,5 +1,6 @@
 import Scatterplot from "./Scatterplot.js";
 import Utils from "../Utils.js";
+import DRMetaDataset from "../data/DRMetaDataset.js";
 
 /**
  * Scatterplots with dots connected by specified degree of freedom.
@@ -23,6 +24,10 @@ export default class ParetoScatterplot extends Scatterplot
     {
         super(name, panel, attributes, dataset, style, parentDivID, useBinning);
 
+        this._correlationBar              = null;
+        this._correlationBarBackground    = null;
+        this._initCorrelationBar();
+
         // If binning is required: Create separate, contained SVG.
         this._hexHeatmapContainerID = null;
         // Used to store max. value in heatmap cell - important for setting color of cells.
@@ -35,12 +40,49 @@ export default class ParetoScatterplot extends Scatterplot
         $("#" + this._target).addClass("pareto-scatterplot");
     }
 
+    /**
+     * Initializes divs for correlation bar.
+     * @private
+     */
+    _initCorrelationBar()
+    {
+        // Spawn background for correlation bar and actual correlation bar.
+        this._correlationBarBackground  = Utils.spawnChildDiv(this._target, null, "filter-reduce-correlation-bar");
+        this._correlationBar            = Utils.spawnChildDiv(this._target, null, "filter-reduce-correlation-bar");
+        $("#" + this._correlationBar.id).css("background-color", "#1f77b4", "height", "0");
+    }
+
+    /**
+     * Fills correlation bar according to current correlation value for this chart's attributes.
+     * @private
+     */
+    _updateCorrelationBar()
+    {
+        // Fill correlation bar.
+        const axAttr                    = this._axes_attributes;
+        let correlationBar              = $("#" + this._correlationBar.id);
+        let correlationBackgroundBar    = $("#" + this._correlationBarBackground.id);
+        const correlation               = this._dataset.correlations[axAttr.x.replace("*", "")][axAttr.y.replace("*", "")];
+        const attributeTranslation      = DRMetaDataset.translateAttributeNames(false);
+
+        const correlationText           = "Correlation " +
+            attributeTranslation[this._axes_attributes.x].toLowerCase() + " to " +
+            attributeTranslation[this._axes_attributes.y].toLowerCase() + ": " +
+            Math.round(correlation * 100) + "%";
+
+        correlationBar.css("height", correlation * correlationBackgroundBar.height());
+        correlationBar.attr("title", correlationText);
+        correlationBackgroundBar.attr("title", correlationText);
+    }
+
     render()
     {
         this._cf_chart.render();
 
         if (this._useBinning)
             this._drawHexagonalHeatmap();
+
+        this._updateCorrelationBar();
     }
 
     constructCFChart()

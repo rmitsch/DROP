@@ -24,6 +24,7 @@ export default class DRMetaDataset extends Dataset
         this._metadata          = metadata;
         this._binCount          = 10;
         this._binCountSSP       = 10;
+        this._correlations      = null;
 
         // Maps for translation of categorical variables into numerical ones.
         this._categoricalToNumericalValues = {};
@@ -47,10 +48,30 @@ export default class DRMetaDataset extends Dataset
         // Set up binary dimensions (for scatterplots).
         this._initBinaryDimensionsAndGroups(true);
 
+        // Compute correlation strengths.
+        this._computeCorrelationStrengths();
+
         // Create series mapping.
         // Since for the intended use case (i. e. DROP) it is to be expected to need series variant w.r.t. each possible
         // hyperparameter, in makes sense to calculate all of them beforehand.
         this._seriesMappingByHyperparameter = this._generateSeriesMappingForHyperparameters();
+    }
+
+    /**
+     * Prompts backend to compute correlations.
+     * @private
+     */
+    _computeCorrelationStrengths() {
+        // Note that computing correlation for large datasets may take too long and thus correlation strengths are not
+        // available before rendering starts. If this occurs, updating correlation strengths in UI have to be triggered
+        // or request information periodically before UI is unlocked.
+        fetch("/compute_correlation_strength",
+            {
+                headers: {"Content-Type": "application/json; charset=utf-8"},
+                method: "GET"
+            })
+            .then(res => res.json())
+            .then(results => this._correlations = results);
     }
 
     /**
@@ -176,6 +197,7 @@ export default class DRMetaDataset extends Dataset
             "n_iter": "Iterations",
             "angle": "Angle",
             "metric": "Dist. metric",
+            "metric*": "Dist. metric",
             "n_neighbors": "Neighbors",
             "min_dist": "Min. Distance",
             "local_connectivity": "Local Conn.",
@@ -609,5 +631,10 @@ export default class DRMetaDataset extends Dataset
     get seriesMappingByHyperparameter()
     {
         return this._seriesMappingByHyperparameter;
+    }
+
+    get correlations()
+    {
+        return this._correlations;
     }
 }

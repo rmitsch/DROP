@@ -4,15 +4,16 @@ import sys
 import os
 
 import lime
-import numpy
+import numpy as np
 import pandas
 import psutil
 import sklearn
+import scipy
 from flask import Flask
 from sklearn.preprocessing import LabelEncoder
 from sklearn.tree import DecisionTreeRegressor
 import lime.lime_tabular
-from sklearn.datasets import load_boston
+
 
 # Class for various, non-essential tasks.
 class Utils:
@@ -210,18 +211,3 @@ class Utils:
             )
             for objective in metadata_template["objectives"]
         }
-
-    @staticmethod
-    def you_suck(rafi=[], ich=[]):
-        complaints = ["i am tired", "i am hungry", "i suck so much!!!!!!", "i am a snob"]
-        if "hungry" in complaints:
-            ich.append(1)
-        rafi.append(1)
-        if len(rafi) > 1:
-            print("Rafi sucks")
-        else:
-            print("I am the best")
-
-
-if __name__ == '__main__':
-    Utils.you_suck()
