@@ -419,4 +419,19 @@ export default class FilterReduceChartsPanel extends Panel
             }
         }
     }
+
+    /**
+     * Updates correlation bars after change in filter selection has been processed in backend.
+     * @param results
+     */
+    updateCorrelationBars(results)
+    {
+        for (const chartName in this._charts) {
+            // Ignore histograms.
+            if (!chartName.includes("histogram")) {
+                if (chartName.split(":").length === 2)
+                    this._charts[chartName].updateCorrelationBar(results);
+            }
+        }
+    }
 }

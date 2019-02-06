@@ -53,7 +53,7 @@ export default class Chart
      * Resize chart.
      * Note: Usually not necessary due to usage of dc.renderAll() and automatic crossfilter updates.
      */
-    render()
+    resize()
     {
         throw new TypeError("Chart.resize(): Abstract method must not be called.");
     }
@@ -87,8 +87,7 @@ export default class Chart
         let dimensions      = instance._dataset._cf_dimensions;
         let operator        = instance._panel._operator;
         let embeddingIDs    = new Set();
-        for (let record of dimensions[key].top(Infinity))
-            embeddingIDs.add(record.id);
+        dimensions[key].top(Infinity).forEach(record => embeddingIDs.add(record.id));
 
         if (!(Utils.compareSets(embeddingIDs, operator._filteredIDs))) {
             operator._filteredIDs = embeddingIDs;

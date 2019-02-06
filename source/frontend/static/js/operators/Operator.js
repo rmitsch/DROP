@@ -139,4 +139,9 @@ export default class Operator
     {
         return this._target;
     }
+
+    get filteredIDs()
+    {
+        return this._filteredIDs;
+    }
 }

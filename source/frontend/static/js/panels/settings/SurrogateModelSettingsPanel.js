@@ -107,11 +107,17 @@ export default class SurrogateModelSettingsPanel extends SettingsPanel
         let objectiveString = options.objectives;
         let treeDepth       = options.treeDepth;
 
+        // Assemble all filtered IDs.
+        let idString = "";
+        for (let id of this._operator.filteredIDs)
+            idString += id + ",";
+        idString = idString.substring(0, idString.length - 1);
+
         // -------------------------------------------------
         // 2. Fetch new surrogate model data.
         // -------------------------------------------------
 
-        fetch("/get_surrogate_model_data?modeltype=tree&objs=" + objectiveString + "&depth=" + treeDepth,
+        fetch("/get_surrogate_model_data?modeltype=tree&objs=" + objectiveString + "&depth=" + treeDepth + "&ids=" + idString,
             {
                 headers: { "Content-Type": "application/json; charset=utf-8"},
                 method: "GET"

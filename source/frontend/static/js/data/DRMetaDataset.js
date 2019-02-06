@@ -49,7 +49,7 @@ export default class DRMetaDataset extends Dataset
         this._initBinaryDimensionsAndGroups(true);
 
         // Compute correlation strengths.
-        this._computeCorrelationStrengths();
+        this.computeCorrelationStrengths();
 
         // Create series mapping.
         // Since for the intended use case (i. e. DROP) it is to be expected to need series variant w.r.t. each possible
@@ -58,20 +58,38 @@ export default class DRMetaDataset extends Dataset
     }
 
     /**
-     * Prompts backend to compute correlations.
-     * @private
+     * Prompts backend to compute correlations for currently filtered IDs.
+     * @param callback
      */
-    _computeCorrelationStrengths() {
+    computeCorrelationStrengths(callback)
+    {
         // Note that computing correlation for large datasets may take too long and thus correlation strengths are not
         // available before rendering starts. If this occurs, updating correlation strengths in UI have to be triggered
         // or request information periodically before UI is unlocked.
-        fetch("/compute_correlation_strength",
-            {
-                headers: {"Content-Type": "application/json; charset=utf-8"},
-                method: "GET"
-            })
-            .then(res => res.json())
-            .then(results => this._correlations = results);
+        let instance = this;
+
+        if (this._cf_dimensions.id.top(Infinity).length > 1) {
+            let idString = "";
+            for (let embedding of this._cf_dimensions.id.top(Infinity))
+                idString += embedding.id + ",";
+            idString = idString.substring(0, idString.length - 1);
+
+            fetch("/compute_correlation_strength?ids=" + idString,
+                {
+                    headers: {"Content-Type": "application/json; charset=utf-8"},
+                    method: "GET"
+                })
+                .then(res => res.json())
+                .then(function (results) {
+                    instance._correlations = results;
+                    if (callback !== undefined)
+                        callback(results);
+                });
+        }
+
+        else {
+            callback(null);
+        }
     }
 
     /**

@@ -346,11 +346,20 @@ def get_dr_model_details():
 def compute_correlation_strength():
     """
     Computes correlation strengths between pairs of attributes.
-    Works on currently loaded dataset. Doesn't expect any GET parameters.
+    Works on currently loaded dataset.
+        GET parameters:
+        - "ids": List of embedding IDs to consider, with ids=1,2,3,... Note: If "ids" is not specified, all embeddings
+                 are taken into account.
     :return:
     """
 
     df = app.config["EMBEDDING_METADATA"]["original"].drop(["num_records"], axis=1)
+    ids = request.args.get("ids")
+    ids = list(map(int, ids.split(","))) if ids is not None else None
+
+    if ids is not None:
+        df = df.iloc[ids]
+
     df.metric = df.metric.astype("category").cat.codes
 
     return df.corr(method=lambda x, y: dcor.distance_correlation(x, y)).to_json(orient='index')

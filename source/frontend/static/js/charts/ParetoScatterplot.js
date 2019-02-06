@@ -54,18 +54,20 @@ export default class ParetoScatterplot extends Scatterplot
 
     /**
      * Fills correlation bar according to current correlation value for this chart's attributes.
-     * @private
+     * @param correlations
      */
-    _updateCorrelationBar()
+    updateCorrelationBar(correlations = null)
     {
-        // Fill correlation bar.
-        const axAttr                    = this._axes_attributes;
+        let attrX                   = this._axes_attributes.x.replace("*", "");
+        let attrY                   = this._axes_attributes.y.replace("*", "");
+        const attributeTranslation  = DRMetaDataset.translateAttributeNames(false);
+
         let correlationBar              = $("#" + this._correlationBar.id);
         let correlationBackgroundBar    = $("#" + this._correlationBarBackground.id);
-        const correlation               = this._dataset.correlations[axAttr.x.replace("*", "")][axAttr.y.replace("*", "")];
-        const attributeTranslation      = DRMetaDataset.translateAttributeNames(false);
 
-        const correlationText           = "Correlation " +
+        const correlation = correlations !== null ? correlations[attrX][attrY] : 0;
+
+        const correlationText = "Correlation " +
             attributeTranslation[this._axes_attributes.x].toLowerCase() + " to " +
             attributeTranslation[this._axes_attributes.y].toLowerCase() + ": " +
             Math.round(correlation * 100) + "%";
@@ -82,7 +84,7 @@ export default class ParetoScatterplot extends Scatterplot
         if (this._useBinning)
             this._drawHexagonalHeatmap();
 
-        this._updateCorrelationBar();
+        this.updateCorrelationBar(this._dataset.correlations);
     }
 
     constructCFChart()
@@ -143,6 +145,8 @@ export default class ParetoScatterplot extends Scatterplot
             .mouseZoomable(false)
             .margins({ top: 0, right: 0, bottom: 16, left: 25 })
             .on('preRedraw', function(chart) {
+                // todo update correlation bar here
+
                 // If binning is used: Redraw heatmap.
                 if (instance._useBinning) {
                     instance._drawHexagonalHeatmap();
@@ -184,6 +188,16 @@ export default class ParetoScatterplot extends Scatterplot
                         instance._dataset.numericalToCategoricalValues[originalAttributeName][tickValue] : "";
             });
         }
+    }
+
+    propagateFilterChange(instance, key)
+    {
+        const panel = this._panel;
+        // Update correlation strengths, then re-render correlation bars.
+        this._dataset.computeCorrelationStrengths(function (results) {
+            panel.updateCorrelationBars(results);
+        });
+        super.propagateFilterChange(instance, key);
     }
 
     /**
