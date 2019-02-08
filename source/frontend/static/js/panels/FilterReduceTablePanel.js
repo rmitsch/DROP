@@ -65,7 +65,7 @@ export default class FilterReduceTablePanel extends Panel
     resize()
     {
         let panelDiv = $("#" + this._target);
-        if (panelDiv.height() != this._lastPanelSize.height) {
+        if (panelDiv.height() !== this._lastPanelSize.height) {
             $("#" + this._target + " .dataTables_scrollBody").css(
                 'height', (panelDiv.height() - 190) + "px"
             );

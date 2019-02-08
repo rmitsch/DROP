@@ -219,14 +219,14 @@ export default class ModelDetailPanel extends Panel
         // 4. Draw LIME matrix.
         // -------------------------------------------------------
 
-        this._redrawLIMEHeatmap();
+        this._redrawAttributeInfluenceHeatmap();
 
         // Update panel size.
         const panelDiv = $("#" + this._target);
         this._lastPanelSize = {width: panelDiv.width(), height: panelDiv.height()};
     }
 
-    _redrawLIMEHeatmap()
+    _redrawAttributeInfluenceHeatmap()
     {
         let scope       = this;
         let cfConfig    = this._data.crossfilterData["lime"];
@@ -239,9 +239,10 @@ export default class ModelDetailPanel extends Panel
         // let colorDomain = ModelDetailPanel._calculateColorDomain(cfConfig.extrema["weight"], colorScheme);
         let colorDomain = ModelDetailPanel._calculateColorDomain({min: -1, max: 1}, colorScheme);
 
+        const limePane = $("#model-details-lime-pane");
         this._charts["limeHeatmap"]
-            .height($("#model-details-lime-pane").height() + 45)
-            .width($("#model-details-lime-pane").width())
+            .height(limePane.height() + 45)
+            .width(limePane.width())
             .dimension(cfConfig.dimensions[attribute])
             .group(cfConfig.groups[attribute])
             .colorAccessor(function(d)  { return d.value; })
@@ -486,7 +487,6 @@ export default class ModelDetailPanel extends Panel
      */
     _redrawAttributeSparklines(updateValues = true)
     {
-        console.log("redrawing sparklines")
         let dataset             = this._data;
         let drMetaDataset       = dataset._drMetaDataset;
         // Fetch metadata structure (i. e. attribute names and types).
@@ -598,30 +598,51 @@ export default class ModelDetailPanel extends Panel
         this.render();
     }
 
+    _updateTableHeight()
+    {
+        let tablePanelDiv = $("#model-details-block-record-table");
+        $("div.model-detail-table .dataTables_scrollBody").css(
+            'height', (tablePanelDiv.height() - 100) + "px"
+        );
+    }
+
     resize()
     {
-
         // Check modal.
         const panelDiv = $("#" + this._target);
         if (panelDiv.width() !== this._lastPanelSize.width || panelDiv.height() !== this._lastPanelSize.height) {
             // todo update charts here if splits have been changed
             this._lastPanelSize = {width: panelDiv.width(), height: panelDiv.height()};
+
+            this._redrawAttributeSparklines(false);
+            this._redrawAttributeInfluenceHeatmap();
+            this._redrawRecordScatterplots();
+            this._updateTableHeight();
         }
 
-        // Check splits.
-        for (const pos in this._splits) {
-            const new_sizes = this._splits[pos].getSizes();
+        else {
+            // Check splits.
+            for (const pos in this._splits) {
+                const new_sizes = this._splits[pos].getSizes();
 
-            if (new_sizes[0] !== this._lastSplitPositions[pos][0] || new_sizes[1] !== this._lastSplitPositions[pos][1]) {
-                console.log("changee in ", pos, ":", new_sizes, this._lastSplitPositions[pos])
-                this._lastSplitPositions[pos] = new_sizes;
+                if (new_sizes[0] !== this._lastSplitPositions[pos][0] || new_sizes[1] !== this._lastSplitPositions[pos][1]) {
+                    console.log("changee in ", pos, ":", new_sizes, this._lastSplitPositions[pos])
+                    this._lastSplitPositions[pos] = new_sizes;
 
-                if (pos === "middle") {
-                    this._redrawAttributeSparklines(false);
-                    this._redrawLIMEHeatmap();
+                    if (pos === "left") {
+                        this._redrawAttributeInfluenceHeatmap();
+                    }
+                    if (pos === "middle") {
+                        this._redrawAttributeSparklines(false);
+                        this._redrawAttributeInfluenceHeatmap();
+                        this._redrawRecordScatterplots();
+                    }
+                    if (pos === "right") {
+                        this._redrawRecordScatterplots();
+                        this._updateTableHeight();
+                    }
                 }
             }
         }
-        // todo update charts here if modal has been resized
     }
 }
