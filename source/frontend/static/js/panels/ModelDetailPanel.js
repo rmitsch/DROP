@@ -19,6 +19,11 @@ export default class ModelDetailPanel extends Panel
     {
         super(name, operator, parentDivID);
 
+        this._sparklineValues = null;
+        // Store information on split positions.
+        this._lastSplitPositions    = {};
+        this._splits                = {};
+
         // Update involved CSS classes.
         $("#" + this._target).addClass("model-detail-panel");
 
@@ -92,6 +97,8 @@ export default class ModelDetailPanel extends Panel
      */
     _createDivStructure()
     {
+        let instance = this;
+
         // -----------------------------------
         // 1. Create panes.
         // -----------------------------------
@@ -141,25 +148,34 @@ export default class ModelDetailPanel extends Panel
         // -----------------------------------
 
         // Split left and right pane.
-        Split(["#" + parameterPane.id, "#" + samplePane.id], {
+        this._splits["middle"] = Split(["#" + parameterPane.id, "#" + samplePane.id], {
             direction: "horizontal",
             sizes: [25, 75],
-            onDragEnd: function() {}
+            onDragEnd: function() {
+                instance.resize();
+            }
         });
+        this._lastSplitPositions["middle"] = [25, 75];
 
         // Split upper-left and bottom-left pane.
-        Split(["#" + attributePane.id, "#" + limePane.id], {
+        this._splits["left"] = Split(["#" + attributePane.id, "#" + limePane.id], {
             direction: "vertical",
             sizes: [40, 60],
-            onDragEnd: function() {}
+            onDragEnd: function() {
+                instance.resize();
+            }
         });
+        this._lastSplitPositions["left"] = [40, 60];
 
         // Split upper-right and bottom-right pane.
-        Split(["#" + scatterplotPane.id, "#" + recordPane.id], {
+        this._splits["right"] = Split(["#" + scatterplotPane.id, "#" + recordPane.id], {
             direction: "vertical",
             sizes: [50, 50],
-            onDragEnd: function() {}
+            onDragEnd: function() {
+                instance.resize();
+            }
         });
+        this._lastSplitPositions["right"] = [50, 50];
 
         // Return all panes' IDs.
         return {
@@ -204,6 +220,10 @@ export default class ModelDetailPanel extends Panel
         // -------------------------------------------------------
 
         this._redrawLIMEHeatmap();
+
+        // Update panel size.
+        const panelDiv = $("#" + this._target);
+        this._lastPanelSize = {width: panelDiv.width(), height: panelDiv.height()};
     }
 
     _redrawLIMEHeatmap()
@@ -461,10 +481,12 @@ export default class ModelDetailPanel extends Panel
 
     /**
      * Draws sparklines for attributes (i. e. hyperparameters and objectives).
+     * @param updateValues
      * @private
      */
-    _redrawAttributeSparklines()
+    _redrawAttributeSparklines(updateValues = true)
     {
+        console.log("redrawing sparklines")
         let dataset             = this._data;
         let drMetaDataset       = dataset._drMetaDataset;
         // Fetch metadata structure (i. e. attribute names and types).
@@ -483,7 +505,8 @@ export default class ModelDetailPanel extends Panel
         // -------------------------------------------------------
 
         // Gather values for bins from DRMetaDataset instance.
-        let values = this._data.preprocessDataForSparklines();
+        if (updateValues || this._sparklineValues === false)
+            this._sparklineValues = this._data.preprocessDataForSparklines();
 
         // -------------------------------------------------------
         // 2. Draw charts.
@@ -500,7 +523,7 @@ export default class ModelDetailPanel extends Panel
 
         // Generate table for attribute charts.
         let chartDivIDs = {};
-        for (const valueType in values) {
+        for (const valueType in this._sparklineValues) {
             for (const attribute of metadataStructure[valueType]) {
                 const key = valueType === "hyperparameters" ? attribute.name : attribute;
                 const value = dataset._allModelMetadata[dataset._modelID][key];
@@ -517,10 +540,10 @@ export default class ModelDetailPanel extends Panel
         hyperparameterContentDiv.html(attributeTable + "</table>");
 
         // Draw hyperparameter charts.
-        for (const valueType in values) {
+        for (const valueType in this._sparklineValues) {
             for (const attribute of metadataStructure[valueType]) {
                 let key             = valueType === "hyperparameters" ? attribute.name : attribute;
-                let record          = values[valueType][key];
+                let record          = this._sparklineValues[valueType][key];
 
                 // Append new div for attribute.
                 let chartContainerDiv = Utils.spawnChildDiv(
@@ -528,11 +551,12 @@ export default class ModelDetailPanel extends Panel
                 );
 
                 // Draw chart.
-                $("#" + chartContainerDiv.id).sparkline(
+                const chartContainer = $("#" + chartContainerDiv.id);
+                chartContainer.sparkline(
                     record.data,
                     {
                         type: "bar",
-                        barWidth: Math.min(10, 100 / record.data.length),
+                        barWidth: Math.min(Math.max(10, chartContainer.width() / (record.data.length * 2)), 30),
                         barSpacing: 1,
                         chartRangeMin: 0,
                         height: 20,
@@ -572,5 +596,31 @@ export default class ModelDetailPanel extends Panel
 
         // Render charts.
         this.render();
+    }
+
+    resize()
+    {
+
+        // Check modal.
+        const panelDiv = $("#" + this._target);
+        if (panelDiv.width() !== this._lastPanelSize.width || panelDiv.height() !== this._lastPanelSize.height) {
+            // todo update charts here if splits have been changed
+            this._lastPanelSize = {width: panelDiv.width(), height: panelDiv.height()};
+        }
+
+        // Check splits.
+        for (const pos in this._splits) {
+            const new_sizes = this._splits[pos].getSizes();
+
+            if (new_sizes[0] !== this._lastSplitPositions[pos][0] || new_sizes[1] !== this._lastSplitPositions[pos][1]) {
+                console.log("changee in ", pos, ":", new_sizes, this._lastSplitPositions[pos])
+                this._lastSplitPositions[pos] = new_sizes;
+
+                if (pos === "middle") {
+                    this._redrawAttributeSparklines(false);
+                }
+            }
+        }
+        // todo update charts here if modal has been resized
     }
 }

@@ -26,7 +26,7 @@ export default class Chart
         this._style             = style;
         this._target            = Utils.uuidv4();
         // Store size of panel at time of last render.
-        this._lastOperatorSize  = {width: 0, height: 0};
+        this._lastPanelSize  = {width: 0, height: 0};
 
         // Create div structure for this chart.
         let div = document.createElement('div');

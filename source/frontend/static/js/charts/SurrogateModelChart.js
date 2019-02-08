@@ -52,8 +52,8 @@ export default class SurrogateModelChart extends Chart
     render()
     {
         let operatorDiv = $("#" + this._panel._operator._target);
-        this._lastOperatorSize.width = operatorDiv.width();
-        this._lastOperatorSize.height = operatorDiv.height();
+        this._lastPanelSize.width = operatorDiv.width();
+        this._lastPanelSize.height = operatorDiv.height();
 
         let margin      = {top: 5, right: 120, bottom: 20, left: 120};
         let baseWidth   = operatorDiv.width() - 0;
@@ -253,7 +253,7 @@ export default class SurrogateModelChart extends Chart
         let operatorDiv = $("#" + this._panel._operator._target);
 
         // Check if panel height has changed.
-        if (operatorDiv.height() != this._lastOperatorSize.height) {
+        if (operatorDiv.height() != this._lastPanelSize.height) {
             d3.select("#surrogate-model-chart-svg").remove();
             this.render();
         }

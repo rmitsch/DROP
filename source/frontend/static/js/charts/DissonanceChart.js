@@ -434,13 +434,13 @@ export default class DissonanceChart extends Chart
     resize()
     {
         let panelDiv = $("#" + this._target);
-        if (panelDiv.height() != this._lastOperatorSize.height ||
-            panelDiv.width() != this._lastOperatorSize.width) {
+        if (panelDiv.height() != this._lastPanelSize.height ||
+            panelDiv.width() != this._lastPanelSize.width) {
             this.render();
         }
 
         // Store size of panel at time of last render.
-        this._lastOperatorSize.width = panelDiv.width();
-        this._lastOperatorSize.height = panelDiv.height();
+        this._lastPanelSize.width = panelDiv.width();
+        this._lastPanelSize.height = panelDiv.height();
     }
 }
