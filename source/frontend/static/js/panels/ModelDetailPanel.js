@@ -612,7 +612,6 @@ export default class ModelDetailPanel extends Panel
         // Check modal.
         const panelDiv = $("#" + this._target);
 
-        console.log(this._lastPanelSize, panelDiv.width(), panelDiv.height());
         if (panelDiv.width() !== this._lastPanelSize.width || panelDiv.height() !== this._lastPanelSize.height) {
             // todo update charts here if splits have been changed
 
@@ -630,7 +629,6 @@ export default class ModelDetailPanel extends Panel
                 const new_sizes = this._splits[pos].getSizes();
 
                 if (new_sizes[0] !== this._lastSplitPositions[pos][0] || new_sizes[1] !== this._lastSplitPositions[pos][1]) {
-                    console.log("changee in ", pos, ":", new_sizes, this._lastSplitPositions[pos])
                     this._lastSplitPositions[pos] = new_sizes;
 
                     if (pos === "left") {
