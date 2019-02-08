@@ -240,7 +240,7 @@ export default class ModelDetailPanel extends Panel
         let colorDomain = ModelDetailPanel._calculateColorDomain({min: -1, max: 1}, colorScheme);
 
         this._charts["limeHeatmap"]
-            .height($("#model-details-lime-pane").height())
+            .height($("#model-details-lime-pane").height() + 45)
             .width($("#model-details-lime-pane").width())
             .dimension(cfConfig.dimensions[attribute])
             .group(cfConfig.groups[attribute])
@@ -618,6 +618,7 @@ export default class ModelDetailPanel extends Panel
 
                 if (pos === "middle") {
                     this._redrawAttributeSparklines(false);
+                    this._redrawLIMEHeatmap();
                 }
             }
         }
