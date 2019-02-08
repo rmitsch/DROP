@@ -591,7 +591,8 @@ export default class ModelDetailPanel extends Panel
         $("#" + this._target).dialog({
             title: "Model Details for Model with ID #" + data._modelID,
             width: stageDiv.width() / 1.25,
-            height: stageDiv.height() / 1.25
+            height: stageDiv.height() / 1.25,
+            resizeStop: (event, ui) => this.resize()
         });
 
         // Render charts.
@@ -610,8 +611,11 @@ export default class ModelDetailPanel extends Panel
     {
         // Check modal.
         const panelDiv = $("#" + this._target);
+
+        console.log(this._lastPanelSize, panelDiv.width(), panelDiv.height());
         if (panelDiv.width() !== this._lastPanelSize.width || panelDiv.height() !== this._lastPanelSize.height) {
             // todo update charts here if splits have been changed
+
             this._lastPanelSize = {width: panelDiv.width(), height: panelDiv.height()};
 
             this._redrawAttributeSparklines(false);
