@@ -115,16 +115,6 @@ export default class Operator
         return this._panels;
     }
 
-    get inputCardinality()
-    {
-        return this._inputCardinality;
-    }
-
-    get outputCardinality()
-    {
-        return this._outputCardinality;
-    }
-
     get dataset()
     {
         return this._dataset;

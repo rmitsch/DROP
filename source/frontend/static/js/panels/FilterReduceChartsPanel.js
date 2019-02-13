@@ -434,4 +434,26 @@ export default class FilterReduceChartsPanel extends Panel
             }
         }
     }
+
+    render()
+    {
+        for (const chartName in this._charts) {
+            this._charts[chartName].render();
+        }
+    }
+
+     /**
+      * Updates data and buffered filter data after selection has been made in table panel.
+      * @param embeddingIDs
+      */
+    updateFilteredRecordBuffer(embeddingIDs)
+    {
+        // Ignore histograms, since they don't have buffered record IDs.
+        for (const chartName in this._charts) {
+            if (!chartName.includes("histogram")) {
+                if (chartName.split(":").length === 2)
+                    this._charts[chartName].updateFilteredRecordBuffer(embeddingIDs);
+            }
+        }
+    }
 }

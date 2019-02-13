@@ -145,8 +145,6 @@ export default class ParetoScatterplot extends Scatterplot
             .mouseZoomable(false)
             .margins({ top: 0, right: 0, bottom: 16, left: 25 })
             .on('preRedraw', function(chart) {
-                // todo update correlation bar here
-
                 // If binning is used: Redraw heatmap.
                 if (instance._useBinning) {
                     instance._drawHexagonalHeatmap();
@@ -198,6 +196,15 @@ export default class ParetoScatterplot extends Scatterplot
             panel.updateCorrelationBars(results);
         });
         super.propagateFilterChange(instance, key);
+    }
+
+    /**
+      * Updates data and buffered filter data after selection has been made in table panel.
+      * @param embeddingIDs
+      */
+    updateFilteredRecordBuffer(embeddingIDs)
+    {
+        this._cf_chart.identifyFilteredRecords(d => embeddingIDs.has(d.id));
     }
 
     /**

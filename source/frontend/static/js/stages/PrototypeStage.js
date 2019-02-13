@@ -35,13 +35,20 @@ export default class PrototypeStage extends Stage
 
         // Store info about shift usage.
         this._shiftDown = false;
+        this._ctrlDown = false;
         this._initKeyDownListener();
     }
 
     _initKeyDownListener()
     {
         let scope = this;
-        function handleShift(e) { scope._shiftDown = e.shiftKey;  }
+
+        function handleShift(e)
+        {
+            scope._shiftDown = e.shiftKey;
+            scope._ctrlDown = e.ctrlKey;
+        }
+
         document.addEventListener("keydown", handleShift, true);
         document.addEventListener("keyup", handleShift, true);
     }
@@ -213,5 +220,10 @@ export default class PrototypeStage extends Stage
     get shiftDown()
     {
         return this._shiftDown;
+    }
+
+    get ctrlDown()
+    {
+        return this._ctrlDown;
     }
 }

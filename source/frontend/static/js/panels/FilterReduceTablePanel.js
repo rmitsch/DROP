@@ -75,4 +75,9 @@ export default class FilterReduceTablePanel extends Panel
         this._lastPanelSize.width = panelDiv.width();
         this._lastPanelSize.height = panelDiv.height();
     }
+
+    render()
+    {
+        this._charts[this._tableName].render();
+    }
 }

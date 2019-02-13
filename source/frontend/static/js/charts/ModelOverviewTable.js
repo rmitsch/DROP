@@ -102,13 +102,33 @@ export default class ModelOverviewTable extends Chart
         //     );
         // }, 0));
 
+        const table = $("#" + tableID + " tbody");
+        const stage = instance._panel._operator._stage;
+
         // On (double-)click: Open detail view.
-        $("#" + tableID + " tbody").on('dblclick', 'td', function (e) {
+        table.on('dblclick', 'td', function (e) {
             // Instruct model detail operator to load data for the selected model.
-            instance._panel._operator._stage._operators["ModelDetail"].loadData(
+            stage._operators["ModelDetail"].loadData(
                 // Fetch model ID from first field in selected table row.
                 instance._cf_chart.row(this).data()[0]
             );
+        });
+
+        // On click: Filter.
+        table.on('click', 'td', function (e) {
+            const selectedID = instance._cf_chart.row(this).data()[0];
+
+            if (stage.ctrlDown)
+                instance._filteredIDs.add(selectedID);
+            else
+                instance._filteredIDs = new Set([selectedID]);
+
+            // Update filter for ID dimensions.
+            instance._dimension.filterFunction(x => instance._filteredIDs.has(x));
+            instance.propagateFilterChange(instance, "id");
+            // Manually trigger redraw of elements in this operator.
+            instance._panel._operator.updateFilteredRecordBuffer(instance._filteredIDs);
+            instance._panel._operator.render();
         });
     }
 
@@ -130,6 +150,11 @@ export default class ModelOverviewTable extends Chart
         $("#" + table.id).append(tableHeader);
 
         return table.id;
+    }
+
+    render()
+    {
+        this._cf_chart.redraw();
     }
 
     /**
@@ -164,7 +189,7 @@ export default class ModelOverviewTable extends Chart
                     // oSettings holds information that can be used to differ between different tables -
                     // might be necessary once several tables use different filters.
                     function (oSettings, aData, iDataIndex) {
-                        // Check oSettings to see if ew have to apply this filter. Otherwise ignore (i. e. return true
+                        // Check oSettings to see if we have to apply this filter. Otherwise ignore (i. e. return true
                         // for all elements).
                         return oSettings.sTableId === instance._tableID ?
                             instance._filteredIDs.has(+aData[0]) :

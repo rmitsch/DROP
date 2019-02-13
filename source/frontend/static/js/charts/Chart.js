@@ -87,6 +87,7 @@ export default class Chart
         let dimensions      = instance._dataset._cf_dimensions;
         let operator        = instance._panel._operator;
         let embeddingIDs    = new Set();
+
         dimensions[key].top(Infinity).forEach(record => embeddingIDs.add(record.id));
 
         if (!(Utils.compareSets(embeddingIDs, operator._filteredIDs))) {

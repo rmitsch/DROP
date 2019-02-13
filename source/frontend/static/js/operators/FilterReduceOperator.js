@@ -80,6 +80,22 @@ export default class FilterReduceOperator extends Operator
         }
     }
 
+    render()
+    {
+        for (let panelName in this._panels) {
+            this._panels[panelName].render();
+        }
+    }
+
+    /**
+     * Updates data and buffered filter data after selection has been made in table panel.
+     * @param embeddingIDs
+     */
+    updateFilteredRecordBuffer(embeddingIDs)
+    {
+        this._panels["Hyperparameters & Objectives"].updateFilteredRecordBuffer(embeddingIDs);
+    }
+
     propagateSettingsChanges(delta, sourcePanelName)
     {
         // We know that currently only one panel is affected by setting changes.
@@ -89,7 +105,10 @@ export default class FilterReduceOperator extends Operator
 
     filter(embeddingIDs)
     {
-        // Note: Nothing to do here, since FilterReduceOperator is (currently) the only operator providing the ability
-        // to filter records.
+        // todo Implement filtering after changes have been made in other operators, if necessary.
+        // Assuming dimensions have already been filtered.
+        // for (let panelName in this._panels) {
+        //     this._panels[panelName].render();
+        // }
     }
 }

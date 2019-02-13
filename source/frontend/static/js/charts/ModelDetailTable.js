@@ -114,10 +114,9 @@ export default class ModelDetailTable extends Chart
         //     );
         // }, 0));
 
-        // todo: On (double-)click: Highlight point in chart.
+        // todo: On (double-)click: Highlight point in chart (?).
         $("#" + tableID + " tbody").on('dblclick', 'td', function (e) {
         });
-        // todo: On click: B+L.
     }
 
     _createDivStructure()
