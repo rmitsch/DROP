@@ -448,6 +448,15 @@ export default class FilterReduceChartsPanel extends Panel
       */
     updateFilteredRecordBuffer(embeddingIDs)
     {
+        // TODO
+        //  - why is filtered point in grey and other points not visible at all?
+        //    should be: filtered point blue, other points grey.
+        //    probably wrong association in identifyFilteredRecords() - should be reasonably easy to find (worst case:
+        //    additional param to handle special case of external (== table) filter update).
+        //  - allow selection of multiple rows (ctrl + marking clicked rows, delayed filtering until ctrl has been
+        //    released).
+        //  - add reset button - or similar functionality - for re-adding embeddings.
+
         // Ignore histograms, since they don't have buffered record IDs.
         for (const chartName in this._charts) {
             if (!chartName.includes("histogram")) {

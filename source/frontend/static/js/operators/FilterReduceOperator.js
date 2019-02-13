@@ -89,6 +89,9 @@ export default class FilterReduceOperator extends Operator
 
     /**
      * Updates data and buffered filter data after selection has been made in table panel.
+     * Note that this is necessary due to the special structure of how records are filtered in SSPs for extended
+     * functionality and better performance. This method does hence not appear in other operators and processes the
+     * input from other sources of filter constraints (e. g. FilterReduceTable etc.) to SSP charts in this operator.
      * @param embeddingIDs
      */
     updateFilteredRecordBuffer(embeddingIDs)
