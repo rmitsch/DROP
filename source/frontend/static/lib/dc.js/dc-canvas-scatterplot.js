@@ -38,6 +38,7 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
     _chart.objective                        = objective;
     _chart.useBinning                       = useBinning;
     _chart.coordinatesToFilteredDataPoints  = null;
+    _chart.initialData                      = [];
     var lineOptions                         = {
       useLogs: false,
       binFraction: 10
@@ -282,37 +283,48 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
      */
     _chart.identifyFilteredRecords = function (checkIfFiltered = null)
     {
-        const data = _chart.data();
         const seriesMapping = _chart.dataset.seriesMappingByHyperparameter[_chart.variantAttribute];
         // Store association between data points' coordinates and their IDs (ID -> coordinates).
         _chart.coordinatesToFilteredDataPoints = {};
 
-        // Get datapoints' coordinates.
-        data.forEach(function (d, i) {
-            let x       = _chart.x()(_chart.keyAccessor()(d));
-            let y       = _chart.y()(_chart.valueAccessor()(d));
-            let xRound  = Math.round(x);
-            let yRound  = Math.round(y);
+        // Copy initial dataset, if that hasn't been done yet.
+        if (_chart.initialData.length === 0) {
+            _chart.data().forEach(function (d, i) {
+                let itemCopy = $.extend(true, {}, d);
+                itemCopy.value.items = new Set(d.value.items);
+                _chart.initialData.push(itemCopy);
+            });
+        }
+
+        // Construct dataset with information on records' availability.
+        const setNames          = {true: "ids", false: "idsUnfiltered"};
+        const seriesSetNames    = {true: "seriesIDs", false: "seriesIDsUnfiltered"};
+
+        _chart.initialData.forEach(function (d, i) {
+            const x       = _chart.x()(_chart.keyAccessor()(d));
+            const y       = _chart.y()(_chart.valueAccessor()(d));
+            const xRound  = Math.round(x);
+            const yRound  = Math.round(y);
 
             // Update coordinate store.
             if (!(xRound in _chart.coordinatesToFilteredDataPoints))
                 _chart.coordinatesToFilteredDataPoints[xRound] = {};
             if (!(yRound in _chart.coordinatesToFilteredDataPoints[xRound]))
                 _chart.coordinatesToFilteredDataPoints[xRound][yRound] = {
-                    ids: new Set(),
-                    idsUnfiltered: new Set(),
-                    attr_x: _chart.keyAccessor()(d),
-                    attr_y: _chart.valueAccessor()(d),
-                    seriesIDs: new Set(),
-                    seriesIDsUnfiltered: new Set()
+                    [setNames[true]]: new Set(),
+                    [setNames[false]]: new Set(),
+                    [seriesSetNames[true]]: new Set(),
+                    [seriesSetNames[false]]: new Set()
                 };
 
-            // Add datapoint to set of filtered/unfiltered coordinates.
+            // Check if record is filtered.
             const isFiltered    = checkIfFiltered === null ?
                 !_chart.filter() || _chart.filter().isFiltered([d.key[0], d.key[1]]) :
                 checkIfFiltered([d.key[0], d.key[1], d.key[2]]); // !_chart.filter() ||
-            const setName       = isFiltered ? "ids" : "idsUnfiltered";
-            const seriesSetName = isFiltered ? "seriesIDs" : "seriesIDsUnfiltered";
+            const setName       = setNames[isFiltered];
+            const seriesSetName = seriesSetNames[isFiltered];
+
+            // Add datapoints to set of filtered/unfiltered coordinates.
             let currCollection  = _chart.coordinatesToFilteredDataPoints[xRound][yRound];
             for (let datapoint of d.value.items) {
                 currCollection[setName].add(datapoint.id);
@@ -570,28 +582,7 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
         // 2. Plot points.
         // ---------------------------------------------------------------------------------
 
-        // Plot all filtered points.
-        // a. Configure canvas context.
-        context.globalAlpha = dataPoints.filtered.opacity;
-        context.fillStyle   = dataPoints.filtered.color;
-        context.beginPath();
-        // b. Plot points.
-        for (let coordinate of dataPoints.filtered.coordinates) {
-            context.moveTo(coordinate[0], coordinate[1]);
-            context.arc(
-                coordinate[0],
-                coordinate[1],
-                dataPoints.filtered.radius,
-                0,
-                2 * Math.PI,
-                true
-            );
-        }
-        context.fill();
-        context.save();
-
         // Plot all unfiltered points.
-        // b. Configure canvas context.
         context.globalAlpha = dataPoints.notFiltered.opacity;
         context.fillStyle   = dataPoints.notFiltered.color;
         context.beginPath();
@@ -610,7 +601,26 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
         context.fill();
         context.save();
 
-        context.restore();
+        // Plot all filtered points.
+        context.globalAlpha = dataPoints.filtered.opacity;
+        context.fillStyle   = dataPoints.filtered.color;
+        context.beginPath();
+        // b. Plot points.
+        for (let coordinate of dataPoints.filtered.coordinates) {
+            context.moveTo(coordinate[0], coordinate[1]);
+            context.arc(
+                coordinate[0],
+                coordinate[1],
+                dataPoints.filtered.radius,
+                0,
+                2 * Math.PI,
+                true
+            );
+        }
+        context.fill();
+        context.save();
+
+        // context.restore();
     }
 
     _chart.highlight = function(id)

@@ -81,6 +81,7 @@ export default class Chart
      * Propagate filter changes to stage.
      * @param instance
      * @param key
+     * @returns Set<int> Filtered IDs.
      */
     propagateFilterChange(instance, key)
     {
@@ -94,6 +95,8 @@ export default class Chart
             operator._filteredIDs = embeddingIDs;
             operator._stage.filter(operator._name, embeddingIDs);
         }
+
+        return embeddingIDs;
     }
 
     get name()

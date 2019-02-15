@@ -95,6 +95,15 @@ export default class FilterReduceChartsPanel extends Panel
         // -----------------------------------
 
         this._createScatterplots(dataset, scatterplotStyle);
+
+
+        // -----------------------------------
+        // 3. Set correlation bars to initial
+        //    values.
+        // -----------------------------------
+
+        this._operator._dataset.computeCorrelationStrengths(results => this.updateCorrelationBars(results));
+
     }
 
     /**
@@ -440,6 +449,8 @@ export default class FilterReduceChartsPanel extends Panel
         for (const chartName in this._charts) {
             this._charts[chartName].render();
         }
+
+        this._operator._dataset.computeCorrelationStrengths(results => this.updateCorrelationBars(results));
     }
 
      /**
@@ -449,10 +460,6 @@ export default class FilterReduceChartsPanel extends Panel
     updateFilteredRecordBuffer(embeddingIDs)
     {
         // TODO
-        //  - why is filtered point in grey and other points not visible at all?
-        //    should be: filtered point blue, other points grey.
-        //    probably wrong association in identifyFilteredRecords() - should be reasonably easy to find (worst case:
-        //    additional param to handle special case of external (== table) filter update).
         //  - allow selection of multiple rows (ctrl + marking clicked rows, delayed filtering until ctrl has been
         //    released).
         //  - add reset button - or similar functionality - for re-adding embeddings.

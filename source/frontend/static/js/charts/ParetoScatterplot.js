@@ -83,8 +83,6 @@ export default class ParetoScatterplot extends Scatterplot
 
         if (this._useBinning)
             this._drawHexagonalHeatmap();
-
-        this.updateCorrelationBar(this._dataset.correlations);
     }
 
     constructCFChart()
@@ -195,7 +193,8 @@ export default class ParetoScatterplot extends Scatterplot
         this._dataset.computeCorrelationStrengths(function (results) {
             panel.updateCorrelationBars(results);
         });
-        super.propagateFilterChange(instance, key);
+
+        return super.propagateFilterChange(instance, key);
     }
 
     /**
@@ -204,7 +203,12 @@ export default class ParetoScatterplot extends Scatterplot
       */
     updateFilteredRecordBuffer(embeddingIDs)
     {
-        this._cf_chart.identifyFilteredRecords(d => embeddingIDs.has(d.id));
+        this._cf_chart.identifyFilteredRecords(d => embeddingIDs.has(d[2]));
+
+        // const panel = this._panel;
+        // this._dataset.computeCorrelationStrengths(function (results) {
+        //     panel.updateCorrelationBars(results);
+        // });
     }
 
     /**

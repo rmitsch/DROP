@@ -59,7 +59,11 @@ export default class NumericalHistogram extends Histogram
             .margins({top: 0, right: 10, bottom: 16, left: 25})
             .gap(1)
             // Call cross-operator filter method on stage instance after filter event.
-            .on("filtered", event => this.propagateFilterChange(this, key));
+            .on("filtered", event => {
+                this._filteredIDs = this.propagateFilterChange(this, key);
+                this._panel._operator.updateFilteredRecordBuffer(this._filteredIDs);
+                this._panel._operator.render();
+            });
 
         // Set number of ticks.
         this._cf_chart.yAxis().ticks(instance._style.numberOfTicks.y);
