@@ -32,7 +32,9 @@ export default class ModelOverviewTable extends Chart
         // Select dimension of ID to use for later look-ups.
         this._dimension = this._dataset.cf_dimensions["id"];
         // Create storage for filtered IDs.
-        this._filteredIDs       = null;
+        this._filteredIDs           = new Set();
+        this._previousFilteredIDs   = new Set();
+        this._selectedRows          = {};
         // Defines whether filter has already been added to jQuery's DataTable.
         this._filterHasBeenSet  = false;
 
@@ -104,6 +106,7 @@ export default class ModelOverviewTable extends Chart
 
         const table = $("#" + tableID + " tbody");
         const stage = instance._panel._operator._stage;
+        stage.addKeyEventListener(this, ModelOverviewTable.processKeyEvent)
 
         // On (double-)click: Open detail view.
         table.on('dblclick', 'td', function (e) {
@@ -116,20 +119,69 @@ export default class ModelOverviewTable extends Chart
 
         // On click: Filter.
         table.on('click', 'td', function (e) {
-            const selectedID = instance._cf_chart.row(this).data()[0];
+            const row           = instance._cf_chart.row(this);
+            const selectedID    = row.data()[0];
 
-            if (stage.ctrlDown)
-                instance._filteredIDs.add(selectedID);
-            else
+            if (stage.ctrlDown) {
+                if (instance._filteredIDs.has(selectedID)) {
+                    instance._filteredIDs.delete(selectedID);
+                    instance._selectedRows[selectedID].removeClass('selected');
+                    delete instance._selectedRows[selectedID];
+                }
+                else {
+                    instance._filteredIDs.add(selectedID);
+                    instance._selectedRows[selectedID] = $(row.nodes());
+                    instance._selectedRows[selectedID].addClass('selected');
+                }
+            }
+
+            else {
                 instance._filteredIDs = new Set([selectedID]);
-
-            // Update filter for ID dimensions.
-            instance._dimension.filterFunction(x => instance._filteredIDs.has(x));
-            instance.propagateFilterChange(instance, "id");
-            // Manually trigger redraw of elements in this operator.
-            instance._panel._operator.updateFilteredRecordBuffer(instance._filteredIDs);
-            instance._panel._operator.render();
+                if (!Utils.eqSet(instance._filteredIDs, instance._previousFilteredIDs)) {
+                    // Update filter for ID dimensions.
+                    instance._updateGlobalFilterStatus();
+                    instance._previousFilteredIDs = new Set(instance._filteredIDs);
+                }
+            }
         });
+    }
+
+    /**
+     * Auxiliary function updating global filter status; includes re-rendering.
+     * Note: Ideally all of this should be taken care of in this.propagateFilterChange().
+     * @private
+     */
+    _updateGlobalFilterStatus()
+    {
+        this._dimension.filterFunction(x => this._filteredIDs.has(x));
+        this.propagateFilterChange(this, "id");
+        // Manually trigger redraw of elements in this operator.
+        this._panel._operator.filter(this._filteredIDs);
+        this._panel._operator.render();
+    }
+
+    /**
+     * Processes key event. Called by stage object.
+     * @param instance
+     * @param keyEvent
+     */
+    static processKeyEvent(instance, keyEvent)
+    {
+        if (keyEvent.key === "Control" && keyEvent.ctrlKey === false) {
+            // Reset row highlighting.
+            for (let id in instance._selectedRows)
+                instance._selectedRows[id].removeClass('selected');
+
+            if (!Utils.eqSet(instance._filteredIDs, instance._previousFilteredIDs)) {
+                if (instance._filteredIDs.size > 0) {
+                    instance._updateGlobalFilterStatus();
+                    instance._previousFilteredIDs = new Set(instance._filteredIDs);
+                }
+            }
+
+            instance._filteredIDs.clear();
+            instance._selectedRows = {};
+        }
     }
 
     _createDivStructure()

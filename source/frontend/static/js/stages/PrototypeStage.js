@@ -31,27 +31,9 @@ export default class PrototypeStage extends Stage
         this._bottomSplitPane = null;
 
         // Construct operators.
-        this.constructOperators()
-
-        // Store info about shift usage.
-        this._shiftDown = false;
-        this._ctrlDown = false;
-        this._initKeyDownListener();
+        this.constructOperators();
     }
 
-    _initKeyDownListener()
-    {
-        let scope = this;
-
-        function handleShift(e)
-        {
-            scope._shiftDown = e.shiftKey;
-            scope._ctrlDown = e.ctrlKey;
-        }
-
-        document.addEventListener("keydown", handleShift, true);
-        document.addEventListener("keyup", handleShift, true);
-    }
 
     /**
      * Construct all panels for this view.
@@ -225,5 +207,10 @@ export default class PrototypeStage extends Stage
     get ctrlDown()
     {
         return this._ctrlDown;
+    }
+
+    get keyEventCallbacks()
+    {
+        return this._keyEventCallbacks;
     }
 }

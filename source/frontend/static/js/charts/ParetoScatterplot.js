@@ -72,6 +72,7 @@ export default class ParetoScatterplot extends Scatterplot
             attributeTranslation[this._axes_attributes.y].toLowerCase() + ": " +
             Math.round(correlation * 100) + "%";
 
+        // console.log(correlation);
         correlationBar.css("height", correlation * correlationBackgroundBar.height());
         correlationBar.attr("title", correlationText);
         correlationBackgroundBar.attr("title", correlationText);

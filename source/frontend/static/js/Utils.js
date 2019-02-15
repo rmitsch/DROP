@@ -274,4 +274,22 @@ export default class Utils
             }
         }
     }
+
+    /**
+     * Checks two sets for equality.
+     * Source: https://stackoverflow.com/questions/31128855/comparing-ecma6-sets-for-equality
+     * @param as
+     * @param bs
+     * @returns {boolean}
+     */
+    static eqSet(as, bs)
+    {
+        if (as.size !== bs.size)
+            return false;
+        for (const a of as)
+            if (!bs.has(a))
+                return false;
+
+        return true;
+    }
 }

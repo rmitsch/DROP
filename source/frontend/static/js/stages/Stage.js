@@ -18,6 +18,13 @@ export default class Stage
         this._datasets  = datasets;
         this._operators = {};
 
+
+        // Store info about shift usage.
+        this._shiftDown = false;
+        this._ctrlDown = false;
+        this._keyEventCallbacks = [];
+        this._initKeyDownListener();
+
         // Make class abstract.
         if (new.target === Stage) {
             throw new TypeError("Cannot construct Stage instances.");
@@ -40,6 +47,32 @@ export default class Stage
     filter(source, embeddingIDs)
     {
         throw new TypeError("Stage.filter(source, embeddingIDs): Cannot execute abstract method.");
+    }
+
+    /**
+     * Listens to document-level key events.
+     * @private
+     */
+    _initKeyDownListener()
+    {
+        let scope = this;
+
+        function handleShift(e)
+        {
+            scope._shiftDown    = e.shiftKey;
+            scope._ctrlDown     = e.ctrlKey;
+
+            for (let listener of scope._keyEventCallbacks)
+                listener.callback(listener.instance, e);
+        }
+
+        document.addEventListener("keydown", handleShift, true);
+        document.addEventListener("keyup", handleShift, true);
+    }
+
+    addKeyEventListener(instance, callback)
+    {
+        this._keyEventCallbacks.push({instance: instance, callback: callback});
     }
 
     get name()

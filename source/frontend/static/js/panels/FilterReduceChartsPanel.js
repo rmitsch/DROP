@@ -103,7 +103,6 @@ export default class FilterReduceChartsPanel extends Panel
         // -----------------------------------
 
         this._operator._dataset.computeCorrelationStrengths(results => this.updateCorrelationBars(results));
-
     }
 
     /**
@@ -459,11 +458,6 @@ export default class FilterReduceChartsPanel extends Panel
       */
     updateFilteredRecordBuffer(embeddingIDs)
     {
-        // TODO
-        //  - allow selection of multiple rows (ctrl + marking clicked rows, delayed filtering until ctrl has been
-        //    released).
-        //  - add reset button - or similar functionality - for re-adding embeddings.
-
         // Ignore histograms, since they don't have buffered record IDs.
         for (const chartName in this._charts) {
             if (!chartName.includes("histogram")) {

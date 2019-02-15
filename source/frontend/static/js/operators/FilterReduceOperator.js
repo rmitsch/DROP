@@ -87,18 +87,6 @@ export default class FilterReduceOperator extends Operator
         }
     }
 
-    /**
-     * Updates data and buffered filter data after selection has been made in table panel.
-     * Note that this is necessary due to the special structure of how records are filtered in SSPs for extended
-     * functionality and better performance. This method does hence not appear in other operators and processes the
-     * input from other sources of filter constraints (e. g. FilterReduceTable etc.) to SSP charts in this operator.
-     * @param embeddingIDs
-     */
-    updateFilteredRecordBuffer(embeddingIDs)
-    {
-        this._panels["Hyperparameters & Objectives"].updateFilteredRecordBuffer(embeddingIDs);
-    }
-
     propagateSettingsChanges(delta, sourcePanelName)
     {
         // We know that currently only one panel is affected by setting changes.
@@ -108,7 +96,8 @@ export default class FilterReduceOperator extends Operator
 
     filter(embeddingIDs)
     {
-        // todo Implement filtering after changes have been made in other operators, if necessary.
+        this._panels["Hyperparameters & Objectives"].updateFilteredRecordBuffer(embeddingIDs);
+
         // Assuming dimensions have already been filtered.
         // for (let panelName in this._panels) {
         //     this._panels[panelName].render();

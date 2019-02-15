@@ -61,7 +61,7 @@ export default class NumericalHistogram extends Histogram
             // Call cross-operator filter method on stage instance after filter event.
             .on("filtered", event => {
                 this._filteredIDs = this.propagateFilterChange(this, key);
-                this._panel._operator.updateFilteredRecordBuffer(this._filteredIDs);
+                this._panel._operator.filter(this._filteredIDs);
                 this._panel._operator.render();
             });
 
