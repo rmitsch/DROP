@@ -147,6 +147,21 @@ export default class ModelOverviewTable extends Chart
     }
 
     /**
+     * Resets global filter status after reset() button was clicked.
+     */
+    resetFilter()
+    {
+        this._dimension.filterFunction(x => true);
+        for (let d of this._dimension.top(Infinity))
+            this._filteredIDs.add(d.id);
+        this.propagateFilterChange(this, "id");
+
+        this._panel._operator.filter(this._filteredIDs);
+        this._panel._operator.render();
+        this._previousFilteredIDs = new Set(this._filteredIDs);
+    }
+
+    /**
      * Auxiliary function updating global filter status; includes re-rendering.
      * Note: Ideally all of this should be taken care of in this.propagateFilterChange().
      * @private
@@ -155,9 +170,11 @@ export default class ModelOverviewTable extends Chart
     {
         this._dimension.filterFunction(x => this._filteredIDs.has(x));
         this.propagateFilterChange(this, "id");
+
         // Manually trigger redraw of elements in this operator.
         this._panel._operator.filter(this._filteredIDs);
         this._panel._operator.render();
+        this._previousFilteredIDs = new Set(this._filteredIDs);
     }
 
     /**
@@ -175,7 +192,6 @@ export default class ModelOverviewTable extends Chart
             if (!Utils.eqSet(instance._filteredIDs, instance._previousFilteredIDs)) {
                 if (instance._filteredIDs.size > 0) {
                     instance._updateGlobalFilterStatus();
-                    instance._previousFilteredIDs = new Set(instance._filteredIDs);
                 }
             }
 

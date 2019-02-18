@@ -49,13 +49,24 @@ export default class FilterReduceTablePanel extends Panel
      */
     _createDivStructure()
     {
+        let scope   = this;
         let infoDiv = Utils.spawnChildDiv(this._target, null, "panel-info");
+
         $("#" + infoDiv.id).html(
             "<span class='title'>All embeddings</span>" +
+            "<a id='filter-reduce-table-info-reset-icon' href='#'>" +
+            "    <img src='./static/img/icon_reset_2.png' class='info-icon' alt='Reset' width='19px'>" +
+            "</a>" +
             "<a id='filter-reduce-table-info-settings-icon' href='#'>" +
             "    <img src='./static/img/icon_settings.png' class='info-icon' alt='Settings' width='20px'>" +
             "</a>"
         );
+
+
+        // Set listener for reset icon.
+        $("#filter-reduce-table-info-reset-icon").click(function() {
+            scope._charts[scope._tableName].resetFilter();
+        });
 
         return {
           infoDivID: infoDiv.id

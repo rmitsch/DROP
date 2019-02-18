@@ -132,3 +132,8 @@ span.filter-reduce-row-label-text {
     width: 3px;
     border: 1px solid #000;
 }
+
+#filter-reduce-table-info-settings-icon {
+    position: relative;
+    top: 1px;
+}

@@ -36,7 +36,7 @@ export default class FilterReduceSettingsPanel extends SettingsPanel {
         settingsHTML += "<input type='number' id='filter-reduce-bin-number' min='1' max='10000' step='1' value='1'>";
         settingsHTML += "</div>";
 
-        // Logarithmic scaling
+        // Logarithmic scaling.
         settingsHTML += "<div class='settings-subsection'>";
         settingsHTML += "<span id='filter-reduce-settings-line-opacity-log-scaling'>Use log. scaling</span>";
         settingsHTML += "<input id='filter-reduce-settings-line-log-scale' type='checkbox' checked>"
@@ -48,7 +48,7 @@ export default class FilterReduceSettingsPanel extends SettingsPanel {
         // 2. Create title and options container.
         // -----------------------------------
 
-        // Note: Listener for table icon is added by FilterReduceOperator, since it requires information about the table
+        // Note: Listener for table icon is added by parent class, since it requires information about the table
         // panel.
         $("#" + this._target).html(
             "<div class='settings-content'>" + settingsHTML + "</div>" +
