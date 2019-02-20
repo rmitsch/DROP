@@ -65,7 +65,7 @@ export default class FilterReduceTablePanel extends Panel
 
         // Set listener for reset icon.
         $("#filter-reduce-table-info-reset-icon").click(function() {
-            scope._charts[scope._tableName].resetFilter();
+            scope._charts[scope._tableName].resetFilterStatus();
         });
 
         return {

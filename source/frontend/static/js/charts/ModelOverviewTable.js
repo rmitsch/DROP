@@ -149,7 +149,7 @@ export default class ModelOverviewTable extends Chart
     /**
      * Resets global filter status after reset() button was clicked.
      */
-    resetFilter()
+    resetFilterStatus()
     {
         this._dimension.filterFunction(x => true);
         for (let d of this._dimension.top(Infinity))
@@ -159,6 +159,9 @@ export default class ModelOverviewTable extends Chart
         this._panel._operator.filter(this._filteredIDs);
         this._panel._operator.render();
         this._previousFilteredIDs = new Set(this._filteredIDs);
+
+        this._filteredIDs.clear();
+        this._selectedRows = {};
     }
 
     /**

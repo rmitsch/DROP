@@ -72,7 +72,6 @@ export default class ParetoScatterplot extends Scatterplot
             attributeTranslation[this._axes_attributes.y].toLowerCase() + ": " +
             Math.round(correlation * 100) + "%";
 
-        // console.log(correlation);
         correlationBar.css("height", correlation * correlationBackgroundBar.height());
         correlationBar.attr("title", correlationText);
         correlationBackgroundBar.attr("title", correlationText);
@@ -80,10 +79,17 @@ export default class ParetoScatterplot extends Scatterplot
 
     render()
     {
+        if (this._useBinning)
+            $("#" + this._hexHeatmapContainerID).remove();
+
         this._cf_chart.render();
 
-        if (this._useBinning)
+        if (this._useBinning) {
+            this._hexHeatmapContainerID = Utils.spawnChildDiv(this._target, null, 'pareto-scatterplot-hexheatmap').id;
             this._drawHexagonalHeatmap();
+            // Update z-index to allow selection in underlying map.
+            $("#" + this._hexHeatmapContainerID).css("z-index", -1);
+        }
     }
 
     constructCFChart()
@@ -427,15 +433,7 @@ export default class ParetoScatterplot extends Scatterplot
         if (width !== -1)
             this._cf_chart.width(width);
 
-        if (this._useBinning)
-            $("#" + this._hexHeatmapContainerID).remove();
-        this._cf_chart.render();
-        if (this._useBinning) {
-            this._hexHeatmapContainerID = Utils.spawnChildDiv(this._target, null, 'pareto-scatterplot-hexheatmap').id;
-            this._drawHexagonalHeatmap();
-            // Update z-index to allow selection in underlying map.
-            $("#" + this._hexHeatmapContainerID).css("z-index", -1);
-        }
+        this.render();
     }
 
     /**
