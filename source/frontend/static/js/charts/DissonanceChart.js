@@ -143,7 +143,7 @@ export default class DissonanceChart extends Chart
 
     renderHeatmap()
     {
-        this._dissonanceHeatmap.render();
+        !this._areChartsConstructed ? this._dissonanceHeatmap.render() : this._dissonanceHeatmap.redraw();
     }
 
     /**
