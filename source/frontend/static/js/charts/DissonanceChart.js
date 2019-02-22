@@ -22,11 +22,20 @@ export default class DissonanceChart extends Chart
     {
         super(name, panel, attributes, dataset, style, parentDivID);
 
+        // Define color range.
+        this._colors = d3.scaleLinear().range(["#fff7fb", "#1f77b4"]);
+
+        // Cache number of filtered records (to speed up color computation).
+        this._numFilteredRecords = this._dataset._cf_dimensions.model_id.top(Infinity).length;
+
         // Constant width in pixel heatmap SVG is too large.
         this._heatmapCutoff = 20;
 
         // Generate div structure for child nodes.
         this._divStructure = this._createDivStructure();
+
+        // Track whether charts have been constructed yet.
+        this._areChartsConstructed = false;
 
          // Construct graph.
         this.constructCFChart();
@@ -60,8 +69,11 @@ export default class DissonanceChart extends Chart
 
     render()
     {
-        const numCols         = this._dataset._binCounts.x;
-        const numRows         = this._dataset._binCounts.y;
+        const numCols = this._dataset._binCounts.x;
+        const numRows = this._dataset._binCounts.y;
+
+        // Update cached number of filtered records.
+        this._numFilteredRecords = this._dataset._cf_dimensions.model_id.top(Infinity).length;
 
         // Use heatmap width and height as yard stick for histograms.
         let newHeight       = Math.floor(
@@ -81,7 +93,7 @@ export default class DissonanceChart extends Chart
             this._horizontalHistogram.margins().right -
             this._heatmapCutoff + 2
         );
-        this._horizontalHistogram.render();
+        !this._areChartsConstructed ? this._horizontalHistogram.render() : this._horizontalHistogram.redraw();
 
         // -------------------------------
         // 2. Render vertical histogram.
@@ -107,7 +119,7 @@ export default class DissonanceChart extends Chart
                 this._heatmapCutoff + 3
             ) + "px"
         });
-        this._verticalHistogram.render();
+        !this._areChartsConstructed ? this._verticalHistogram.render() : this._verticalHistogram.redraw();
 
         // -------------------------------
         // 3. Render heatmap and color
@@ -116,7 +128,7 @@ export default class DissonanceChart extends Chart
 
         this._dissonanceHeatmap.width(newWidth);
         this._dissonanceHeatmap.height(newHeight);
-        this._dissonanceHeatmap.render();
+        this.renderHeatmap();
 
         // Adjust color scale height.
         $("#" + this._divStructure.colorPaletteDiv.id).height(newHeight);
@@ -125,6 +137,13 @@ export default class DissonanceChart extends Chart
             let labelElement = $("#" + label.id);
             labelElement.css("top", labelElement.parent().height() / 2 - labelElement.height() / 2);
         }
+
+        this._areChartsConstructed = true;
+    }
+
+    renderHeatmap()
+    {
+        this._dissonanceHeatmap.render();
     }
 
     /**
@@ -135,13 +154,11 @@ export default class DissonanceChart extends Chart
      */
     _computeColorsForCell(d)
     {
-        let colors = d3
-            .scaleLinear()
-            // .range(this._colorDomain)
-            .range(["#fff7fb", "#1f77b4"])
-            .domain([0, Math.log10(this._dataset._cf_dimensions.model_id.top(Infinity).length)]);
+        const colorDomain = this._colors.domain(
+            [0, Math.log10(this._numFilteredRecords)]
+        );
 
-        return d === 0 ? "#fff" : colors(Math.log10(d));
+        return d === 0 ? "#fff" : colorDomain(Math.log10(d));
     }
 
     /**
@@ -434,13 +451,14 @@ export default class DissonanceChart extends Chart
     resize()
     {
         let panelDiv = $("#" + this._target);
-        if (panelDiv.height() != this._lastPanelSize.height ||
-            panelDiv.width() != this._lastPanelSize.width) {
+        console.log(panelDiv.height(), panelDiv.width(), this._lastPanelSize)
+        if (panelDiv.height() !== this._lastPanelSize.height ||
+            panelDiv.width() !== this._lastPanelSize.width) {
             this.render();
         }
 
         // Store size of panel at time of last render.
-        this._lastPanelSize.width = panelDiv.width();
-        this._lastPanelSize.height = panelDiv.height();
+        this._lastPanelSize.width   = panelDiv.width();
+        this._lastPanelSize.height  = panelDiv.height();
     }
 }

@@ -28,7 +28,7 @@ export default class PrototypeStage extends Stage
         super(name, target, datasets);
 
         // Store splitter instance for bottom div.
-        this._bottomSplitPane = null;
+        this._bottomSplitPane   = null;
 
         // Construct operators.
         this.constructOperators();
@@ -186,7 +186,7 @@ export default class PrototypeStage extends Stage
                       $("#splashscreen").css("display", "none");
                   });
 
-                  let now = new Date();
+                  const now = new Date();
                   console.log("*** DROP *** Finished construction at " + now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds() + ".");
             });
     }
