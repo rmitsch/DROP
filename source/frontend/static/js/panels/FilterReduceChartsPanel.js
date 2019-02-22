@@ -73,12 +73,13 @@ export default class FilterReduceChartsPanel extends Panel
             excludedSymbolSize: 1,
             excludedColor: "#ccc",
             numberOfTicks: {
-                x: 0,
-                y: 2
+                x: 3,
+                y: 3
             },
-            numberOfXTicksInLastRow: 2,
-            numberOfYTicksInFirstRow: 0,
-            showTickMarks: true
+            showAxisTickLabels: {
+                x: false,
+                y: false
+            }
         };
 
         // Fetch reference to dataset.
@@ -198,9 +199,9 @@ export default class FilterReduceChartsPanel extends Panel
             // Iterate over objectives.
             for (let objective of dataset.metadata.objectives) {
                 // Adapt style settings, based on whether this is the first scatterplot or not.
-                let updatedStyle                = $.extend(true, {}, style);
-                updatedStyle.numberOfTicks.y    = hyperparameterIndex === 0 ? updatedStyle.numberOfTicks.y : updatedStyle.numberOfYTicksInFirstRow;
-                updatedStyle.numberOfTicks.x    = objectiveIndex === dataset.metadata.objectives.length - 1 ? updatedStyle.numberOfXTicksInLastRow : updatedStyle.numberOfTicks.x;
+                let updatedStyle                    = $.extend(true, {}, style);
+                updatedStyle.showAxisTickLabels.y   = hyperparameterIndex === 0;
+                updatedStyle.showAxisTickLabels.x   = objectiveIndex === dataset.metadata.objectives.length - 1;
 
                 // Instantiate new scatterplot.
                 let scatterplot = new ParetoScatterplot(
@@ -247,12 +248,8 @@ export default class FilterReduceChartsPanel extends Panel
                 let objective2 = dataset.metadata.objectives[j];
 
                 // Adapt style settings, based on whether this is the first scatterplot or not.
-                let updatedStyle                = $.extend(true, {}, style);
-                updatedStyle.numberOfTicks.y    = 0;
-                updatedStyle.numberOfTicks.x    = j === dataset.metadata.objectives.length - 1 ? updatedStyle.numberOfXTicksInLastRow : updatedStyle.numberOfTicks.x;
-                // Note: Categorical barchart apparently does not allow unlabeld x-axis.
-                updatedStyle.showAxisLabels.x   = false;
-                updatedStyle.showAxisLabels.y   = false;
+                let updatedStyle                    = $.extend(true, {}, style);
+                updatedStyle.showAxisTickLabels.x   = j === dataset.metadata.objectives.length - 1;
 
                 // Instantiate new scatterplot.
                 let scatterplot = new ParetoScatterplot(

@@ -158,6 +158,12 @@ export default class ParetoScatterplot extends Scatterplot
             // Call cross-operator filter method on stage instance after filter event.
             .on("filtered", event => instance.propagateFilterChange(instance, key));
 
+        // Hide axis lables, if so specified.
+        if (!this._style.showAxisTickLabels.y)
+            this._cf_chart.yAxis().tickFormat(function(v) { return ""; });
+        if (!this._style.showAxisTickLabels.x)
+            this._cf_chart.xAxis().tickFormat(function(v) { return ""; });
+
         // Set custom handler for filter events.
         if (!this._useBinning)
             this._setFilterHandler();
@@ -175,7 +181,11 @@ export default class ParetoScatterplot extends Scatterplot
         this._cf_chart.xAxis().ticks(instance._style.numberOfTicks.x);
 
         // If this x-axis hosts categorical argument: Print categorical representations of numerical values.
-        if (this._axes_attributes.x.indexOf("*") !== -1 && instance._style.numberOfTicks.x) {
+        if (
+            this._axes_attributes.x.indexOf("*") !== -1 &&
+            instance._style.numberOfTicks.x &&
+            this._style.showAxisTickLabels.x
+        ) {
             // Get original name by removing suffix "*" from attribute name.
             let originalAttributeName = instance._axes_attributes.x.slice(0, -1);
 
