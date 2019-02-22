@@ -31,7 +31,7 @@ def init_flask_app():
     )
 
     # Define version.
-    flask_app.config["VERSION"] = "0.12.0"
+    flask_app.config["VERSION"] = "0.12.2"
 
     # Store metadata template. Is assembled once in /get_metadata.
     flask_app.config["METADATA_TEMPLATE"] = None

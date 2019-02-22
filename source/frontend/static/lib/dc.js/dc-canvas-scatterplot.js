@@ -275,6 +275,28 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
     };
 
     /**
+     * Updates filtered records' after resize.
+     */
+    _chart.updateFilteredRecordCoordinates = function ()
+    {
+        let filteredData                        = $.extend(true, {}, _chart.coordinatesToFilteredDataPoints);
+        _chart.coordinatesToFilteredDataPoints  = {};
+
+        for (let x in filteredData) {
+            for (let y in filteredData[x]) {
+                // Translate old to new coordinates.
+                const xRound  = Math.round(_chart.x()(filteredData[x][y].xValue));
+                const yRound  = Math.round(_chart.y()(filteredData[x][y].yValue));
+
+                // Copy content in dictionary.
+                if (!(xRound in _chart.coordinatesToFilteredDataPoints))
+                    _chart.coordinatesToFilteredDataPoints[xRound] = {};
+                _chart.coordinatesToFilteredDataPoints[xRound][yRound] = filteredData[x][y];
+            }
+        }
+    };
+
+    /**
      * Identifies filtered records.
      * @memberof dc.scatterPlot
      * @param checkIfFiltered Function for checking if datapoints are filtered. Uses native filter() functionality if
@@ -314,7 +336,9 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
                     [setNames[true]]: new Set(),
                     [setNames[false]]: new Set(),
                     [seriesSetNames[true]]: new Set(),
-                    [seriesSetNames[false]]: new Set()
+                    [seriesSetNames[false]]: new Set(),
+                    xValue: _chart.keyAccessor()(d),
+                    yValue: _chart.valueAccessor()(d)
                 };
 
             // Check if record is filtered.
@@ -732,7 +756,7 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
     };
 
     function renderTitles(symbol, d) {
-        if (_chart.renderTitle()) {
+        if (_Title()) {
             symbol.selectAll('title').remove();
             symbol.append('title').text(function (d) {
                 return _chart.title()(d);

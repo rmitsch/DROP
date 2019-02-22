@@ -221,11 +221,6 @@ export default class ParetoScatterplot extends Scatterplot
     updateFilteredRecordBuffer(embeddingIDs)
     {
         this._cf_chart.identifyFilteredRecords(d => embeddingIDs.has(d[2]));
-
-        // const panel = this._panel;
-        // this._dataset.computeCorrelationStrengths(function (results) {
-        //     panel.updateCorrelationBars(results);
-        // });
     }
 
     /**
@@ -442,6 +437,13 @@ export default class ParetoScatterplot extends Scatterplot
             this._cf_chart.height(height);
         if (width !== -1)
             this._cf_chart.width(width);
+
+        // Note: prepareForResize() is necessary here since otherwise scale is updated only during render().
+        // !this._useBinning only for performance reasons.
+        if (!this._useBinning) {
+            this._cf_chart.prepareForResize();
+            this._cf_chart.updateFilteredRecordCoordinates();
+        }
 
         this.render();
     }

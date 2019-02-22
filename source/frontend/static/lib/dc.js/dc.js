@@ -3945,6 +3945,11 @@ dc.coordinateGridMixin = function (_chart) {
         return _chart;
     };
 
+    _chart.prepareForResize = function() {
+        prepareXAxis(_chart.g(), false);
+        _chart._prepareYAxis(_chart.g());
+    };
+
     function drawChart (render) {
         if (_chart.isOrdinal()) {
             _brushOn = false;
