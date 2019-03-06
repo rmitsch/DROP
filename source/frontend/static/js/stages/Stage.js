@@ -19,9 +19,10 @@ export default class Stage
         this._operators = {};
 
 
-        // Store info about shift usage.
-        this._shiftDown = false;
-        this._ctrlDown = false;
+        // Store info about key usage.
+        this._shiftDown                 = false;
+        this._ctrlDown                  = false;
+        this._extendedSelectionEnabled  = false;
         this._keyEventCallbacks = [];
         this._initKeyDownListener();
 
@@ -57,17 +58,26 @@ export default class Stage
     {
         let scope = this;
 
-        function handleShift(e)
+        function handleKeyStateChanges(e)
         {
             scope._shiftDown    = e.shiftKey;
             scope._ctrlDown     = e.ctrlKey;
+
+            // Check activation status of extended selection mode.
+            if (e.key === "h" && e.type === "keyup") {
+                scope._extendedSelectionEnabled = !scope._extendedSelectionEnabled;
+                const hoverInfo = $("#hovermode-info");
+                hoverInfo.stop(true);
+                hoverInfo.html((scope._extendedSelectionEnabled ? "Enabled" : "Disabled") + " extended selection mode.")
+                hoverInfo.fadeIn(1000).delay(4000).fadeOut(1000);
+            }
 
             for (let listener of scope._keyEventCallbacks)
                 listener.callback(listener.instance, e);
         }
 
-        document.addEventListener("keydown", handleShift, true);
-        document.addEventListener("keyup", handleShift, true);
+        document.addEventListener("keydown", handleKeyStateChanges, true);
+        document.addEventListener("keyup", handleKeyStateChanges, true);
     }
 
     addKeyEventListener(instance, callback)

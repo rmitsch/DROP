@@ -57,6 +57,15 @@ export default class CategoricalHistogram extends Histogram
                 this._filteredIDs = this.propagateFilterChange(this, key);
                 this._panel._operator.filter(this._filteredIDs);
                 this._panel._operator.render();
+            })
+            .on('renderlet', function(chart) {
+                chart.selectAll('rect.bar')
+                    .on('mouseover', function(d) {
+                        console.log("in", d);
+                    })
+                    .on('mouseout', function(d) {
+                        console.log("out", d);
+                    });
             });
 
         // Set number of ticks (x-axis is ignored).
