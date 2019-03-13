@@ -78,10 +78,10 @@ export default class NumericalHistogram extends Histogram
 
                     chart.selectAll('rect.bar')
                         .on('mouseover', function(d) {
-                            console.log("in", d);
+                            d3.select(this).attr('fill', 'rgb(255, 0, 0)');
                         })
                         .on('mouseout', function(d) {
-                            console.log("out", d);
+                            d3.select(this).attr('fill', 'rgb(31, 119, 180)');
                         });
                 }
             });
@@ -140,13 +140,11 @@ export default class NumericalHistogram extends Histogram
     {
         if (source !== this._target) {
             if (id !== null) {
-                let value           = this._dataset.getDataByID(id)[this._axes_attributes.x];
-                let xAttribute      = this._axes_attributes.x;
-
-                this._cf_chart.selectAll('rect.bar').each(function(d){
-                    if (value >= d.data.value.extrema[xAttribute].min && value <= d.data.value.extrema[xAttribute].max) {
+                this._cf_chart.selectAll('rect.bar').each(function(d) {
+                    if (d.data.value.ids.has(id))
+                    // if (value >= d.data.value.extrema[xAttribute].min && value <= d.data.value.extrema[xAttribute].max) {
                         d3.select(this).attr("fill", "red");
-                    }
+                    // }
                 });
             }
 

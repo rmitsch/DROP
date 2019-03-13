@@ -31,9 +31,6 @@ export default class FilterReduceChartsPanel extends Panel
 
         // Generate charts.
         this._generateCharts();
-
-        // Render all charts in prototype stage (work with groups instead of using .renderAll()!).
-        // dc.renderAll();
     }
 
     /**
@@ -172,7 +169,7 @@ export default class FilterReduceChartsPanel extends Panel
     {
         // -----------------------------------
         // 1. Hyperparameter-objective combinations.
-        // -----------------------------------
+        // ----------------------------f-------
 
         this._createHyperparameterObjectiveScatterplots(dataset, style, true);
 

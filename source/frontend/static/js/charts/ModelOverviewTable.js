@@ -89,24 +89,25 @@ export default class ModelOverviewTable extends Chart
             fixedColumns: false
         });
 
-        // Highlight data point on hover in scatterplots & histograms.
         let instance = this;
-        // $("#" + tableID + " tbody").on('mouseenter', 'td', Utils.debounce(function () {
-        //     if (instance._cf_chart.row(this).data() !== null)
-        //         instance._panel._operator.highlight(
-        //                 instance._cf_chart.row(this).data()[0], instance._target
-        //         );
-        // }, 0));
-        // $("#" + tableID + " tbody").on('mouseout', 'td', Utils.debounce(function () {
-        //     // Clear highlighting.
-        //     instance._panel._operator.highlight(
-        //         null, instance._target
-        //     );
-        // }, 0));
-
         const table = $("#" + tableID + " tbody");
         const stage = instance._panel._operator._stage;
         stage.addKeyEventListener(this, ModelOverviewTable.processKeyEvent)
+
+        // On hover: Highlight data point on hover in scatterplots & histograms.
+        table.on('mouseenter', 'tr', function () {
+            if (instance._cf_chart.row(this).data() !== null)
+                instance._panel.highlight(
+                    instance._cf_chart.row(this).data()[0],
+                    instance._name,
+                    true
+                );
+            }
+        );
+        // Clear highlighting on mouseout.
+        table.on('mouseout', 'tr', function () {
+            instance._panel.highlight(null, instance._name, true);
+        });
 
         // On (double-)click: Open detail view.
         table.on('dblclick', 'td', function (e) {

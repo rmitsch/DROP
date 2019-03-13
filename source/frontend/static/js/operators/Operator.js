@@ -94,15 +94,21 @@ export default class Operator
     }
 
     /**
-     * Highlights data point in all charts in all panels in this operator.
+     * Highlights data point in all charts in all panels in this operator and propagates event to stage.
      * @param id
      * @param source
+     * @param propagate Determines whether highlight event should be propagated to stage.
      */
-    highlight(id, source)
+    highlight(id, source, propagate = false)
     {
+        // console.log(this._name, source, propagate)
         for (let key in this._panels) {
-            this._panels[key].highlight(id, source);
+            if (this._panels[key]._name !== source)
+                this._panels[key].highlight(id, source);
         }
+
+        if (propagate && false)
+            this._stage.highlight(id, this._name);
     }
 
     get name()

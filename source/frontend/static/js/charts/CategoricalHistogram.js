@@ -52,7 +52,6 @@ export default class CategoricalHistogram extends Histogram
             .margins({top: 0, right: 10, bottom: 16, left: 25})
             .gap(1)
             // Call cross-operator filter method on stage instance after filter event.
-            // Call cross-operator filter method on stage instance after filter event.
             .on("filtered", event => {
                 this._filteredIDs = this.propagateFilterChange(this, key);
                 this._panel._operator.filter(this._filteredIDs);
@@ -61,10 +60,10 @@ export default class CategoricalHistogram extends Histogram
             .on('renderlet', function(chart) {
                 chart.selectAll('rect.bar')
                     .on('mouseover', function(d) {
-                        console.log("in", d);
+                        d3.select(this).attr('fill', 'rgb(255, 0, 0)');
                     })
                     .on('mouseout', function(d) {
-                        console.log("out", d);
+                        d3.select(this).attr('fill', 'rgb(31, 119, 180)');
                     });
             });
 

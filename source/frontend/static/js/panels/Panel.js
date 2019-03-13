@@ -88,12 +88,17 @@ export default class Panel
      * Highlights data point in all charts in this panel.
      * @param id
      * @param source
+     * @param propagate Determines whether highlight event should be propagated to stage.
      */
-    highlight(id, source)
+    highlight(id, source, propagate = false)
     {
         for (let key in this._charts) {
-            this._charts[key].highlight(id, source);
+            if (this._charts[key] !== source)
+                this._charts[key].highlight(id, source);
         }
+
+        if (propagate)
+            this._operator.highlight(id, this._name);
     }
 
     get name()

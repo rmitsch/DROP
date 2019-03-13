@@ -51,6 +51,19 @@ export default class Stage
     }
 
     /**
+     * Highlights datapoint in all operators.
+     * @param id ID of embedding record to highlight.
+     * @param source Name of operator instance.
+     */
+    highlight(id, source)
+    {
+        for (let key in this._operators) {
+            if (this._operators[key]._name !== source)
+                this._operators[key].highlight(id, source);
+        }
+    }
+
+    /**
      * Listens to document-level key events.
      * @private
      */
