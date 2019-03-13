@@ -157,7 +157,7 @@ export default class DissonanceChart extends Chart
         const colorDomain = this._colors.domain(
             [0, Math.log10(this._numFilteredRecords)]
         );
-        
+
         return d === 0 ? "#fff" : colorDomain(Math.log10(d));
     }
 

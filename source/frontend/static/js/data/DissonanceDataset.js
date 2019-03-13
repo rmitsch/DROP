@@ -474,8 +474,8 @@ export default class DissonanceDataset extends Dataset
 
                 // Sort data by number of entries in this attribute's histogram.
                 sortedData.sort(function(entryA, entryB) {
-                    let countA = +entryA.value;
-                    let countB = +entryB.value;
+                    let countA = typeof entryA.value === "number" ? +entryA.value : +entryA.value.count;
+                    let countB = typeof entryB.value === "number" ? +entryB.value : +entryB.value.count;
 
                     switch (sortCriterion) {
                         case "natural":
