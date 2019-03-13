@@ -184,17 +184,6 @@ export default class DissonanceDataset extends Dataset
                     rowValue = scope._rowExtrema.max - rowBinWidth;
                 }
 
-                // if (d.model_id > 200 && d.model_id < 300) {
-                //     console.log(
-                //         d[rowAttribute],
-                //         scope._rowExtrema,
-                //         scope._cf_extrema[rowAttribute],
-                //         rowValue,
-                //         rowBinWidth,
-                //         +Math.floor(rowValue / rowBinWidth)
-                //     );
-                // }
-
                 // (b) Get column number.
                 let colValue = d[colAttribute];
                 if (colValue <= scope._colExtrema.min)
@@ -212,7 +201,26 @@ export default class DissonanceDataset extends Dataset
         // group exists, sum works just fine.
         this._cf_groups[attribute] = this._cf_dimensions[attribute]
             .group()
-            .reduceCount();
+            // .reduceCount();
+            .reduce(
+                function(elements, item) {
+                    if (item.model_id !== -1) {
+                        elements.count++;
+                        elements.ids.add(item.model_id);
+                    }
+                    return elements;
+                },
+                function(elements, item) {
+                    if (item.model_id !== -1) {
+                        elements.count--;
+                        elements.ids.delete(item.model_id);
+                    }
+                    return elements;
+                },
+                function() {
+                    return { count: 0, ids: new Set() };
+                }
+            );
 
         // 3. Find extrema.
         this._calculateHistogramExtremaForAttribute(attribute);
@@ -260,14 +268,22 @@ export default class DissonanceDataset extends Dataset
             })
             // Custome reducer ignoring dummys with model_id === -1.
             .reduce(
-                function(counter, item) {
-                    return item.model_id !== -1 ? ++counter : counter;
+                function(elements, item) {
+                    if (item.model_id !== -1) {
+                        elements.count++;
+                        elements.ids.add(item.model_id);
+                    }
+                    return elements;
                 },
-                function(counter, item) {
-                    return item.model_id !== -1 ? --counter : counter;
+                function(elements, item) {
+                    if (item.model_id !== -1) {
+                        elements.count--;
+                        elements.ids.delete(item.model_id);
+                    }
+                    return elements;
                 },
                 function() {
-                    return 0;
+                    return { count: 0, ids: new Set() };
                 }
             );
 
@@ -307,14 +323,22 @@ export default class DissonanceDataset extends Dataset
             })
             // Custome reducer ignoring dummys with model_id === -1.
             .reduce(
-                function(counter, item) {
-                    return item.model_id !== -1 ? ++counter : counter;
+                function(elements, item) {
+                    if (item.model_id !== -1) {
+                        elements.count++;
+                        elements.ids.add(item.model_id);
+                    }
+                    return elements;
                 },
-                function(counter, item) {
-                    return item.model_id !== -1 ? --counter : counter;
+                function(elements, item) {
+                    if (item.model_id !== -1) {
+                        elements.count--;
+                        elements.ids.delete(item.model_id);
+                    }
+                    return elements;
                 },
                 function() {
-                    return 0;
+                    return { count: 0, ids: new Set() };
                 }
             );
 
@@ -530,16 +554,16 @@ export default class DissonanceDataset extends Dataset
 
         // Sort data by number of entries in this attribute's histogram.
         sortedData.sort(function(entryA, entryB) {
-            let countA = entryA.value;
-            let countB = entryB.value;
+            let countA = entryA.value.count;
+            let countB = entryB.value.count;
 
             return countA > countB ? 1 : (countB > countA ? -1 : 0);
         });
 
         // Determine extrema.
         this._cf_extrema[histogramAttribute] = {
-            min: (sortedData[0].value),
-            max: (sortedData[sortedData.length - 1].value)
+            min: (sortedData[0].value.count),
+            max: (sortedData[sortedData.length - 1].value.count)
         };
 
         // Update extrema by padding values (hardcoded to 10%) for x-axis.

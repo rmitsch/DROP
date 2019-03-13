@@ -93,12 +93,12 @@ export default class Panel
     highlight(id, source, propagate = false)
     {
         for (let key in this._charts) {
-            if (this._charts[key] !== source)
+            if (this._charts[key]._name !== source)
                 this._charts[key].highlight(id, source);
         }
 
         if (propagate)
-            this._operator.highlight(id, this._name);
+            this._operator.highlight(id, this._name, propagate);
     }
 
     get name()

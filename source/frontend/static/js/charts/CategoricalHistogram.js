@@ -73,7 +73,7 @@ export default class CategoricalHistogram extends Histogram
 
     highlight(id, source)
     {
-        if (source !== this._target) {
+        if (source !== this._name) {
             if (id !== null) {
                 let value = this._dataset.getDataByID(id)[this._axes_attributes.x];
 

@@ -647,4 +647,9 @@ export default class ModelDetailPanel extends Panel
             }
         }
     }
+
+    highlight(id, source, propagate = false)
+    {
+        // Nothing to do here.
+    }
 }

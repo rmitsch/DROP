@@ -157,7 +157,7 @@ export default class DissonanceChart extends Chart
         const colorDomain = this._colors.domain(
             [0, Math.log10(this._numFilteredRecords)]
         );
-
+        
         return d === 0 ? "#fff" : colorDomain(Math.log10(d));
     }
 
@@ -190,7 +190,9 @@ export default class DissonanceChart extends Chart
                 {min: 0, max: dataset._binCounts.x},
                 {min: 0, max: dataset._binCounts.y}
             ))
-            .colorAccessor(function(d)  { return d.value; })
+            // Not quite clear why d.value sometimes doesn't have .count attribute with custom reduce function.
+            // Using workaround here.
+            .colorAccessor(d => typeof d.value === 'number' ? d.value : d.value.count)
             .colors(d => scope._computeColorsForCell(d))
             .keyAccessor(function(d)    { return d.key[0];  })
             .valueAccessor(function(d)  { return d.key[1]; })
@@ -251,7 +253,7 @@ export default class DissonanceChart extends Chart
             .height(40)
             .width(Math.floor($("#" + this._target).width() / dataset._binCounts.x) * dataset._binCounts.x)
             .keyAccessor( function(d) { return d.key; } )
-            .valueAccessor( function(d) { return d.value; } )
+            .valueAccessor( d => d.value.count)
             .elasticY(false)
             .x(d3.scale.linear().domain([0, dataset._binCounts.x]))
             .y(d3.scale.linear().domain([0, extrema[yAttribute].max]))
@@ -296,7 +298,7 @@ export default class DissonanceChart extends Chart
         this._verticalHistogram
             .height(40)
             .width($("#" + this._panel._target).height())
-            .valueAccessor( function(d) { return d.value; } )
+            .valueAccessor(d => d.value.count)
             .elasticY(false)
             .x(d3.scale.linear().domain([0, dataset._binCounts.y]))
             .y(d3.scale.linear().domain([0, extrema[yAttribute].max]))
@@ -460,5 +462,27 @@ export default class DissonanceChart extends Chart
         // Store size of panel at time of last render.
         this._lastPanelSize.width   = panelDiv.width();
         this._lastPanelSize.height  = panelDiv.height();
+    }
+
+    highlight(id, source)
+    {
+        console.log("********* highlighting")
+
+        if (source !== this._name) {
+            if (id !== null) {
+                this._horizontalHistogram.selectAll('rect.bar').each(function(d) {
+                    console.log(d)
+                    // if (d.data.value.ids.has(id))
+                    //     d3.select(this).attr("fill", "red");
+                });
+            }
+
+            // Reset all bars to default color.
+            else {
+                // this._cf_chart.selectAll('rect.bar').each(function(d){
+                //     d3.select(this).attr("fill", "#1f77b4");
+                // });
+            }
+        }
     }
 }

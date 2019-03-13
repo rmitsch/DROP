@@ -138,13 +138,11 @@ export default class NumericalHistogram extends Histogram
 
     highlight(id, source)
     {
-        if (source !== this._target) {
+        if (source !== this._name) {
             if (id !== null) {
                 this._cf_chart.selectAll('rect.bar').each(function(d) {
                     if (d.data.value.ids.has(id))
-                    // if (value >= d.data.value.extrema[xAttribute].min && value <= d.data.value.extrema[xAttribute].max) {
                         d3.select(this).attr("fill", "red");
-                    // }
                 });
             }
 

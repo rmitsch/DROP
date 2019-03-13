@@ -101,13 +101,12 @@ export default class Operator
      */
     highlight(id, source, propagate = false)
     {
-        // console.log(this._name, source, propagate)
         for (let key in this._panels) {
             if (this._panels[key]._name !== source)
                 this._panels[key].highlight(id, source);
         }
 
-        if (propagate && false)
+        if (propagate)
             this._stage.highlight(id, this._name);
     }
 

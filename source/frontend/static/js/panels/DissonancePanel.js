@@ -44,6 +44,7 @@ export default class DissonancePanel extends Panel
             null,
             this._divStructure.chartsContainerDivID
         );
+        this._charts["histogramHeatmap"] = this._chart;
     }
 
     /**
