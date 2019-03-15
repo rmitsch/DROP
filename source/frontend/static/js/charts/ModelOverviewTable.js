@@ -111,7 +111,6 @@ export default class ModelOverviewTable extends Chart
 
         // On (double-)click: Open detail view.
         table.on('dblclick', 'td', function (e) {
-            console.log("dblclick")
             // Instruct model detail operator to load data for the selected model.
             stage._operators["ModelDetail"].loadData(
                 // Fetch model ID from first field in selected table row.
