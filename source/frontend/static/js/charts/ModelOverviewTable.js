@@ -111,6 +111,7 @@ export default class ModelOverviewTable extends Chart
 
         // On (double-)click: Open detail view.
         table.on('dblclick', 'td', function (e) {
+            console.log("dblclick")
             // Instruct model detail operator to load data for the selected model.
             stage._operators["ModelDetail"].loadData(
                 // Fetch model ID from first field in selected table row.
@@ -133,15 +134,6 @@ export default class ModelOverviewTable extends Chart
                     instance._filteredIDs.add(selectedID);
                     instance._selectedRows[selectedID] = $(row.nodes());
                     instance._selectedRows[selectedID].addClass('selected');
-                }
-            }
-
-            else {
-                instance._filteredIDs = new Set([selectedID]);
-                if (!Utils.eqSet(instance._filteredIDs, instance._previousFilteredIDs)) {
-                    // Update filter for ID dimensions.
-                    instance._updateGlobalFilterStatus();
-                    instance._previousFilteredIDs = new Set(instance._filteredIDs);
                 }
             }
         });
