@@ -466,22 +466,38 @@ export default class DissonanceChart extends Chart
 
     highlight(id, source)
     {
-        console.log("********* highlighting")
+        let scope = this;
 
         if (source !== this._name) {
             if (id !== null) {
+                this._verticalHistogram.selectAll('rect.bar').each(function(d) {
+                    if (d.data.value.ids.has(id))
+                        d3.select(this).attr("fill", "red");
+                });
                 this._horizontalHistogram.selectAll('rect.bar').each(function(d) {
-                    console.log(d)
-                    // if (d.data.value.ids.has(id))
-                    //     d3.select(this).attr("fill", "red");
+                    if (d.data.value.ids.has(id))
+                        d3.select(this).attr("fill", "red");
+                });
+                this._dissonanceHeatmap.selectAll('rect.heat-box').each(function(d) {
+                    if (typeof d.value === "object" && id in d.value.ids)
+                        d3.select(this).attr("fill", "red");
                 });
             }
 
-            // Reset all bars to default color.
+            // Reset all bars to default colors.
             else {
-                // this._cf_chart.selectAll('rect.bar').each(function(d){
-                //     d3.select(this).attr("fill", "#1f77b4");
-                // });
+                this._verticalHistogram.selectAll('rect.bar').each(function(d) {
+                    d3.select(this).attr("fill", "#1f77b4");
+                });
+                this._horizontalHistogram.selectAll('rect.bar').each(function(d) {
+                    d3.select(this).attr("fill", "#1f77b4");
+                });
+                this._dissonanceHeatmap.selectAll('rect.heat-box').each(function(d) {
+                    d3.select(this).attr(
+                        "fill",
+                        scope._computeColorsForCell(typeof d.value === 'number' ? d.value : d.value.count)
+                    );
+                });
             }
         }
     }

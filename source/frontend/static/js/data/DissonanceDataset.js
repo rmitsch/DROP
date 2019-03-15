@@ -40,7 +40,6 @@ export default class DissonanceDataset extends Dataset
 
         // Initialize crossfilter data.
         this._initSingularDimensionsAndGroups();
-        // this._initializeBins();
         this._initHistogramDimensionsAndGroups();
         this._initBinaryDimensionsAndGroups();
     }
@@ -109,37 +108,6 @@ export default class DissonanceDataset extends Dataset
             ];
         }
     }
-    /**
-     * Adds one dummy record per heatmap bin to make sure heatmap doesn't omit any rows/columns.
-     * @private
-     */
-    _initializeBins()
-    {
-        // ----------------------------------------------------
-        // Add n * m dummy records to make sure all bins exist.
-        // ----------------------------------------------------
-
-        let rowAttribute    = this._supportedDRModelMeasure;
-        let colAttribute    = "measure";
-        let rowExtrema      = this._cf_extrema[rowAttribute];
-        let colExtrema      = this._cf_extrema[colAttribute];
-        let rowBinWidth     = (rowExtrema.max - rowExtrema.min) / this._binCounts.y;
-        let colBinWidth     = (colExtrema.max - colExtrema.min) / this._binCounts.x;
-
-        // Generate dummy records for heatmap and add to crossfilter's dataset.
-        let dummyRecords = Array(this._binCounts.y * this._binCounts.x).fill(0);
-        for (let i = 0; i < this._binCounts.y; i++) {
-            for (let j = 0; j < this._binCounts.x; j++) {
-                let dummyRecord             = {model_id: -1, sample_id: -1};
-                dummyRecord[colAttribute]   = j * colBinWidth;
-                dummyRecord[rowAttribute]   = i * rowBinWidth;
-
-                // Add record to crossfilter dataset.
-                dummyRecords[i * this._binCounts.x + j] = dummyRecord;
-            }
-        }
-        this._crossfilter.add(dummyRecords);
-    }
 
     _initSingularDimensionsAndGroups()
     {
@@ -201,24 +169,25 @@ export default class DissonanceDataset extends Dataset
         // group exists, sum works just fine.
         this._cf_groups[attribute] = this._cf_dimensions[attribute]
             .group()
-            // .reduceCount();
             .reduce(
                 function(elements, item) {
                     if (item.model_id !== -1) {
                         elements.count++;
-                        elements.ids.add(item.model_id);
+                        if (!(item.model_id in elements.ids))
+                            elements.ids[item.model_id] = 0;
+                        elements.ids[item.model_id]++;
                     }
                     return elements;
                 },
                 function(elements, item) {
                     if (item.model_id !== -1) {
                         elements.count--;
-                        elements.ids.delete(item.model_id);
+                        elements.ids[item.model_id]--;
                     }
                     return elements;
                 },
                 function() {
-                    return { count: 0, ids: new Set() };
+                    return { count: 0, ids: {} };
                 }
             );
 
@@ -440,7 +409,7 @@ export default class DissonanceDataset extends Dataset
         for (let bin of bins)
             gapIndices.delete(bin.key);
         for (let gapIndex of gapIndices)
-            bins.push({key: gapIndex, value: 0});
+            bins.push({key: gapIndex, value: {count: 0, ids: {}}});
 
         return bins;
     }
