@@ -240,19 +240,21 @@ export default class DissonanceDataset extends Dataset
                 function(elements, item) {
                     if (item.model_id !== -1) {
                         elements.count++;
-                        elements.ids.add(item.model_id);
+                        if (!(item.model_id in elements.ids))
+                            elements.ids[item.model_id] = 0;
+                        elements.ids[item.model_id]++;
                     }
                     return elements;
                 },
                 function(elements, item) {
                     if (item.model_id !== -1) {
                         elements.count--;
-                        elements.ids.delete(item.model_id);
+                        elements.ids[item.model_id]--;
                     }
                     return elements;
                 },
                 function() {
-                    return { count: 0, ids: new Set() };
+                    return { count: 0, ids: {} };
                 }
             );
 
@@ -295,19 +297,21 @@ export default class DissonanceDataset extends Dataset
                 function(elements, item) {
                     if (item.model_id !== -1) {
                         elements.count++;
-                        elements.ids.add(item.model_id);
+                        if (!(item.model_id in elements.ids))
+                            elements.ids[item.model_id] = 0;
+                        elements.ids[item.model_id]++;
                     }
                     return elements;
                 },
                 function(elements, item) {
                     if (item.model_id !== -1) {
                         elements.count--;
-                        elements.ids.delete(item.model_id);
+                        elements.ids[item.model_id]--;
                     }
                     return elements;
                 },
                 function() {
-                    return { count: 0, ids: new Set() };
+                    return { count: 0, ids: {} };
                 }
             );
 

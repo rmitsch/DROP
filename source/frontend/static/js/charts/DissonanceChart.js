@@ -22,8 +22,10 @@ export default class DissonanceChart extends Chart
     {
         super(name, panel, attributes, dataset, style, parentDivID);
 
-        // Define color range.
-        this._colors = d3.scaleLinear().range(["#fff7fb", "#1f77b4"]);
+        // Define color range and related values.
+        this._colors                = d3.scaleLinear().range(["#fff7fb", "#1f77b4"]);
+        this._highlightColors       = d3.scaleLinear().range(["#fee5d9", "#ff0000"]);
+        this._numRecordsInEmbedding = this._dataset._data.length / this._dataset._drModelMetadata._data.length;
 
         // Cache number of filtered records (to speed up color computation).
         this._numFilteredRecords = this._dataset._cf_dimensions.model_id.top(Infinity).length;
@@ -156,6 +158,21 @@ export default class DissonanceChart extends Chart
     {
         const colorDomain = this._colors.domain(
             [0, Math.log10(this._numFilteredRecords)]
+        );
+
+        return d === 0 ? "#fff" : colorDomain(Math.log10(d));
+    }
+
+    /**
+     * Compute colors for heatmap cell when highlighted. Uses logarithmic scaling.
+     * @param d
+     * @private
+     * @returns string Color as hex value.
+     */
+    _computeHighlightColorsForCell(d)
+    {
+        const colorDomain = this._highlightColors.domain(
+            [0, Math.log10(this._numRecordsInEmbedding)]
         );
 
         return d === 0 ? "#fff" : colorDomain(Math.log10(d));
@@ -471,16 +488,16 @@ export default class DissonanceChart extends Chart
         if (source !== this._name) {
             if (id !== null) {
                 this._verticalHistogram.selectAll('rect.bar').each(function(d) {
-                    if (d.data.value.ids.has(id))
+                    if (id in d.data.value.ids)
                         d3.select(this).attr("fill", "red");
                 });
                 this._horizontalHistogram.selectAll('rect.bar').each(function(d) {
-                    if (d.data.value.ids.has(id))
-                        d3.select(this).attr("fill", "red");
+                    if (id in d.data.value.ids)
+                        d3.select(this).attr("fill", scope._computeHighlightColorsForCell(d.data.value.ids[id]));
                 });
                 this._dissonanceHeatmap.selectAll('rect.heat-box').each(function(d) {
                     if (typeof d.value === "object" && id in d.value.ids)
-                        d3.select(this).attr("fill", "red");
+                        d3.select(this).attr("fill", scope._computeHighlightColorsForCell(d.value.ids[id]));
                 });
             }
 
@@ -494,8 +511,7 @@ export default class DissonanceChart extends Chart
                 });
                 this._dissonanceHeatmap.selectAll('rect.heat-box').each(function(d) {
                     d3.select(this).attr(
-                        "fill",
-                        scope._computeColorsForCell(typeof d.value === 'number' ? d.value : d.value.count)
+                        "fill", scope._computeColorsForCell(typeof d.value === 'number' ? d.value : d.value.count)
                     );
                 });
             }
