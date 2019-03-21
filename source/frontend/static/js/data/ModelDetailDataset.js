@@ -26,9 +26,12 @@ export default class ModelDetailDataset extends Dataset
         this._low_dim_projection        = ModelDetailDataset._preprocessLowDimProjectionData(
             modelDataJSON.low_dim_projection, modelDataJSON.original_dataset
         );
-        this._allModelMetadata          = modelDataJSON.model_metadata;
-        this._limeData                  = modelDataJSON.lime_explanation;
-        this._preprocessedLimeData      = ModelDetailDataset._preprocessLimeData(this._limeData);
+
+        this._allModelMetadata                  = modelDataJSON.model_metadata;
+        this._explanations                      = modelDataJSON.explanations;
+        this._preprocessedExplanationData      = ModelDetailDataset._preprocessExplainerData(
+            this._explanations, modelDataJSON.explanation_columns
+        );
         this._sampleDissonances         = modelDataJSON.sample_dissonances;
 
         // Gather attributes available for original record.
@@ -65,70 +68,49 @@ export default class ModelDetailDataset extends Dataset
         // Create crossfilter instance for low-dimensional projection (LDP).
         this._crossfilterData["low_dim_projection"].crossfilter = crossfilter(this._low_dim_projection);
         // Create crossfilter instance for LIME heatmap.
-        this._crossfilterData["lime"].crossfilter               = crossfilter(this._preprocessedLimeData);
+        this._crossfilterData["lime"].crossfilter               = crossfilter(this._preprocessedExplanationData);
 
         // Initialize dimensions and groups for crossfilter datasets.
         this._configureLowDimProjectionCrossfilter();
-        this._configureLIMECrossfilter();
+        this._configureExplanationsCrossfilter();
     }
 
     /**
-     * Preprocesses LIME data to fit data pattern expected by crossfilter.js.
-     * @param limeData
+     * Preprocesses SHAP data to fit data pattern expected by crossfilter.js.
+     * @param explanations
+     * * @param explanationColumns
      * @returns {Array}
      * @private
      */
-    static _preprocessLimeData(limeData)
+    static _preprocessExplainerData(explanations, explanationColumns)
     {
-        let parsedLimeData = [];
-        for (let objective in limeData) {
-            for (let rule in limeData[objective]) {
-                let original_rule = rule;
-                let rule_parts = rule.split(" ");
+        let parsedExplainerData = [];
 
-                // Filter out hyperparameter. Consider that split/categorical arguments are structured differently.
-                let hyperparameter = null;
-                // Pattern: NUMBER OPERATOR HYPERPARAMETER OPERATOR NUMBER, e. g. 3 <= n_components < 6.
-                if (rule_parts.length === 5)
-                    hyperparameter = rule_parts[2];
-                // Pattern: HYPERPARAMETER OPERATOR NUMBER, e. g. n_components > 2.
-                else if (rule_parts.length === 3)
-                    hyperparameter = rule_parts[0];
-                // Pattern: HYPERPARAMETER=NUMBER, e. g. metric=cosine, indicating a categorical value.
-                else if (rule_parts.length === 1) {
-                    rule_parts = rule.split("=");
-
-                    // Only accept hyperparameter if it was actually active in this record.
-                    if (rule_parts[1] === "1") {
-                        rule_parts = rule_parts[0].split("_");
-                        hyperparameter = rule_parts[0];
-                        rule = hyperparameter + " = " + rule_parts[1];
-                    }
-                }
-
-                // Append parsed record, except when it contains a categorical value for this hyperparameter that
-                // equates zero - meaning there is another record in the dataset with another categorical value for this
-                // hyperparameter that actually applies.
-                // Procedure to be debated - LIME values for these values seem to roughly cancel each other out, so as
-                // an approximation it seems feasible.
-                if (hyperparameter !== null)
-                    parsedLimeData.push({
-                        "objective": objective,
-                        "hyperparameter": hyperparameter,
-                        "rule":  rule,
-                        "weight": limeData[objective][original_rule]
-                    });
+        let valtotal = 0;
+        for (let objective in explanations) {
+            let val = 0;
+            for (let i = 0; i < explanationColumns.length; i++) {
+                parsedExplainerData.push({
+                    "objective": objective,
+                    "hyperparameter": explanationColumns[i],
+                    "weight": explanations[objective][i]
+                });
+                val += explanations[objective][i];
             }
-        }
+            console.log(objective, val)
+            valtotal += val;
 
-        return parsedLimeData;
+        }
+        console.log(valtotal)
+
+        return parsedExplainerData;
     }
 
     /**
      * Configures dimensions and groups for LIME crossfilter used in heatmap.
      * @private
      */
-    _configureLIMECrossfilter()
+    _configureExplanationsCrossfilter()
     {
         // Keep in mind that heatmap cells/labels have to be linked to rule data, incl. comparator;
         // while heatmap only shows rule weight.

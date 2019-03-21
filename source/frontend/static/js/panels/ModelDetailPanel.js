@@ -31,7 +31,7 @@ export default class ModelDetailPanel extends Panel
         this._divStructure = this._createDivStructure();
 
         // Dictionary for lookup of LIME rules.
-        this._limeRuleLookup = {};
+        this._explanationRuleLookup = {};
 
         // Generate charts.
         this._generateCharts();
@@ -77,17 +77,17 @@ export default class ModelDetailPanel extends Panel
 
     /**
      * Extracts dictionary {hyperparameter -> {objective -> rule}} from loaded dataset.
-     * Stores result in this._limeRuleLookup.
+     * Stores result in this._explanationRuleLookup.
      * @private
      */
-    _updateLimeRuleLookup()
+    _updateExplanationRuleLookup()
     {
-        for (let rule of this._data._preprocessedLimeData) {
-            if (!(rule.hyperparameter in this._limeRuleLookup)) {
-                this._limeRuleLookup[rule.hyperparameter] = {};
+        for (let rule of this._data._preprocessedExplanationData) {
+            if (!(rule.hyperparameter in this._explanationRuleLookup)) {
+                this._explanationRuleLookup[rule.hyperparameter] = {};
             }
 
-            this._limeRuleLookup[rule.hyperparameter][rule.objective] = rule.rule + ": " + rule.weight;
+            this._explanationRuleLookup[rule.hyperparameter][rule.objective] = rule.hyperparameter + " to " + rule.objective + ": " + rule.weight;
         }
     }
 
@@ -230,11 +230,14 @@ export default class ModelDetailPanel extends Panel
     {
         let scope       = this;
         let cfConfig    = this._data.crossfilterData["lime"];
-        let attribute   = "objective:hyperparameter";
+        const attribute = "objective:hyperparameter";
 
         // Determine color scheme, color domain.
-        let colorScheme = [
-            '#ca0020','#f4a582','#f7f7f7','#92c5de','#0571b0'
+        const colorScheme = [
+            // '#ca0020','#f4a582','#f7f7f7','#92c5de','#0571b0'
+            // '#ca0020','#f4a582','#ffffff','#92c5de','#0571b0'
+            '#a50f15', '#de2d26', '#fb6a4a', '#fcae91', '#fee5d9',
+            "#ffffff", '#bdd7e7', '#6baed6', '#3182bd', '#08519c'
         ];
         // let colorDomain = ModelDetailPanel._calculateColorDomain(cfConfig.extrema["weight"], colorScheme);
         let colorDomain = ModelDetailPanel._calculateColorDomain({min: -1, max: 1}, colorScheme);
@@ -255,14 +258,14 @@ export default class ModelDetailPanel extends Panel
             .keyAccessor(function(d)    { return d.key[0]; })
             .valueAccessor(function(d)  { return d.key[1]; })
             .title(function(d) {
-                return scope._limeRuleLookup[d.key[1]][d.key[0]];
+                return scope._explanationRuleLookup[d.key[1]][d.key[0]];
             })
             .colsLabel(function(d)      { return DRMetaDataset.translateAttributeNames(false)[d]; })
             .rowsLabel(function(d)      { return DRMetaDataset.translateAttributeNames(false)[d]; })
             .margins({top: 0, right: 20, bottom: 48, left: 60})
             .transitionDuration(0)
             .xBorderRadius(0)
-            // Rotrate labels.
+            // Rotate labels.
             .on('pretransition', function(chart) {
                 chart
                     .selectAll('g.cols.axis > text')
@@ -585,7 +588,7 @@ export default class ModelDetailPanel extends Panel
         let stageDiv    = $("#" + this._operator._stage._target);
 
         // Update LIME rule lookup.
-        this._updateLimeRuleLookup();
+        this._updateExplanationRuleLookup();
 
         // Show modal.
         $("#" + this._target).dialog({

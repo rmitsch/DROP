@@ -17,6 +17,7 @@ from backend.data_generation.datasets.InputDataset import InputDataset
 from backend.data_generation.dimensionality_reduction import DimensionalityReductionKernel
 from backend.utils import Utils
 import dcor
+import shap
 
 
 def init_flask_app():
@@ -128,7 +129,7 @@ def get_metadata():
         )
 
         # Initialize LIME explainers for each objective.
-        app.config["LIME_EXPLAINERS"] = Utils.initialize_lime_explainers(
+        app.config["EXPLAINERS"] = Utils.initialize_lime_explainers(
             metadata_template=app.config["METADATA_TEMPLATE"],
             features_df=app.config["EMBEDDING_METADATA"]["features_preprocessed"]
         )
@@ -292,16 +293,26 @@ def get_dr_model_details():
     # Fetch dataframe with preprocessed features.
     embedding_metadata_feat_df = app.config["EMBEDDING_METADATA"]["features_preprocessed"].loc[[str(embedding_id)]]
 
-    # Let LIME explain influence of hyperparameters on this instance's objectives.
+    # todo
+    #   - Check color coding - which value range do SHAP values have?
+
+    # Drop index for categorical variables that are inactive for this record.
+    # Note: Currently hardcoded for metric only.
+    cols = embedding_metadata_feat_df.columns.values
+    param_indices = [
+        i for i
+        in range(len(cols))
+        if "metric_" not in cols[i] or
+           cols[i] == "metric_" + str(
+            app.config["EMBEDDING_METADATA"]["original"].loc[[embedding_id]].metric.values[0]
+        )[2:-1]
+    ]
+
+    # Let SHAP estimate influence of hyperparameter values for each objective.
     explanations = {
-        objective: {
-            rule: weight for rule, weight in
-            app.config["LIME_EXPLAINERS"][objective].explain_instance(
-                data_row=embedding_metadata_feat_df.values[0],
-                predict_fn=app.config["GLOBAL_SURROGATE_MODELS"][objective].predict,
-                labels=(objective,),
-            ).as_list()
-        }
+        objective: shap.TreeExplainer(
+            app.config["GLOBAL_SURROGATE_MODELS"][objective]
+        ).shap_values(embedding_metadata_feat_df.values[0], approximate=True)[param_indices].tolist()
         for objective in app.config["METADATA_TEMPLATE"]["objectives"]
     }
 
@@ -333,7 +344,12 @@ def get_dr_model_details():
         # Explain embedding value with LIME.
         # --------------------------------------------------------
 
-        "lime_explanation": explanations
+        "explanation_columns": [
+            # Hardcoded workaround for one-hot encoded category attribute: Rename to "metric".
+            col if "metric_" not in col else "metric" for col
+            in app.config["EMBEDDING_METADATA"]["features_preprocessed"].columns.values[param_indices]
+        ],
+        "explanations": explanations
     }
 
     # Close file with low-dim. data.
