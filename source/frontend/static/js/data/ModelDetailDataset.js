@@ -84,6 +84,7 @@ export default class ModelDetailDataset extends Dataset
      */
     static _preprocessExplainerData(explanations, explanationColumns)
     {
+        // NEXT: check why SHAP for some instances sum up to < 0 - is regressor output really < 0? is logodds involved?
         let parsedExplainerData = [];
 
         let valtotal = 0;

@@ -309,12 +309,28 @@ def get_dr_model_details():
     ]
 
     # Let SHAP estimate influence of hyperparameter values for each objective.
+    # See https://github.com/slundberg/shap/issues/392 for how to verify predicted SHAP values.
     explanations = {
         objective: shap.TreeExplainer(
             app.config["GLOBAL_SURROGATE_MODELS"][objective]
-        ).shap_values(embedding_metadata_feat_df.values[0], approximate=True)[param_indices].tolist()
+        ).shap_values(embedding_metadata_feat_df.values[0], approximate=False)[param_indices].tolist()
         for objective in app.config["METADATA_TEMPLATE"]["objectives"]
     }
+
+    preds = {
+        objective: app.config["GLOBAL_SURROGATE_MODELS"][objective].predict(embedding_metadata_feat_df.values)
+        for objective in app.config["METADATA_TEMPLATE"]["objectives"]
+    }
+
+    for obj in explanations:
+        explainer = shap.TreeExplainer(
+            app.config["GLOBAL_SURROGATE_MODELS"][obj]
+        )
+        shap_values = explainer.shap_values(embedding_metadata_feat_df.values, approximate=False)
+
+        print(numpy.abs(explainer.expected_value + shap_values.sum(axis=1) - app.config["GLOBAL_SURROGATE_MODELS"][obj].predict(embedding_metadata_feat_df.values)).max())
+
+    print(preds)
 
     # Assemble result object.
     result = {
