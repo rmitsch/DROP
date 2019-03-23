@@ -32,7 +32,7 @@ def init_flask_app():
     )
 
     # Define version.
-    flask_app.config["VERSION"] = "0.12.3"
+    flask_app.config["VERSION"] = "0.13.0"
 
     # Store metadata template. Is assembled once in /get_metadata.
     flask_app.config["METADATA_TEMPLATE"] = None
@@ -293,9 +293,6 @@ def get_dr_model_details():
     # Fetch dataframe with preprocessed features.
     embedding_metadata_feat_df = app.config["EMBEDDING_METADATA"]["features_preprocessed"].loc[[str(embedding_id)]]
 
-    # todo
-    #   - Check color coding - which value range do SHAP values have?
-
     # Drop index for categorical variables that are inactive for this record.
     # Note: Currently hardcoded for metric only.
     cols = embedding_metadata_feat_df.columns.values
@@ -309,28 +306,21 @@ def get_dr_model_details():
     ]
 
     # Let SHAP estimate influence of hyperparameter values for each objective.
-    # See https://github.com/slundberg/shap/issues/392 for how to verify predicted SHAP values.
+    # See https://github.com/slundberg/shap/issues/392 on to verify predicted SHAP values.
     explanations = {
         objective: shap.TreeExplainer(
             app.config["GLOBAL_SURROGATE_MODELS"][objective]
         ).shap_values(embedding_metadata_feat_df.values[0], approximate=False)[param_indices].tolist()
         for objective in app.config["METADATA_TEMPLATE"]["objectives"]
     }
-
-    preds = {
-        objective: app.config["GLOBAL_SURROGATE_MODELS"][objective].predict(embedding_metadata_feat_df.values)
-        for objective in app.config["METADATA_TEMPLATE"]["objectives"]
-    }
-
-    for obj in explanations:
-        explainer = shap.TreeExplainer(
-            app.config["GLOBAL_SURROGATE_MODELS"][obj]
-        )
-        shap_values = explainer.shap_values(embedding_metadata_feat_df.values, approximate=False)
-
-        print(numpy.abs(explainer.expected_value + shap_values.sum(axis=1) - app.config["GLOBAL_SURROGATE_MODELS"][obj].predict(embedding_metadata_feat_df.values)).max())
-
-    print(preds)
+    # Transform SHAP values of objectives w/o upper bounds into [0, 1]-interval by dividing values for unbounded
+    # objectives  through the maximum for this objective.
+    # Note that we assume all objectives, including those w/o upper bounds, to be [0, x] where x is either 1 or an
+    # arbitrary real number.
+    # Hence we iterate over upper-unbounded objectives, get their max, divide values in explanations through the maximum
+    # of that objective. This yields [0, 1]-intervals for all objectives.
+    for obj in DimensionalityReductionKernel.OBJECTIVES_WO_UPPER_BOUND:
+        explanations[obj] = (explanations[obj] / app.config["EMBEDDING_METADATA"]["original"][obj].max()).tolist()
 
     # Assemble result object.
     result = {

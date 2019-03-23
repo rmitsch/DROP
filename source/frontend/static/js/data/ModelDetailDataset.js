@@ -84,25 +84,17 @@ export default class ModelDetailDataset extends Dataset
      */
     static _preprocessExplainerData(explanations, explanationColumns)
     {
-        // NEXT: check why SHAP for some instances sum up to < 0 - is regressor output really < 0? is logodds involved?
         let parsedExplainerData = [];
 
-        let valtotal = 0;
         for (let objective in explanations) {
-            let val = 0;
             for (let i = 0; i < explanationColumns.length; i++) {
                 parsedExplainerData.push({
                     "objective": objective,
                     "hyperparameter": explanationColumns[i],
                     "weight": explanations[objective][i]
                 });
-                val += explanations[objective][i];
             }
-            console.log(objective, val)
-            valtotal += val;
-
         }
-        console.log(valtotal)
 
         return parsedExplainerData;
     }

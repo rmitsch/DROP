@@ -248,20 +248,18 @@ export default class ModelDetailPanel extends Panel
             .width(limePane.width())
             .dimension(cfConfig.dimensions[attribute])
             .group(cfConfig.groups[attribute])
-            .colorAccessor(function(d)  { return d.value; })
+            .colorAccessor(d => d.value)
             .colors(
                 d3.scale
                     .linear()
                     .domain(colorDomain)
                     .range(colorScheme)
             )
-            .keyAccessor(function(d)    { return d.key[0]; })
-            .valueAccessor(function(d)  { return d.key[1]; })
-            .title(function(d) {
-                return scope._explanationRuleLookup[d.key[1]][d.key[0]];
-            })
-            .colsLabel(function(d)      { return DRMetaDataset.translateAttributeNames(false)[d]; })
-            .rowsLabel(function(d)      { return DRMetaDataset.translateAttributeNames(false)[d]; })
+            .keyAccessor(d => d.key[0])
+            .valueAccessor(d => d.key[1])
+            .title(d => scope._explanationRuleLookup[d.key[1]][d.key[0]])
+            .colsLabel(d => DRMetaDataset.translateAttributeNames(false)[d])
+            .rowsLabel(d => DRMetaDataset.translateAttributeNames(false)[d])
             .margins({top: 0, right: 20, bottom: 48, left: 60})
             .transitionDuration(0)
             .xBorderRadius(0)
@@ -421,7 +419,7 @@ export default class ModelDetailPanel extends Panel
             .symbolSize(2)
             .filterOnBrushEnd(true)
             .mouseZoomable(true)
-            .margins({top: 5, right: 0, bottom: 0, left: 0});
+            .margins({top: 5, right: 0, bottom: 2, left: 0});
 
         scatterplot.yAxis().ticks(5);
         scatterplot.xAxis().ticks(5);
