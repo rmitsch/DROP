@@ -361,23 +361,21 @@ export default class DRMetaDataset extends Dataset
         for (let i = 0; i < attributes.length; i++) {
             let attribute   = attributes[i];
             const binWidth  = this._cf_intervals[attribute] / binCount;
-            let extrema     = this._cf_extrema[attribute];
+            const extrema   = this._cf_extrema[attribute];
 
             let value = record[attribute];
-            if (value <= extrema.min) {
+            if (value <= extrema.min)
                 value = extrema.min;
-            }
-
-            else if (value >= extrema.max) {
-                value = extrema.max - binWidth;
-            }
+            // Note: Removed `- binWidth` 2019-03-26 while fixing wrong bin computation for values in uppermost bin.
+            else if (value >= extrema.max)
+                value = extrema.max;
 
             // Adjust for extrema.
             let binnedValue = binWidth !== 0 ? Math.floor((value - extrema.min) / binWidth) * binWidth : 0;
             binnedValue += extrema.min;
-
-            if (binnedValue >= extrema.max)
-                binnedValue = extrema.max - binWidth;
+            if (binnedValue > extrema.max)
+                // Note: Removed `- binWidth` 2019-03-26 while fixing wrong bin computation for values in uppermost bin.
+                binnedValue = extrema.max;
 
             record[attribute + binnedFieldSuffix] = binnedValue;
         }

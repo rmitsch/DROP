@@ -257,7 +257,9 @@ export default class ModelDetailDataset extends Dataset
                 const groupAll      = drMetaDataset._cf_groups[key + "#histogram"].all();
                 let unprocessedBins = JSON.parse(JSON.stringify(groupAll));
                 const binWidth      = drMetaDataset._cf_intervals[key] / drMetaDataset._binCount;
-                // Determine whether this attribute is categorical.
+
+                // Determine whether this attribute is numerical and hence should be binned or categorical (i. e. there
+                // is no need for binning).
                 const isCategorical = valueType === "hyperparameters" && attribute.type === "categorical";
                 const useBinning    = !isCategorical && binWidth !== 0;
 
@@ -267,7 +269,9 @@ export default class ModelDetailDataset extends Dataset
                 if (useBinning) {
                     for (let i = 0; i < drMetaDataset._binCount; i++) {
                         let currBinKey  = drMetaDataset._cf_extrema[key].min + binWidth * i;
-                        let currBin     = unprocessedBins.filter(bin => { return bin.key === currBinKey; });
+                        let currBin     = unprocessedBins.filter(bin => {
+                            return bin.key === currBinKey || bin.key > currBinKey && i === drMetaDataset._binCount - 1;
+                        });
 
                         // Current bin not available: Create fake bin to bridge gap in chart.
                         currBin = currBin.length > 0 ? currBin[0] : {
@@ -275,17 +279,22 @@ export default class ModelDetailDataset extends Dataset
                                 value: {count: 0, extrema: {}}
                         };
                         currBin.nextKey = currBinKey + binWidth;
+
+                        // Correct key value for last bin.
+                        if (i === drMetaDataset._binCount - 1)
+                            currBin.key -= binWidth;
+
                         bins.push(currBin);
                     }
                 }
 
                 // Build dict for this attribute.
-                values[valueType][key]          = {data: [], extrema: drMetaDataset._cf_extrema[key], colors: null, tooltips: null};
+                values[valueType][key]      = {data: [], extrema: drMetaDataset._cf_extrema[key], colors: null, tooltips: null};
                 // Compile data list.
-                values[valueType][key].data     = isCategorical ? bins.map(bin => bin.value) : bins.map(bin => bin.value.count);
+                values[valueType][key].data = isCategorical ? bins.map(bin => bin.value) : bins.map(bin => bin.value.count);
 
                 // Compile color map.
-                values[valueType][key].colors   = bins.map(
+                values[valueType][key].colors = bins.map(
                     bin => useBinning ?
                     // If attribute is numerical or binWidth === 0: Check if list of items in bin contains current model
                     // with this ID.
@@ -305,8 +314,7 @@ export default class ModelDetailDataset extends Dataset
                 values[valueType][key].tooltips = {};
                 for (let i = 0; i < bins.length; i++) {
                     values[valueType][key].tooltips[i] = useBinning ?
-                        bins[i].key.toFixed(4) + " - " + (bins[i].key + binWidth).toFixed(4) :
-                        bins[i].key;
+                        bins[i].key.toFixed(4) + " - " + (bins[i].key + binWidth).toFixed(4) : bins[i].key;
                 }
             }
         }
