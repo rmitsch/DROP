@@ -114,7 +114,7 @@ class InputDataset:
         Random forests are used as default model. Can be overwritten by children - important for comparison: Use
         same procedure for prediction in both original and reduced dataset.
         :param features: Data to be used for prediction. Labels are extract from original dataset.
-        :parma relative: Indicates to compute RTDP instead of TDP.
+        :param relative: Indicates to compute RTDP instead of TDP.
         :return:
         """
 

@@ -27,7 +27,7 @@ class HappinessDataset(InputDataset):
         super().__init__()
 
     def _load_data(self):
-        df = pd.read_csv(filepath_or_buffer="../../../data/happiness_2017.csv").drop(
+        df = pd.read_csv(filepath_or_buffer="../../../data/happiness_   2017.csv").drop(
             ["map_reference", "biggest_official_language", "gdp_per_capita[$]"], axis=1
         ).set_index("country")
         df = df.rename(columns={col: re.sub(r'\[.*\]', '', col) for col in df.columns})
@@ -96,7 +96,7 @@ class HappinessDataset(InputDataset):
         # 2. Calculate Silhouette score.
         try:
             silhouette_score = sklearn.metrics.silhouette_score(
-                X=self.labels().reshape(-1, 1), metric='euclidean', labels=clusterer.labels_
+                X=self.labels().values.reshape(-1, 1), metric='euclidean', labels=clusterer.labels_
             )
             # Workaround: Use worst value if number is NaN - why does this happen?
             silhouette_score = -1 if np.isnan(silhouette_score) else silhouette_score
