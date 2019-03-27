@@ -310,11 +310,11 @@ export default class ModelDetailPanel extends Panel
         // 2. Append new chart containers, draw scatterplots.
         // -------------------------------------------------------
 
-        this._charts["scatterplots"] = {};
-        const numDimensions     = this._data._allModelMetadata[this._data._modelID].n_components;
-        let numPlotsInRow       = Math.max(numDimensions - 1, 1);
-        const scatterplotWidth  = chartContainerDiv.width() / numPlotsInRow - 15;
-        const scatterplotHeight = chartContainerDiv.height() / numPlotsInRow - 10;
+        this._charts["scatterplots"]    = {};
+        const numDimensions             = this._data._allModelMetadata[this._data._modelID].n_components;
+        let numPlotsInRow               = Math.max(numDimensions - 1, 1);
+        const scatterplotWidth          = chartContainerDiv.width() / numPlotsInRow - 15;
+        const scatterplotHeight         = chartContainerDiv.height() / numPlotsInRow - 10;
 
         // Generate all combinations of dimension indices.
         for (let i = 0; i < Math.max(numDimensions - 1, 1); i++) {
@@ -526,9 +526,9 @@ export default class ModelDetailPanel extends Panel
         let chartDivIDs = {};
         for (const valueType in this._sparklineValues) {
             for (const attribute of metadataStructure[valueType]) {
-                const key = valueType === "hyperparameters" ? attribute.name : attribute;
-                const value = dataset._allModelMetadata[dataset._modelID][key];
-                chartDivIDs[key] = Utils.uuidv4();
+                const key           = valueType === "hyperparameters" ? attribute.name : attribute;
+                const value         = dataset._allModelMetadata[dataset._modelID][key];
+                chartDivIDs[key]    = Utils.uuidv4();
 
                 attributeTable += "<tr>";
                 attributeTable +=   "<td>" + DRMetaDataset.translateAttributeNames()[key] + "</td>";
@@ -573,7 +573,6 @@ export default class ModelDetailPanel extends Panel
 
     processSettingsChange(delta)
     {
-        // todo Which settings to consider?
     }
 
     /**
@@ -614,7 +613,7 @@ export default class ModelDetailPanel extends Panel
         const panelDiv = $("#" + this._target);
 
         if (panelDiv.width() !== this._lastPanelSize.width || panelDiv.height() !== this._lastPanelSize.height) {
-            // todo update charts here if splits have been changed
+            // Update charts here if splits have been changed.
 
             this._lastPanelSize = {width: panelDiv.width(), height: panelDiv.height()};
 
@@ -651,6 +650,11 @@ export default class ModelDetailPanel extends Panel
 
     highlight(id, source, propagate = false)
     {
-        // Nothing to do here.
+        // We know that the only possible source we want to consider for a highlighting operation is the correponding
+        // ModelDetailTable instance, so we can safely ignore all other sources.
+        if (this._charts["table"].name === source) {
+            for (const scatterplot in this._charts["scatterplots"])
+                this._charts["scatterplots"][scatterplot].highlight(id);
+        }
     }
 }

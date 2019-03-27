@@ -100,22 +100,21 @@ export default class ModelDetailTable extends Chart
         });
 
         // Highlight data point on hover in scatterplots & histograms.
-        let instance = this;
-        // $("#" + tableID + " tbody").on('mouseenter', 'td', Utils.debounce(function () {
-        //     if (instance._cf_chart.row(this).data() !== null)
-        //         instance._panel._operator.highlight(
-        //                 instance._cf_chart.row(this).data()[0], instance._target
-        //         );
-        // }, 0));
-        // $("#" + tableID + " tbody").on('mouseout', 'td', Utils.debounce(function () {
-        //     // Clear highlighting.
-        //     instance._panel._operator.highlight(
-        //         null, instance._target
-        //     );
-        // }, 0));
+        let instance    = this;
+        const table     = $("#" + tableID + " tbody");
 
-        // todo: On (double-)click: Highlight point in chart (?).
-        $("#" + tableID + " tbody").on('dblclick', 'td', function (e) {
+        table.on('mouseenter', 'tr', function () {
+            if (instance._cf_chart.row(this).data() !== null)
+                instance._panel.highlight(
+                    instance._cf_chart.row(this).data()[0],
+                    instance._name,
+                    false
+                );
+            }
+        );
+        // Clear highlighting on mouseout.
+        table.on('mouseout', 'tr', function () {
+            instance._panel.highlight(null, instance._name, false);
         });
     }
 

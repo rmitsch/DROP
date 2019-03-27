@@ -89,10 +89,10 @@ export default class ModelOverviewTable extends Chart
             fixedColumns: false
         });
 
-        let instance = this;
-        const table = $("#" + tableID + " tbody");
-        const stage = instance._panel._operator._stage;
-        stage.addKeyEventListener(this, ModelOverviewTable.processKeyEvent)
+        let instance    = this;
+        const table     = $("#" + tableID + " tbody");
+        const stage     = instance._panel._operator._stage;
+        stage.addKeyEventListener(this, ModelOverviewTable.processKeyEvent);
 
         // On hover: Highlight data point on hover in scatterplots & histograms.
         table.on('mouseenter', 'tr', function () {

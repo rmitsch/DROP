@@ -697,6 +697,7 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
                     return useLastHighlightedPosition ? _chart.lastHighlightedPosition.y : d.coordinates.y;
                 })
                 .style("fill", "red");
+
             dc.transition(circles, 100, _chart.transitionDelay())
                 .attr("cx", function (d) { return d.coordinates.x; })
                 .attr("cy", function (d) { return d.coordinates.y; })
