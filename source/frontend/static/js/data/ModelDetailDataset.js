@@ -280,9 +280,11 @@ export default class ModelDetailDataset extends Dataset
                         };
                         currBin.nextKey = currBinKey + binWidth;
 
-                        // Correct key value for last bin.
-                        if (i === drMetaDataset._binCount - 1)
-                            currBin.key -= binWidth;
+                        // Correct key for last bin.
+                        if (i === drMetaDataset._binCount - 1) {
+                            currBin.key     -= binWidth;
+                            currBin.nextKey = drMetaDataset._cf_extrema[key].max;
+                        }
 
                         bins.push(currBin);
                     }

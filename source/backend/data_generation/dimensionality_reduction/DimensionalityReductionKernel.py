@@ -35,8 +35,8 @@ class DimensionalityReductionKernel:
     }
 
     # Define which runtimes are not bounded by [0, 1] intervals.
-    # Note that we assume all objectives start with 0.
-    OBJECTIVES_WO_UPPER_BOUND = {"runtime"}
+    # Note that we assume all objectives start with 0, their upper bound might vary though.
+    OBJECTIVES_WO_UPPER_BOUND = {"runtime", "classification_accuracy"}
 
     def __init__(self, dim_red_kernel_name: str):
         """
