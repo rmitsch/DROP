@@ -94,7 +94,7 @@ high_dim_neighbourhood_rankings = {
 # Shuffle list with parameter sets so that they are kinda evenly distributed.
 shuffle(parameter_sets)
 # Determine number of workers.
-n_jobs = psutil.cpu_count(logical=True) - 1
+n_jobs = psutil.cpu_count(logical=True)
 threads = []
 # Shared list holding results.
 results = []
