@@ -12,7 +12,7 @@ import scipy
 from flask import Flask
 from sklearn.preprocessing import LabelEncoder
 from sklearn.tree import DecisionTreeRegressor
-import lime.lime_tabulwar
+import lime.lime_tabular
 
 
 # Class for various, non-essential tasks.
@@ -211,3 +211,43 @@ class Utils:
             )
             for objective in metadata_template["objectives"]
         }
+
+    @staticmethod
+    def init_flask_app(frontend_path: str):
+        """
+        Initialize Flask app.
+        :param frontend_path: Path to directory containing frontend project.
+        :return: App object.
+        """
+        flask_app = Flask(
+            __name__,
+            template_folder=os.path.join(frontend_path, 'source/templates'),
+            static_folder=os.path.join(frontend_path, 'source/static')
+        )
+
+        # Define version.
+        flask_app.config["VERSION"] = "0.14.1"
+
+        # Store metadata template. Is assembled once in /get_metadata.
+        flask_app.config["METADATA_TEMPLATE"] = None
+
+        # Store dataframe holding embedding metadata and related data.
+        flask_app.config["EMBEDDING_METADATA"] = {
+            "original": None,
+            "features_preprocessed": None,
+            "features_categorical_encoding_translation": None,
+            "labels": None
+        }
+
+        # Store name of current dataset and kernel. Note that these values is only changed at call of /get_metadata.
+        # Use t-SNE on happiness dataset as default.
+        flask_app.config["DATASET_NAME"] = None
+        flask_app.config["DR_KERNEL_NAME"] = "tsne"
+        flask_app.config["FULL_FILE_NAME"] = "happiness"
+
+        # For storage of global, unrestricted model used by LIME for local explanations.
+        # Has one global regressor for each possible objective.
+        flask_app.config["GLOBAL_SURROGATE_MODEL"] = {}
+        flask_app.config["LIME_EXPLAINER"] = None
+
+        return flask_app

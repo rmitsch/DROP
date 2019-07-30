@@ -1,6 +1,6 @@
 import abc
 import numpy
-from backend.objectives.DimensionalityReductionObjective import DimensionalityReductionObjective
+from objectives.DimensionalityReductionObjective import DimensionalityReductionObjective
 
 
 class DistancePreservationObjective(DimensionalityReductionObjective):

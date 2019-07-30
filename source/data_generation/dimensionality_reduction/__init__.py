@@ -1,3 +1,3 @@
 from .DimensionalityReductionKernel import DimensionalityReductionKernel
 from .DimensionalityReductionThread import DimensionalityReductionThread
-import backend.data_generation.dimensionality_reduction.hdf5_descriptions
+import data_generation.dimensionality_reduction.hdf5_descriptions

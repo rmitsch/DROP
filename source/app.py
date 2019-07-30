@@ -1,4 +1,5 @@
 import os
+import sys
 
 import sklearn
 from flask import Flask
@@ -19,50 +20,11 @@ from utils import Utils
 import dcor
 import shap
 
-
-def init_flask_app():
-    """
-    Initialize Flask app.
-    :return: App object.
-    """
-    flask_app = Flask(
-        __name__,
-        template_folder='frontend/templates',
-        static_folder='frontend/static'
-    )
-
-    # Define version.
-    flask_app.config["VERSION"] = "0.14.1"
-
-    # Store metadata template. Is assembled once in /get_metadata.
-    flask_app.config["METADATA_TEMPLATE"] = None
-
-    # Store dataframe holding embedding metadata and related data.
-    flask_app.config["EMBEDDING_METADATA"] = {
-        "original": None,
-        "features_preprocessed": None,
-        "features_categorical_encoding_translation": None,
-        "labels": None
-    }
-
-    # Store name of current dataset and kernel. Note that these values is only changed at call of /get_metadata.
-    # Use t-SNE on happiness dataset as default.
-    flask_app.config["DATASET_NAME"] = None
-    flask_app.config["DR_KERNEL_NAME"] = "tsne"
-    flask_app.config["FULL_FILE_NAME"] = "happiness"
-
-    # For storage of global, unrestricted model used by LIME for local explanations.
-    # Has one global regressor for each possible objective.
-    flask_app.config["GLOBAL_SURROGATE_MODEL"] = {}
-    flask_app.config["LIME_EXPLAINER"] = None
-
-    return flask_app
-
-
+frontend_path = sys.argv[1]
 # Initialize logger.
 logger = Utils.create_logger()
 # Initialize flask app.
-app = init_flask_app()
+app = Utils.init_flask_app(frontend_path)
 
 
 # root: Render HTML for start menu.

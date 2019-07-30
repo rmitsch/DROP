@@ -1,7 +1,7 @@
 import copy
 
 import numpy
-from backend.objectives.DimensionalityReductionObjective import DimensionalityReductionObjective
+from objectives.DimensionalityReductionObjective import DimensionalityReductionObjective
 from coranking.metrics import trustworthiness, continuity
 from scipy.spatial import distance
 import sklearn
