@@ -680,10 +680,11 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
 
             // Draw circles for highlighted points.
             let circles = _chart.chartBodyG()
-                .selectAll("circle")
+                .selectAll("circle.highlight")
                 .data(recordToHighlight)
                 .enter()
-                .append("circle");
+                .append("circle")
+                .attr("class", "highlight");
 
             // Draw circles.
             let useLastHighlightedPosition = _chart.lastHighlightedPosition !== null;
@@ -697,6 +698,10 @@ dc.scatterPlot = function (parent, chartGroup, dataset, variantAttribute, object
                     return useLastHighlightedPosition ? _chart.lastHighlightedPosition.y : d.coordinates.y;
                 })
                 .style("fill", "red");
+
+            d3.selectAll("circle.highlight").each(function(){
+              this.parentNode.appendChild(this);
+            });
 
             dc.transition(circles, 100, _chart.transitionDelay())
                 .attr("cx", function (d) { return d.coordinates.x; })

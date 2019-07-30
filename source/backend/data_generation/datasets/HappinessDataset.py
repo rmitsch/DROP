@@ -20,6 +20,7 @@ class HappinessDataset(InputDataset):
     Extended Kaggle happiness dataset.
     """
 
+    # Measured TDP for Happiness dataset with regression task in terms of RMSE.
     high_dim_TDP = 0.31
 
     def __init__(self):
