@@ -11,9 +11,12 @@ clf = SkopeRules(max_depth_duplication=None,
                  feature_names=dataset.feature_names)
 
 X, y = dataset.data, dataset.target > 25
-print(dataset.target)
+# print(dataset.target)
 X_train, y_train = X[:len(y)//2], y[:len(y)//2]
 X_test, y_test = X[len(y)//2:], y[len(y)//2:]
+
+print(y_train)
+exit()
 clf.fit(X_train, y_train)
 y_score = clf.score_top_rules(X_test) # Get a risk score for each test example
 print(y_score)

@@ -131,7 +131,7 @@ def get_surrogate_model_data():
     """
     Yields structural data for surrogate model.
     GET parameters:
-        - "modeltype": Model type can be specified with GET param (currently only decision tree with "tree").
+        - "modeltype": Model type can be specified with GET param (currently only decision tree with "tree" supported).
         - "objs": Objectives with objs=alpha,beta,...
         - "depth": Max. depth of decision tree with depth=x.
         - "ids": List of embedding IDs to consider, with ids=1,2,3,... Note: If "ids" is not specified, all embeddings
@@ -162,6 +162,41 @@ def get_surrogate_model_data():
     ids = list(map(int, ids.split(","))) if ids is not None else None
     features_df = app.config["EMBEDDING_METADATA"]["features_preprocessed"]
     labels_df = app.config["EMBEDDING_METADATA"]["labels"]
+
+    import pandas as pd
+    from skrules import SkopeRules
+    from sklearn.metrics import precision_recall_curve
+    import matplotlib.pyplot as plt
+
+    with pd.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', None):
+        print(features_df.head(10))
+        print(labels_df.head(10))
+
+    clf = SkopeRules(
+        max_depth_duplication=None,
+        n_estimators=30,
+        precision_min=0.2,
+        recall_min=0.01,
+        feature_names=features_df.columns.values
+    )
+
+    for label_name in labels_df.columns:
+        print(label_name)
+
+        class_encodings = pd.DataFrame(pd.qcut(labels_df[label_name], 5, range(5)).astype("int"))
+
+        for i in range(1, 5):
+            class_encodings[i] = 0
+            vals = class_encodings[label_name] == i
+            clf.fit(features_df.values, vals)
+
+            # rule: (rule, precision, recall, number of affected records).
+            print(i)
+            for rule in clf.rules_:
+                print(rule)
+            print("***")
+
+        print("------------------------")
 
     if ids is not None:
         features_df = features_df.iloc[ids]
