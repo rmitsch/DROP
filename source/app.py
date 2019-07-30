@@ -13,9 +13,9 @@ from tables import *
 import numpy
 from sklearn.datasets import load_boston
 
-from backend.data_generation.datasets.InputDataset import InputDataset
-from backend.data_generation.dimensionality_reduction import DimensionalityReductionKernel
-from backend.utils import Utils
+from data_generation.datasets.InputDataset import InputDataset
+from data_generation.dimensionality_reduction import DimensionalityReductionKernel
+from utils import Utils
 import dcor
 import shap
 
