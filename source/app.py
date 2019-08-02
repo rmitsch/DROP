@@ -13,12 +13,14 @@ from sklearn.preprocessing import LabelEncoder
 from tables import *
 import numpy
 from sklearn.datasets import load_boston
+import pandas as pd
 
 from data_generation.datasets.InputDataset import InputDataset
 from data_generation.dimensionality_reduction import DimensionalityReductionKernel
 from utils import Utils
 import dcor
 import shap
+from skrules import SkopeRules
 
 frontend_path = sys.argv[1]
 # Initialize logger.
@@ -131,29 +133,29 @@ def get_surrogate_model_data():
     """
     Yields structural data for surrogate model.
     GET parameters:
-        - "modeltype": Model type can be specified with GET param (currently only decision tree with "tree" supported).
+        - "modeltype": Model type can be specified with GET param (currently only decision tree with "rules" supported).
         - "objs": Objectives with objs=alpha,beta,...
-        - "depth": Max. depth of decision tree with depth=x.
         - "ids": List of embedding IDs to consider, with ids=1,2,3,... Note: If "ids" is not specified, all embeddings
           are used to construct surrogate model.
+        - "n_bins": Number of bins to use for surrogate model's predictions.
     :return: Jsonified structure of surrogate model for DR metadata.
     """
+
     metadata_template = app.config["METADATA_TEMPLATE"]
     surrogate_model_type = request.args["modeltype"]
-    objective_names = request.args["objs"].split(",")
-    depth = int(request.args["depth"])
+    objective_name = request.args["objs"]
+    number_of_bins = int(request.args["n_bins"]) if request.args["n_bins"] is not None else 5
     ids = request.args.get("ids")
 
     # ------------------------------------------------------
     # 1. Check for mistakes in parameters.
     # ------------------------------------------------------
 
-    if surrogate_model_type not in ["tree"]:
+    if surrogate_model_type not in ["rules"]:
         return "Surrogate model " + surrogate_model_type + " is not supported.", 400
 
-    for obj_name in objective_names:
-        if obj_name not in metadata_template["objectives"]:
-            return "Objective " + obj_name + " is not supported.", 400
+    if objective_name not in metadata_template["objectives"]:
+        return "Objective " + objective_name + " is not supported.", 400
 
     # ------------------------------------------------------
     # 2. Pre-select embeddings to use for surrogate model.
@@ -163,62 +165,37 @@ def get_surrogate_model_data():
     features_df = app.config["EMBEDDING_METADATA"]["features_preprocessed"]
     labels_df = app.config["EMBEDDING_METADATA"]["labels"]
 
-    import pandas as pd
-    from skrules import SkopeRules
-    from sklearn.metrics import precision_recall_curve
-    import matplotlib.pyplot as plt
+    # Consider filtered IDs before creating model(s).
+    if ids is not None:
+        features_df = features_df.iloc[ids]
+        labels_df = labels_df.iloc[ids]
 
-    with pd.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', None):
-        print(features_df.head(10))
-        print(labels_df.head(10))
-
-    clf = SkopeRules(
+    rules_clf = SkopeRules(
         max_depth_duplication=None,
         n_estimators=30,
         precision_min=0.2,
         recall_min=0.01,
         feature_names=features_df.columns.values
     )
+    
+    class_encodings = pd.DataFrame(pd.qcut(labels_df[objective_name], number_of_bins))
+    rule_data = []
+    for bin_label in class_encodings[objective_name].unique():
+        rules_clf.fit(features_df.values, class_encodings[objective_name] == bin_label)
+        rule_data.extend(
+            [(rule[0], rule[1][0], rule[1][1], rule[1][2], bin_label.left, bin_label.right)
+             for rule in rules_clf.rules_]
+        )
 
-    for label_name in labels_df.columns:
-        print(label_name)
-
-        class_encodings = pd.DataFrame(pd.qcut(labels_df[label_name], 5, range(5)).astype("int"))
-
-        for i in range(1, 5):
-            class_encodings[i] = 0
-            vals = class_encodings[label_name] == i
-            clf.fit(features_df.values, vals)
-
-            # rule: (rule, precision, recall, number of affected records).
-            print(i)
-            for rule in clf.rules_:
-                print(rule)
-            print("***")
-
-        print("------------------------")
-
-    if ids is not None:
-        features_df = features_df.iloc[ids]
-        labels_df = labels_df.iloc[ids]
-
-    # ------------------------------------------------------
-    # 2. Build regressor.
-    # ------------------------------------------------------
-
-    # Fit decision tree.
-    tree = DecisionTreeRegressor(max_depth=depth)
-    tree.fit(features_df, labels_df)
-
-    # ------------------------------------------------------
-    # 3. Extract tree structure and return result.
-    # ------------------------------------------------------
-
-    # Extract tree structure and return as JSON.
-    tree_structure = Utils.extract_decision_tree_structure(
-        tree, features_df.columns, [objective_names]
+    rule_data = pd.DataFrame(
+        rule_data, columns=["rule", "precision", "recall", "support", "interval_start", "interval_end"]
     )
-    return jsonify(tree_structure)
+    # Bin data for frontend.
+    for attribute in ["precision", "recall", "support"]:
+        quantiles = pd.qcut(rule_data[attribute], number_of_bins)
+        rule_data[attribute + "#histogram"] = quantiles.apply(lambda x: x.left)
+
+    return rule_data.to_json(orient='records')
 
 
 @app.route('/get_sample_dissonance', methods=["GET"])
