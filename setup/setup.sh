@@ -13,7 +13,6 @@ sed -i 's/numba.njit(parallel=True/numba.njit(parallel=False/g' /usr/local/lib/p
 cp -f /tmp/base.py /usr/local/lib/python3.5/site-packages/sklearn/base.py
 
 # Download repository and install package for multi-threaded t-SNE.
-pip install --no-cache-dir git+https://github.com/DmitryUlyanov/Multicore-TSNE.git
 pip install --no-cache-dir git+https://github.com/samueljackson92/coranking.git
 
 # Download language data.

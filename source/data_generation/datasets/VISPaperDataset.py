@@ -12,7 +12,7 @@ import sklearn.ensemble
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.metrics import f1_score
 import hdbscan
-import fastText
+import fasttext
 
 from data_generation.datasets import InputDataset
 
