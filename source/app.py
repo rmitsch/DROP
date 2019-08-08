@@ -180,6 +180,7 @@ def get_surrogate_model_data():
     
     class_encodings = pd.DataFrame(pd.qcut(labels_df[objective_name], number_of_bins))
     rule_data = []
+    # todo Parallelize.
     for bin_label in class_encodings[objective_name].unique():
         rules_clf.fit(features_df.values, class_encodings[objective_name] == bin_label)
         rule_data.extend(
@@ -187,9 +188,8 @@ def get_surrogate_model_data():
              for rule in rules_clf.rules_]
         )
 
-    rule_data = pd.DataFrame(
-        rule_data, columns=["rule", "precision", "recall", "support", "interval_start", "interval_end"]
-    )
+    rule_data = pd.DataFrame(rule_data, columns=["rule", "precision", "recall", "support", "from", "to"])
+
     # Bin data for frontend.
     for attribute in ["precision", "recall", "support"]:
         quantiles = pd.qcut(rule_data[attribute], number_of_bins)
