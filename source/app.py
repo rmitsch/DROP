@@ -178,7 +178,7 @@ def get_surrogate_model_data():
         feature_names=features_df.columns.values
     )
     
-    class_encodings = pd.DataFrame(pd.qcut(labels_df[objective_name], number_of_bins))
+    class_encodings = pd.DataFrame(pd.cut(labels_df[objective_name], number_of_bins))
     rule_data = []
     # todo Parallelize.
     for bin_label in class_encodings[objective_name].unique():
@@ -192,7 +192,7 @@ def get_surrogate_model_data():
 
     # Bin data for frontend.
     for attribute in ["precision", "recall", "support"]:
-        quantiles = pd.qcut(rule_data[attribute], number_of_bins)
+        quantiles = pd.cut(rule_data[attribute], number_of_bins)
         rule_data[attribute + "#histogram"] = quantiles.apply(lambda x: x.left)
     rule_data["from#histogram"] = rule_data["from"]
     rule_data["to#histogram"] = rule_data["to"]
