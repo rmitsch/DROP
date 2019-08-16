@@ -2,6 +2,7 @@ import logging
 from contextlib import contextmanager
 import sys
 import os
+import pandas as pd
 
 import lime
 import numpy as np
@@ -12,6 +13,7 @@ import scipy
 from flask import Flask
 from sklearn.preprocessing import LabelEncoder
 from sklearn.tree import DecisionTreeRegressor
+from skrules import SkopeRules
 import lime.lime_tabular
 
 
@@ -251,3 +253,30 @@ class Utils:
         flask_app.config["LIME_EXPLAINER"] = None
 
         return flask_app
+
+    @staticmethod
+    def extract_rules(
+            bin_label: pd.Interval, features_df: pd.DataFrame, class_encodings: pd.DataFrame, objective_name: str
+    ) -> list:
+        """
+        Extract rules with given data and bin label.
+        :param bin_label:
+        :param features_df:
+        :param class_encodings:
+        :param objective_name:
+        :return: List of extracted rules: (rule, precision, recall, support, result from, result to).
+        """
+        rules_clf = SkopeRules(
+            max_depth_duplication=None,
+            n_estimators=30,
+            precision_min=0.2,
+            recall_min=0.01,
+            feature_names=features_df.columns.values,
+            n_jobs=1  # psutil.cpu_count(logical=True)
+        )
+        rules_clf.fit(features_df.values, class_encodings[objective_name] == bin_label)
+
+        return [
+            (rule[0], rule[1][0], rule[1][1], rule[1][2], bin_label.left, bin_label.right)
+            for rule in rules_clf.rules_
+        ]
