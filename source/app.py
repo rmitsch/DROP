@@ -9,6 +9,7 @@ from flask import request
 from flask import jsonify
 import tables
 import pandas
+import math
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.preprocessing import LabelEncoder
 from tables import *
@@ -188,7 +189,7 @@ def get_surrogate_model_data():
     class_encodings = pd.DataFrame(pd.cut(labels_df[objective_name], number_of_bins))
     rule_data = []
     bin_labels = class_encodings[objective_name].unique()
-    with ThreadPool(psutil.cpu_count(logical=True)) as pool:
+    with ThreadPool(math.floor(psutil.cpu_count(logical=True) / 2)) as pool:
         rule_data = list(
             tqdm(
                 pool.imap(
