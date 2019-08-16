@@ -196,6 +196,7 @@ def get_surrogate_model_data():
         rule_data[attribute + "#histogram"] = quantiles.apply(lambda x: x.left)
     rule_data["from#histogram"] = rule_data["from"]
     rule_data["to#histogram"] = rule_data["to"]
+    rule_data.rule = rule_data.rule.str.replace(" and ", "<br>")
 
     return rule_data.to_json(orient='records')
 
