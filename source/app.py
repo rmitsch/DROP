@@ -21,7 +21,7 @@ from tqdm import tqdm
 import dcor
 import shap
 from skrules import SkopeRules
-from multiprocessing.pool import ThreadPool
+from multiprocessing.pool import ThreadPool, Pool as ProcessPool
 
 from data_generation.datasets.InputDataset import InputDataset
 from data_generation.dimensionality_reduction import DimensionalityReductionKernel
@@ -176,20 +176,9 @@ def get_surrogate_model_data():
         features_df = features_df.iloc[ids]
         labels_df = labels_df.iloc[ids]
 
-    # rules_clf = SkopeRules(
-    #     max_depth_duplication=None,
-    #     n_estimators=30,
-    #     precision_min=0.2,
-    #     recall_min=0.01,
-    #     feature_names=features_df.columns.values,
-    #     n_jobs=2 #psutil.cpu_count(logical=True)
-    # )
-
-    start = time.time()
     class_encodings = pd.DataFrame(pd.cut(labels_df[objective_name], number_of_bins))
-    rule_data = []
     bin_labels = class_encodings[objective_name].unique()
-    with ThreadPool(math.floor(psutil.cpu_count(logical=True) / 2)) as pool:
+    with ProcessPool(math.floor(psutil.cpu_count(logical=True))) as pool:
         rule_data = list(
             tqdm(
                 pool.imap(
@@ -204,24 +193,15 @@ def get_surrogate_model_data():
                 total=len(bin_labels)
             )
         )
-    rule_data = [
-        item
-        for sublist in rule_data
-        for item in sublist
-    ]
-
-    # for bin_label in class_encodings[objective_name].unique():
-    #     rules_clf.fit(features_df.values, class_encodings[objective_name] == bin_label)
-    #     rule_data.extend(
-    #         [(rule[0], rule[1][0], rule[1][1], rule[1][2], bin_label.left, bin_label.right)
-    #          for rule in rules_clf.rules_]
-    #     )
 
     rule_data = pd.DataFrame(
-        rule_data,
+        [
+            item
+            for sublist in rule_data
+            for item in sublist
+        ],
         columns=["rule", "precision", "recall", "support", "from", "to"]
     )
-    print("rule extraction xyz", time.time() - start)
 
     # Bin data for frontend.
     for attribute in ["precision", "recall", "support"]:
@@ -232,6 +212,7 @@ def get_surrogate_model_data():
     rule_data.rule = rule_data.rule.str.replace(" and ", "<br>")
 
     return rule_data.to_json(orient='records')
+
 
 @app.route('/get_sample_dissonance', methods=["GET"])
 def get_sample_dissonance():

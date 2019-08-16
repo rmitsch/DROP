@@ -228,7 +228,7 @@ class Utils:
         )
 
         # Define version.
-        flask_app.config["VERSION"] = "0.15.1"
+        flask_app.config["VERSION"] = "0.15.2"
 
         # Store metadata template. Is assembled once in /get_metadata.
         flask_app.config["METADATA_TEMPLATE"] = None
@@ -272,7 +272,7 @@ class Utils:
             precision_min=0.2,
             recall_min=0.01,
             feature_names=features_df.columns.values,
-            n_jobs=1  # psutil.cpu_count(logical=True)
+            n_jobs=1
         )
         rules_clf.fit(features_df.values, class_encodings[objective_name] == bin_label)
 
