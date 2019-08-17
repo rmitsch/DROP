@@ -1,8 +1,6 @@
 import os
 import sys
 
-import sklearn
-from flask import Flask
 from functools import partial
 from flask import render_template
 from flask import request
@@ -10,8 +8,6 @@ from flask import jsonify
 import tables
 import pandas
 import math
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.preprocessing import LabelEncoder
 from tables import *
 import numpy
 import pandas as pd
@@ -20,8 +16,8 @@ import psutil
 from tqdm import tqdm
 import dcor
 import shap
-from skrules import SkopeRules
-from multiprocessing.pool import ThreadPool, Pool as ProcessPool
+import pickle
+from multiprocessing.pool import Pool as ProcessPool
 
 from data_generation.datasets.InputDataset import InputDataset
 from data_generation.dimensionality_reduction import DimensionalityReductionKernel
@@ -50,8 +46,10 @@ def get_metadata():
         - drKernelName with "drk".
     :return:
     """
+    app.config["CACHE_ROOT"] = "/tmp"
     app.config["DATASET_NAME"] = InputDataset.check_dataset_name(request.args.get('datasetName'))
     app.config["DR_KERNEL_NAME"] = DimensionalityReductionKernel.check_kernel_name(request.args.get('drKernelName'))
+
     # Compile metadata template.
     if app.config["METADATA_TEMPLATE"] is None:
         get_metadata_template()
@@ -87,22 +85,22 @@ def get_metadata():
             )
 
         ###################################################
-        # Compute global surrogate models and initialize
-        # corresponding SHAP explainers.
+        # Compute global surrogate models.
         ###################################################
 
         # Compute regressor for each objective.
-        app.config["GLOBAL_SURROGATE_MODELS"] = Utils.fit_random_forest_regressors(
-            metadata_template=app.config["METADATA_TEMPLATE"],
-            features_df=app.config["EMBEDDING_METADATA"]["features_preprocessed"],
-            labels_df=app.config["EMBEDDING_METADATA"]["labels"]
-        )
-
-        # Initialize SHAP explainers for each objective.
-        app.config["EXPLAINERS"] = Utils.initialize_lime_explainers(
-            metadata_template=app.config["METADATA_TEMPLATE"],
-            features_df=app.config["EMBEDDING_METADATA"]["features_preprocessed"]
-        )
+        cached_surrogate_models_filepath = os.path.join(app.config["CACHE_ROOT"], "global_surrogate_models.pkl")
+        if os.path.isfile(cached_surrogate_models_filepath):
+            with open(cached_surrogate_models_filepath, "rb") as file:
+                app.config["GLOBAL_SURROGATE_MODELS"] = pickle.load(file)
+        else:
+            app.config["GLOBAL_SURROGATE_MODELS"] = Utils.fit_random_forest_regressors(
+                metadata_template=app.config["METADATA_TEMPLATE"],
+                features_df=app.config["EMBEDDING_METADATA"]["features_preprocessed"],
+                labels_df=app.config["EMBEDDING_METADATA"]["labels"]
+            )
+            with open(cached_surrogate_models_filepath, "wb") as file:
+                pickle.dump(app.config["GLOBAL_SURROGATE_MODELS"], file)
 
         # Return JSON-formatted embedding data.
         return jsonify(df.drop(["b_nx"], axis=1).to_json(orient='index'))
@@ -124,7 +122,6 @@ def get_metadata_template():
         "objectives": [
             "runtime",
             "r_nx",
-            # "b_nx",
             "stress",
             "classification_accuracy",
             "separability_metric"
@@ -223,8 +220,12 @@ def get_sample_dissonance():
     :return:
     """
     file_name = app.config["FULL_FILE_NAME"]
+    cached_file_path = os.path.join(app.config["CACHE_ROOT"], "sample_dissonance.pkl")
 
     if os.path.isfile(file_name):
+        if os.path.isfile(cached_file_path):
+            return pd.read_pickle(cached_file_path).to_json(orient='records')
+
         h5file = open_file(filename=file_name, mode="r+")
 
         # ------------------------------------------------------
@@ -251,6 +252,9 @@ def get_sample_dissonance():
         df = pandas.DataFrame(pointwise_qualities)
         df["model_id"] = df.index
         df = df.melt("model_id", var_name='sample_id', value_name="measure")
+
+        # Cache result as file.
+        df.to_pickle(cached_file_path)
 
         # Return jsonified version of model x sample quality matrix.
         return df.to_json(orient='records')
@@ -296,7 +300,7 @@ def get_dr_model_details():
     ]
 
     # Let SHAP estimate influence of hyperparameter values for each objective.
-    # See https://github.com/slundberg/shap/issues/392 on to verify predicted SHAP values.
+    # See https://github.com/slundberg/shap/issues/392 on how to verify predicted SHAP values.
     explanations = {
         objective: shap.TreeExplainer(
             app.config["GLOBAL_SURROGATE_MODELS"][objective]
@@ -379,4 +383,4 @@ def compute_correlation_strength():
 
 # Launch on :2483.
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=2483, threaded=True, debug=False)
+    app.run(host='0.0.0.0', port=2483, threaded=False, debug=False)
