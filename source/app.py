@@ -383,4 +383,4 @@ def compute_correlation_strength():
 
 # Launch on :2483.
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=2483, threaded=False, debug=False)
+    app.run(host='0.0.0.0', port=2483, threaded=True, debug=False)
