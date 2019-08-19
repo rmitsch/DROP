@@ -280,3 +280,23 @@ class Utils:
             (rule[0], rule[1][0], rule[1][1], rule[1][2], bin_label.left, bin_label.right)
             for rule in rules_clf.rules_
         ]
+
+    @staticmethod
+    def prepare_binned_original_dataset(dataset_name: str, bin_count: int = 5) -> pd.DataFrame:
+        """
+        Prepares original dataset for detail view in frontend by loading and binning it.
+        :param dataset_name:
+        :param bin_count:
+        :return: Dataframe with all original attributes plus binned versions of it for numerical attributes.
+        """
+
+        df: pd.DataFrame = pandas.read_csv(
+            filepath_or_buffer=os.getcwd() + "/../data/" + dataset_name + "_records.csv",
+            delimiter=',',
+            quotechar='"'
+        )
+
+        for attribute in df.select_dtypes(include=[np.number]).columns:
+            df[attribute + "#histogram"] = pd.cut(df[attribute], bins=bin_count).apply(lambda x: x.left)
+
+        return df

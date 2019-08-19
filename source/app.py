@@ -9,9 +9,8 @@ import tables
 import pandas
 import math
 from tables import *
-import numpy
+import numpy as np
 import pandas as pd
-import time
 import psutil
 from tqdm import tqdm
 import dcor
@@ -19,7 +18,7 @@ import shap
 import pickle
 from multiprocessing.pool import Pool as ProcessPool
 
-from data_generation.datasets.InputDataset import InputDataset
+from data_generation.datasets import *
 from data_generation.dimensionality_reduction import DimensionalityReductionKernel
 from utils import Utils
 
@@ -49,6 +48,17 @@ def get_metadata():
     app.config["CACHE_ROOT"] = "/tmp"
     app.config["DATASET_NAME"] = InputDataset.check_dataset_name(request.args.get('datasetName'))
     app.config["DR_KERNEL_NAME"] = DimensionalityReductionKernel.check_kernel_name(request.args.get('drKernelName'))
+    dataset_name_class_links = {
+        "vis": VISPaperDataset,
+        "wine": WineDataset,
+        "swiss_roll": SwissRollDataset,
+        "mnist": MNISTDataset,
+        "happiness": HappinessDataset
+    }
+    app.config["DATASET_CLASS"] = dataset_name_class_links[app.config["DATASET_NAME"]]
+
+    # Currently only Happiness dataset is fully supported.
+    assert app.config["DATASET_NAME"] == "happiness", "Only Happiness dataset currently supported."
 
     # Compile metadata template.
     if app.config["METADATA_TEMPLATE"] is None:
@@ -334,11 +344,9 @@ def get_dr_model_details():
         # --------------------------------------------------------
 
         # Fetch record names/titles, labels, original features.
-        "original_dataset": pandas.read_csv(
-            filepath_or_buffer=os.getcwd() + "/../data/" + app.config["DATASET_NAME"] + "_records.csv",
-            delimiter=',',
-            quotechar='"'
-        ).to_json(orient='index'),
+        "original_dataset": Utils.prepare_binned_original_dataset(app.config["DATASET_NAME"]).to_json(orient='index'),
+        # Get attributes' data types.
+        "attribute_data_types": app.config["DATASET_CLASS"].get_attributes_data_types(),
 
         # --------------------------------------------------------
         # Explain embedding value with SHAP.

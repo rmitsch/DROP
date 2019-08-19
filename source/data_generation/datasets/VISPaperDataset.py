@@ -248,7 +248,7 @@ class VISPaperDataset(InputDataset):
                 k=k
             )
 
-    def compute_TDP(self, features: numpy.ndarray = None):
+    def compute_target_domain_performance(self, features: numpy.ndarray = None):
         self._logger.info("Calculating classification accuracy.")
 
         accuracy = 0

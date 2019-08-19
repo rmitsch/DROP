@@ -58,7 +58,7 @@ class HappinessDataset(InputDataset):
             features_df = features_df.rename(columns={"happiness_level": "target_label"})
             features_df.to_csv(path_or_buf=filepath, index=False)
 
-    def compute_TDP(self, features: np.ndarray = None, relative: bool = False):
+    def compute_target_domain_performance(self, features: np.ndarray = None, relative: bool = False):
         # Set features, if not specified in function call.
         features = self.preprocessed_features() if features is None else features
         labels = np.reshape(self.labels().values, (self.labels().values.shape[0], 1))
@@ -110,3 +110,22 @@ class HappinessDataset(InputDataset):
 
         # Normalize to 0 <= x <= 1.
         return (silhouette_score + 1) / 2.0
+
+    @staticmethod
+    def get_attributes_data_types() -> dict:
+        return {
+            "happiness_rank": {"supertype": "numerical", "type": "discrete"},
+            "happiness_score": {"supertype": "numerical", "type": "continous"},
+            "economy": {"supertype": "numerical", "type": "continous"},
+            "family": {"supertype": "numerical", "type": "continous"},
+            "health": {"supertype": "numerical", "type": "continous"},
+            "freedom": {"supertype": "numerical", "type": "continous"},
+            "generosity": {"supertype": "numerical", "type": "continous"},
+            "corruption": {"supertype": "numerical", "type": "continous"},
+            "dystopia_residual": {"supertype": "numerical", "type": "continous"},
+            "cellular_subscriptions": {"supertype": "numerical", "type": "discrete"},
+            "surplus_deficit_gdp": {"supertype": "numerical", "type": "continous"},
+            "inflation_rate": {"supertype": "numerical", "type": "continous"},
+            "population": {"supertype": "numerical", "type": "discrete"},
+            "record_name": {"supertype": "categorical", "type": "nominal"}
+        }

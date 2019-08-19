@@ -41,7 +41,7 @@ class InputDataset:
 
         # Calculate accuracy.
         self._classification_accuracy = classification_accuracy if classification_accuracy is not None \
-            else self.compute_TDP()
+            else self.compute_target_domain_performance()
 
     @abc.abstractmethod
     def _load_data(self):
@@ -108,7 +108,25 @@ class InputDataset:
         """
         pass
 
-    def compute_TDP(self, features: numpy.ndarray = None, relative: bool = False):
+    @staticmethod
+    @abc.abstractmethod
+    def get_attributes_data_types() -> dict:
+        """
+        Describes dataset's columns and their typification. Supertypes/types:
+          - Categorical
+            - Nominal
+            - Ordinal
+          - Numerical
+            - Discrete
+            - Continous
+            - Interval
+            - Ratio
+        :return: Dictionary describing columns' types. {attribute -> {supertype: x, type: y[, ordering: []]}}. Ordering
+        is only included for ordinal attributes.
+        """
+        pass
+
+    def compute_target_domain_performance(self, features: numpy.ndarray = None, relative: bool = False):
         """
         Calculates target domain performance for specified feature matrix.
         Random forests are used as default model. Can be overwritten by children - important for comparison: Use

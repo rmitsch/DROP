@@ -126,7 +126,7 @@ class DimensionalityReductionThread(threading.Thread):
             # 2. c. Information-preserving metrics.
             ############################################
 
-            rtdp = self._input_dataset.compute_TDP(
+            rtdp = self._input_dataset.compute_target_domain_performance(
                 features=scaled_low_dim_projection, relative=True
             )
 
