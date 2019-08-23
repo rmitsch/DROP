@@ -20,6 +20,7 @@ from multiprocessing.pool import Pool as ProcessPool
 
 from data_generation.datasets import *
 from data_generation.dimensionality_reduction import DimensionalityReductionKernel
+from objectives.topology_preservation_objectives import CorankingMatrix
 from utils import Utils
 
 
@@ -28,6 +29,8 @@ frontend_path = sys.argv[1]
 logger = Utils.create_logger()
 # Initialize flask app.
 app = Utils.init_flask_app(frontend_path)
+# Define data storage location.
+storage_path = os.getcwd() + "/../data/"
 
 
 # root: Render HTML for start menu.
@@ -245,7 +248,7 @@ def get_sample_dissonance():
         # Use arbitrary model to fetch number of records/points in model.
         num_records = h5file.root.metadata[0][1]
         # Initialize numpy matrix for pointwise qualities.
-        pointwise_qualities = numpy.zeros([h5file.root.metadata.nrows, num_records])
+        pointwise_qualities = np.zeros([h5file.root.metadata.nrows, num_records])
 
         # ------------------------------------------------------
         # 2. Iterate over models.
@@ -284,30 +287,39 @@ def get_dr_model_details():
 
     embedding_id = int(request.args["id"])
     file_name = app.config["FULL_FILE_NAME"]
-    high_dim_file_name = os.getcwd() + "/../data/" + app.config["DATASET_NAME"] + "_records.csv"
 
-    if not os.path.isfile(file_name):
-        return "File " + file_name + "does not exist.", 400
-    if not os.path.isfile(high_dim_file_name):
-        return "File " + high_dim_file_name + "does not exist.", 400
+    high_dim_file_name = storage_path + app.config["DATASET_NAME"] + "_records.csv"
+    high_dim_neighbour_ranking_file_name = storage_path + app.config["DATASET_NAME"] + "_neighbourhood_ranking.pkl"
+    high_dim_distance_matrices_file_name = storage_path + app.config["DATASET_NAME"] + "_distance_matrices.pkl"
+
+    for fn in (
+            file_name, high_dim_file_name, high_dim_neighbour_ranking_file_name,
+            high_dim_distance_matrices_file_name
+    ):
+        if not os.path.isfile(fn):
+            return "File " + fn + " does not exist.", 400
 
     # Open file containing information on low-dimensional projections.
     h5file = open_file(filename=file_name, mode="r+")
+
+    # Read coordinates for low-dimensional projection of this embedding.
+    low_dim_projection = h5file.root.projection_coordinates._f_get_child("model" + str(embedding_id)).read()
+
+    # Compute pairwise displacement data.
+    res = CorankingMatrix.compute_pairwise_displacement_data(
+        high_dim_distance_matrices_file_name,
+        high_dim_neighbour_ranking_file_name,
+        low_dim_projection
+    )
 
     # Fetch dataframe with preprocessed features.
     embedding_metadata_feat_df = app.config["EMBEDDING_METADATA"]["features_preprocessed"].loc[[str(embedding_id)]]
 
     # Drop index for categorical variables that are inactive for this record.
     # Note: Currently hardcoded for metric only.
-    cols = embedding_metadata_feat_df.columns.values
-    param_indices = [
-        i for i
-        in range(len(cols))
-        if "metric_" not in cols[i] or
-           cols[i] == "metric_" + str(
-            app.config["EMBEDDING_METADATA"]["original"].loc[[embedding_id]].metric.values[0]
-        )[2:-1]
-    ]
+    param_indices = Utils.get_active_col_indices(
+        embedding_metadata_feat_df, app.config["EMBEDDING_METADATA"], embedding_id
+    )
 
     # Let SHAP estimate influence of hyperparameter values for each objective.
     # See https://github.com/slundberg/shap/issues/392 on how to verify predicted SHAP values.
@@ -335,7 +347,7 @@ def get_dr_model_details():
         # Transform node with this model into a dataframe so we can easily retain column names.
         "model_metadata": app.config["EMBEDDING_METADATA"]["original"].to_json(orient='index'),
         # Fetch projection record by node name.
-        "low_dim_projection": h5file.root.projection_coordinates._f_get_child("model" + str(embedding_id)).read().tolist(),
+        "low_dim_projection": low_dim_projection.tolist(),
         # Get dissonances of this model's samples.
         "sample_dissonances": h5file.root.pointwise_quality._f_get_child("model" + str(embedding_id)).read().tolist(),
 
@@ -347,6 +359,15 @@ def get_dr_model_details():
         "original_dataset": Utils.prepare_binned_original_dataset(app.config["DATASET_NAME"]).to_json(orient='index'),
         # Get attributes' data types.
         "attribute_data_types": app.config["DATASET_CLASS"].get_attributes_data_types(),
+
+        # --------------------------------------------------------
+        # Relative positional data.
+        # --------------------------------------------------------
+
+        # todo Return
+        # todo prepare as pairs: [record index 1, record index 2, high dim distance, low dim distance] to avoid JS
+        #  preprocessing.
+
 
         # --------------------------------------------------------
         # Explain embedding value with SHAP.
@@ -391,4 +412,4 @@ def compute_correlation_strength():
 
 # Launch on :2483.
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=2483, threaded=True, debug=False)
+    app.run(host='0.0.0.0', port=2483, threaded=True, debug=True)

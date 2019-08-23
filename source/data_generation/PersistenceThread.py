@@ -42,6 +42,7 @@ class PersistenceThread(threading.Thread):
         self._dim_red_kernel_name = dim_red_kernel_name
         self._checking_interval = checking_interval
         self._ids_to_process = None
+        self._storage_path = os.getcwd() + "/../../data/"
 
         # Fetch .h5 file handle.
         self._h5file = self._open_pytables_file()
@@ -154,7 +155,7 @@ class PersistenceThread(threading.Thread):
         """
 
         self._ids_to_process = {i for i in range(0, self._total_number_of_results)}
-        file_name = os.getcwd() + "/../data/drop_" + self._dataset_name + "_" + self._dim_red_kernel_name.lower() + ".h5"
+        file_name = self._storage_path + "drop_" + self._dataset_name + "_" + self._dim_red_kernel_name.lower() + ".h5"
 
         # If file exists: Return handle to existing file (assuming file is not corrupt).
         if os.path.isfile(file_name):

@@ -2,14 +2,14 @@ import logging
 from contextlib import contextmanager
 import sys
 import os
-import pandas as pd
+import pickle
 
+import pandas as pd
 import lime
 import numpy as np
 import pandas
 import psutil
 import sklearn
-import scipy
 from flask import Flask
 from sklearn.preprocessing import LabelEncoder
 from sklearn.tree import DecisionTreeRegressor
@@ -17,8 +17,11 @@ from skrules import SkopeRules
 import lime.lime_tabular
 
 
-# Class for various, non-essential tasks.
 class Utils:
+    """
+    Class for various, non-essential tasks.
+    """
+
     # Inactive constructor.
     def __init__(self):
         print("Constructing Utils. Shouldn't happen")
@@ -300,3 +303,52 @@ class Utils:
             df[attribute + "#histogram"] = pd.cut(df[attribute], bins=bin_count).apply(lambda x: x.left)
 
         return df
+
+    @staticmethod
+    def compute_coranking_matrices(
+            distance_matrices: np.ndarray,
+            low_dim_data: np.ndarray,
+            high_dim_neighbour_ranking: np.ndarray,
+            metrics: set,
+            use_np_arrays: bool = True
+    ) -> dict:
+        """
+        Computes coranking matrices for specified values and list of metrics.
+        :param distance_matrices:
+        :param low_dim_data:
+        :param high_dim_neighbour_ranking:
+        :param metrics:
+        :param use_np_arrays:
+        :return: Dict with metric -> np.ndarray or metric -> list, depending on whether use_np_arrays is True.
+        """
+
+        return {
+            #     high_dimensional_data=distance_matrices[metric],
+            #     low_dimensional_data=low_dim_data,
+            #     distance_metric=metric,
+            #     high_dimensional_neighbourhood_ranking=high_dim_neighbour_ranking[metric]
+            # )
+            # for metric in metrics
+            # metric: CorankingMatrix(
+        }
+
+    @staticmethod
+    def get_active_col_indices(metadata: pd.DataFrame, metadata_config: dict, embedding_id: int) -> list:
+        """
+        Auxiliary method for picking only those columns in metadata dataframe that are either numerical or "active" -
+        i. e. currently: A metric column.
+        :param metadata:
+        :param metadata_config:
+        :param embedding_id:
+        :return: List of active columns in metadata dataframe.
+        """
+
+        cols = metadata.columns.values
+        return [
+            i for i
+            in range(len(cols))
+            if "metric_" not in cols[i] or
+               cols[i] == "metric_" + str(
+                metadata_config["original"].loc[[embedding_id]].metric.values[0]
+            )[2:-1]
+        ]

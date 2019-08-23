@@ -2,6 +2,7 @@ import sys
 from random import shuffle
 import psutil
 import os
+import pickle
 from tables import *
 from tqdm import tqdm
 
@@ -13,7 +14,7 @@ from data_generation.dimensionality_reduction.DimensionalityReductionThread impo
 from utils import Utils
 
 
-def generate_instance(instance_dataset_name: str):
+def generate_instance(instance_dataset_name: str) -> InputDataset:
     """
     Generates and returns dataset instance of specified type.
     :param instance_dataset_name:
@@ -36,6 +37,7 @@ def generate_instance(instance_dataset_name: str):
 
 # Create logger.
 logger = Utils.create_logger()
+storage_path = os.getcwd() + "/../../data/"
 
 ######################################################
 # 1. Generate parameter sets, store in file.
@@ -48,7 +50,7 @@ dim_red_kernel_name = sys.argv[2] if len(sys.argv) > 2 else "TSNE"
 
 # Get all parameter configurations (to avoid duplicate model generations).
 parameter_sets, num_param_sets = DimensionalityReductionKernel.generate_parameter_sets_for_testing(
-    data_file_path=os.getcwd() + "/../data/drop_" + dataset_name + "_" + dim_red_kernel_name.lower() + ".h5",
+    data_file_path=storage_path + "drop_" + dataset_name + "_" + dim_red_kernel_name.lower() + ".h5",
     dim_red_kernel_name=dim_red_kernel_name
 )
 
@@ -62,7 +64,7 @@ logger.info("Creating dataset.")
 high_dim_dataset = generate_instance(instance_dataset_name=dataset_name)
 
 # Persist dataset's records.
-high_dim_dataset.persist_records(directory=os.getcwd() + "/../data")
+high_dim_dataset.persist_records(directory=os.getcwd() + "/../../data")
 
 # Scale attributes, fetch predictors.
 high_dim_features = high_dim_dataset.preprocessed_features()
@@ -86,6 +88,12 @@ high_dim_neighbourhood_rankings = {
     )
     for metric in DimensionalityReductionKernel.get_metric_values(dim_red_kernel_name)
 }
+
+# Store high-dimensional distances matrices and neighbourhood rankings.
+with open(storage_path + dataset_name + "_distance_matrices.pkl", "wb") as file:
+    pickle.dump(distance_matrices, file)
+with open(storage_path + dataset_name + "_neighbourhood_ranking.pkl", "wb") as file:
+    pickle.dump(high_dim_neighbourhood_rankings, file)
 
 ######################################################
 # 3. Set up multithreading.

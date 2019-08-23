@@ -1,11 +1,16 @@
-import copy
+import pickle
 
-import numpy
+import pandas as pd
+import numpy as np
 from objectives.DimensionalityReductionObjective import DimensionalityReductionObjective
 from coranking.metrics import trustworthiness, continuity
+from typing import Tuple
 from scipy.spatial import distance
 import sklearn
 import networkx as nx
+from utils import Utils
+import itertools
+from scipy.spatial.distance import cdist
 
 
 class CorankingMatrix:
@@ -15,23 +20,35 @@ class CorankingMatrix:
 
     def __init__(
             self,
-            low_dimensional_data: numpy.ndarray,
-            high_dimensional_data: numpy.ndarray,
+            low_dimensional_data: np.ndarray,
+            high_dimensional_data: np.ndarray,
             distance_metric: str = 'euclidean',
-            high_dimensional_neighbourhood_ranking: numpy.ndarray = None
+            high_dimensional_neighbourhood_ranking: np.ndarray = None
     ):
+        """
+        Computes new co-ranking matrix.
+        :param low_dimensional_data:
+        :param high_dimensional_data:
+        :param distance_metric:
+        :param high_dimensional_neighbourhood_ranking:
+        """
+
         self._distance_metric = distance_metric
         self._high_dim_ranking = None
         self._low_dim_ranking = None
 
-        self._matrix = self._generate_coranking_matrix(
+        self._matrix, self._record_bin_indices = self._generate_coranking_matrix(
             high_dimensional_data=high_dimensional_data,
             low_dimensional_data=low_dimensional_data,
             high_dim_neighbourhood_ranking=high_dimensional_neighbourhood_ranking
         )
 
+    @property
+    def record_bin_indices(self) -> pd.DataFrame:
+        return self._record_bin_indices
+
     @staticmethod
-    def generate_neighbourhood_ranking(distance_matrix: numpy.ndarray):
+    def generate_neighbourhood_ranking(distance_matrix: np.ndarray) -> np.ndarray:
         """
         Generates neighbourhood ranking. Used externally, accepts pre-calculated distance matrix.
         Might be used to generate a ranking once and supplying it to generate_coranking_matrix() instead of calculating
@@ -45,12 +62,11 @@ class CorankingMatrix:
         return distance_matrix.argsort(axis=1).argsort(axis=1)
 
     @staticmethod
-    def _generate_neighbourhood_ranking(data: numpy.ndarray, distance_metric: str):
+    def _generate_neighbourhood_matrix(data: np.ndarray, distance_metric: str) -> np.ndarray:
         """
-        Generates neighbourhood ranking. Used internally, accepts original data and chosen distance metric.
-
+        Generates neighbourhood matrix. Accepts original data and chosen distance metric.
         Might be used to generate a ranking once and supplying it to generate_coranking_matrix() instead of calculating
-        it over and over.
+        it repeatedly.
         :param data:
         :param distance_metric:
         :return: ndarray of sorted and ranked neigbourhood similarity.
@@ -62,11 +78,11 @@ class CorankingMatrix:
 
     def _generate_coranking_matrix(
             self,
-            high_dimensional_data: numpy.ndarray,
-            low_dimensional_data: numpy.ndarray,
-            high_dim_neighbourhood_ranking: numpy.ndarray = None,
-            use_geodesic=False
-    ):
+            high_dimensional_data: np.ndarray,
+            low_dimensional_data: np.ndarray,
+            high_dim_neighbourhood_ranking: np.ndarray = None,
+            use_geodesic: bool = False
+    ) -> Tuple[np.ndarray, pd.DataFrame]:
         """
         This function allows to construct coranking matrix based on data in state and latent space. Based on
         implementations in https://github.com/samueljackson92/coranking and
@@ -79,7 +95,8 @@ class CorankingMatrix:
         :param use_geodesic: Whether to use the geodesic distance for state space.
         :param high_dim_neighbourhood_ranking: Ranking of neighbourhood similarities. Calculated if none is supplied. If
         supplied, high_dimensional_data is not used.
-        :return: Coranking matrix as 2-dim. ndarry.
+        :return: (1) Coranking matrix as 2-dim. ndarry, (2) pd.DataFrame with records like [source record index, neighbour
+        record index, bin index x-axis, bin index y-axis] if compute_indices_bin_location == True - otherwise None.
         """
 
         n, m = high_dimensional_data.shape
@@ -95,7 +112,7 @@ class CorankingMatrix:
                     data=high_dimensional_data,
                     distance_metric=self._distance_metric
                 ) if use_geodesic else \
-                CorankingMatrix._generate_neighbourhood_ranking(
+                CorankingMatrix._generate_neighbourhood_matrix(
                     high_dimensional_data,
                     distance_metric=self._distance_metric
                 )
@@ -109,7 +126,7 @@ class CorankingMatrix:
         # ------------------------------------------------------------------------------------
 
         # Calculate distances.
-        self._low_dim_ranking = CorankingMatrix._generate_neighbourhood_ranking(
+        self._low_dim_ranking = CorankingMatrix._generate_neighbourhood_matrix(
             low_dimensional_data,
             distance_metric=self._distance_metric
         )
@@ -118,17 +135,42 @@ class CorankingMatrix:
         # 3. Compute coranking matrix.
         # ------------------------------------------------------------------------------------
 
-        Q, xedges, yedges = numpy.histogram2d(
-            self._high_dim_ranking.flatten(),
-            self._low_dim_ranking.flatten(),
+        high_dim_neighbourhood_positions = self._high_dim_ranking.flatten()
+        low_dim_neighbourhood_positions = self._low_dim_ranking.flatten()
+
+        Q, xedges, yedges = np.histogram2d(
+            high_dim_neighbourhood_positions,
+            low_dim_neighbourhood_positions,
             bins=n
         )
 
+        # ------------------------------------------------------------------------------------
+        # 4. Extract bin indices of records in co-ranking matrix.
+        # ------------------------------------------------------------------------------------
+
+        # self._*_dim_ranking specifies the rank/neighbourhood distance in jumps between
+        # records x (row) and y (column) - i. e. element (x, y), record y, is record x's
+        # self._*_dim_ranking[x, y]-th neighbour.
+
+        # Compile dataframe with information on bin index for record pair.
+        # Note that high_dim_neighbour_rank represents y-axis, low_dim_neighbour_offset the x-axis in co-ranking
+        # matrix.
+        index_vals: list = list(range(n))
+        record_indices: np.ndarray = np.asarray([element for element in itertools.product(index_vals, index_vals)])
+        record_bin_indices = pd.DataFrame({
+            "source": record_indices[:, 0],
+            "neighbour": record_indices[:, 1],
+            "high_dim_neighbour_rank": high_dim_neighbourhood_positions,
+            "low_dim_neighbour_offset": low_dim_neighbourhood_positions - high_dim_neighbourhood_positions
+        })
+        # Exclude self-referential records (i. e. rows stating that record x is record's x closest neighbour).
+        record_bin_indices = record_bin_indices[record_bin_indices.source != record_bin_indices.neighbour]
+
         # We remove the rankings corresponding to themselves
-        return Q[1:, 1:]
+        return Q[1:, 1:], record_bin_indices
 
     @staticmethod
-    def _calculate_geodesic_ranking(data: numpy.ndarray, distance_metric: str):
+    def _calculate_geodesic_ranking(data: np.ndarray, distance_metric: str):
         """
         Calculates neighbourhood ranking in data based on geodesic distances.
         :param data:
@@ -145,8 +187,8 @@ class CorankingMatrix:
             is_connex = nx.is_connected(graph)
             k += 1
         distances = nx.all_pairs_dijkstra_path_length(graph, cutoff=None, weight='weight')
-        distances = numpy.array(
-            [numpy.array(a.items())[:, 1] for a in numpy.array(distances.items())[:, 1]])
+        distances = np.array(
+            [np.array(a.items())[:, 1] for a in np.array(distances.items())[:, 1]])
 
         distances = (distances + distances.T) / 2
 
@@ -155,10 +197,10 @@ class CorankingMatrix:
 
     @staticmethod
     def generate_coranking_matrix_deprecated(
-            high_dimensional_data: numpy.ndarray,
-            low_dimensional_data: numpy.ndarray,
+            high_dimensional_data: np.ndarray,
+            low_dimensional_data: np.ndarray,
             distance_metric: str,
-            high_dim_neighbourhood_ranking: numpy.ndarray = None
+            high_dim_neighbourhood_ranking: np.ndarray = None
     ):
         """
         Calculates coranking matrix (might be used for calculating matrix only once if several coranking-based metrics
@@ -177,12 +219,12 @@ class CorankingMatrix:
 
         # Calculate ranking of neighbourhood similarities for high- and low-dimensional datasets.
         high_ranking = high_dim_neighbourhood_ranking if high_dim_neighbourhood_ranking is not None else \
-            CorankingMatrix._generate_neighbourhood_ranking(high_dimensional_data, distance_metric)
+            CorankingMatrix._generate_neighbourhood_matrix(high_dimensional_data, distance_metric)
         low_ranking = \
-            CorankingMatrix._generate_neighbourhood_ranking(low_dimensional_data, distance_metric)
+            CorankingMatrix._generate_neighbourhood_matrix(low_dimensional_data, distance_metric)
 
         # Aggregate coranking matrix.
-        Q, xedges, yedges = numpy.histogram2d(high_ranking.flatten(), low_ranking.flatten(), bins=n)
+        Q, xedges, yedges = np.histogram2d(high_ranking.flatten(), low_ranking.flatten(), bins=n)
 
         # Remove rankings which correspond to themselves, return coranking matrix.
         return Q[1:, 1:]
@@ -215,8 +257,8 @@ class CorankingMatrix:
         measures = []
         for k in k_values:
             # We compute the mask.
-            mask = numpy.zeros([n, n])
-            mask[:k, :k] = numpy.triu(numpy.ones([k, k]))
+            mask = np.zeros([n, n])
+            mask[:k, :k] = np.triu(np.ones([k, k]))
             # We compute the normalization constant
             norm = k * (n + 1.)
             # We finally compute the measures
@@ -243,11 +285,11 @@ class CorankingMatrix:
         vals = Q
 
         # We compute the mask
-        mask = numpy.zeros([n, n])
+        mask = np.zeros([n, n])
 
         measures = []
         for k in k_values:
-            mask[:k, :k] = numpy.tril(numpy.ones([k, k]))
+            mask[:k, :k] = np.tril(np.ones([k, k]))
             # We compute the normalization constant.
             norm = k * (n + 1.)
             # We finally compute the measures.
@@ -289,15 +331,15 @@ class CorankingMatrix:
         # Create pointwise coranking matrix for each index.
         for i in indices:
             # Initialize ranking matrices.
-            low_dim_nh_ranking_i = numpy.zeros(self._low_dim_ranking.shape)
-            high_dim_nh_ranking_i = numpy.zeros(self._high_dim_ranking.shape)
+            low_dim_nh_ranking_i = np.zeros(self._low_dim_ranking.shape)
+            high_dim_nh_ranking_i = np.zeros(self._high_dim_ranking.shape)
 
             # Copy row i.
             low_dim_nh_ranking_i[i] = self._low_dim_ranking[i]
             high_dim_nh_ranking_i[i] = self._high_dim_ranking[i]
 
             # Calculate coranking matrix.
-            Q, xedges, yedges = numpy.histogram2d(
+            Q, xedges, yedges = np.histogram2d(
                 high_dim_nh_ranking_i.flatten(),
                 low_dim_nh_ranking_i.flatten(),
                 bins=n
@@ -305,3 +347,72 @@ class CorankingMatrix:
 
             # Remove rankings which correspond to themselves, return coranking matrix.
             yield Q[1:, 1:]
+
+    @staticmethod
+    def compute_pairwise_displacement_data(
+            original_distance_matrices_file_path: str,
+            original_neighbour_ranking_file_path: str,
+            low_dim_projection_data: np.ndarray
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """
+        Computes pairwise displacement data, i. e. data needed for Shepard diagram (pairwise distances between records
+        in high- and low-dimensional space) and coranking matrix for this low-dimensional embedding.
+        :param original_distance_matrices_file_path:
+        :param original_neighbour_ranking_file_path:
+        :param low_dim_projection_data:
+        :return: (1) For Shepard diagram: pd.DataFrame with records like [record index 1, record index 2,
+        high dim distance, low dim distance]. (2) For co-ranking matrix: pd.DataFrame with records likes [
+        record_source, jumps_to_record_1, jumps_to_record_2, ...].
+        """
+
+        # Read files on coranking and distance matrices.
+        print("start x")
+        import time
+
+        start = time.time()
+
+        ###############################################
+        # 1. Load files.
+        ###############################################
+
+        with open(original_neighbour_ranking_file_path, "rb") as file:
+            original_neighbour_ranking: dict = pickle.load(file)
+        with open(original_distance_matrices_file_path, "rb") as file:
+            original_distance_matrices: dict = pickle.load(file)
+        distance_metrics = set(original_distance_matrices.keys())
+
+        ###############################################
+        # 2. Compute coranking and distance matrices
+        # for low-dimensional dataset.
+        ###############################################
+
+        # Note that this is not feasible for bigger datasets - but storing distance and coranking matrices for every
+        # embedding is probably neither.
+
+        low_dim_distance_matrices = {
+            metric: cdist(low_dim_projection_data, low_dim_projection_data, metric)
+            for metric in distance_metrics
+        }
+
+        coranking_matrices = {
+            metric: CorankingMatrix(
+                high_dimensional_data=original_distance_matrices[metric],
+                low_dimensional_data=low_dim_projection_data,
+                distance_metric=metric,
+                high_dimensional_neighbourhood_ranking=original_neighbour_ranking[metric]
+            )
+            for metric in distance_metrics
+        }
+
+        ###############################################
+        # 3. Transform data to desired format.
+        ###############################################
+
+        # Distance matrices: Should be [metric, record index 1, record index 2, high dim distance, low dim distance].
+        # Coranking matrix: Should be [metric, record index 1, record index 2, displacement rank].
+
+        # print(coranking_matrices["euclidean"]._matrix.shape)
+        # print(original_distance_matrices["euclidean"].shape)
+        print("*****", time.time() - start)
+
+        return pd.DataFrame(), pd.DataFrame()
