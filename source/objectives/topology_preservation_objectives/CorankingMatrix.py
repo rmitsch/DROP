@@ -161,7 +161,7 @@ class CorankingMatrix:
             "source": record_indices[:, 0],
             "neighbour": record_indices[:, 1],
             "high_dim_neighbour_rank": high_dim_neighbourhood_positions,
-            "low_dim_neighbour_offset": low_dim_neighbourhood_positions - high_dim_neighbourhood_positions
+            "low_dim_neighbour_rank": low_dim_neighbourhood_positions
         })
         # Exclude self-referential records (i. e. rows stating that record x is record's x closest neighbour).
         record_bin_indices = record_bin_indices[record_bin_indices.source != record_bin_indices.neighbour]
@@ -403,6 +403,8 @@ class CorankingMatrix:
             )
             for metric in distance_metrics
         }
+
+        # todo next: finish compilation of shepard diagram data. then start with visualization (DetailDataset.js first).
 
         ###############################################
         # 3. Transform data to desired format.
