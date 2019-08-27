@@ -306,7 +306,7 @@ def get_dr_model_details():
     low_dim_projection = h5file.root.projection_coordinates._f_get_child("model" + str(embedding_id)).read()
 
     # Compute pairwise displacement data.
-    pairwise_displacement_data: dict = CorankingMatrix.compute_pairwise_displacement_data(
+    pairwise_displacement_data: pd.DataFrame = CorankingMatrix.compute_pairwise_displacement_data(
         high_dim_distance_matrices_file_name,
         high_dim_neighbour_ranking_file_name,
         low_dim_projection
@@ -365,10 +365,7 @@ def get_dr_model_details():
         # Relative positional data.
         # --------------------------------------------------------
 
-        "pairwise_displacement_data": {
-            metric: pairwise_displacement_data[metric].to_dict(orient="records")
-            for metric in pairwise_displacement_data
-        },
+        "pairwise_displacement_data": pairwise_displacement_data.to_dict(orient="records"),
 
         # --------------------------------------------------------
         # Explain embedding value with SHAP.

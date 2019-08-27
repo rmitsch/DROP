@@ -351,7 +351,7 @@ class CorankingMatrix:
             original_distance_matrices_file_path: str,
             original_neighbour_ranking_file_path: str,
             low_dim_projection_data: np.ndarray
-    ) -> dict:
+    ) -> pd.DataFrame:
         """
         Computes pairwise displacement data, i. e. data needed for Shepard diagram (pairwise distances between records
         in high- and low-dimensional space) and coranking matrix for this low-dimensional embedding.
@@ -361,20 +361,17 @@ class CorankingMatrix:
         :return: Dict of pd.DataFrames with records like [
             record index 1,
             record index 2,
+            metric,
             high dim distance,
             low dim distance,
             high dim neighbour rank,
             low dim neighbour rank
         ].
-        One dataframe per metric.
         """
 
         # Get number of records.
         n: int = low_dim_projection_data.shape[0]
 
-        import time
-
-        start = time.time()
         ###############################################
         # 1. Load files.
         ###############################################
@@ -383,40 +380,40 @@ class CorankingMatrix:
             original_neighbour_ranking: dict = pickle.load(file)
         with open(original_distance_matrices_file_path, "rb") as file:
             original_distance_matrices: dict = pickle.load(file)
-        distance_metrics = set(original_distance_matrices.keys())
+        distance_metrics = list(original_distance_matrices.keys())
 
         ###############################################
         # 2. Compute coranking and distance matrices
         # for low-dimensional dataset.
         ###############################################
         # Note that this is not feasible for bigger datasets - but storing distance and coranking matrices for every
-        
-        # Gather co-ranking matrix information.
-        pairwise_displacement_data: dict = {
-            metric: CorankingMatrix(
+
+        pairwise_displacement_data: pd.DataFrame = pd.DataFrame()
+        for metric in distance_metrics:
+            # 1. Gather co-ranking matrix information.
+            df = CorankingMatrix(
                 high_dimensional_data=original_distance_matrices[metric],
                 low_dimensional_data=low_dim_projection_data,
                 distance_metric=metric,
                 high_dimensional_neighbourhood_ranking=original_neighbour_ranking[metric]
             ).record_bin_indices
-            for metric in distance_metrics
-        }
+            df["metric"] = metric
 
-        # Gather distance values, merge with existing dataframes.
-        index_vals: list = list(range(n))
-        record_indices: np.ndarray = np.asarray([element for element in itertools.product(index_vals, index_vals)])
-        for metric in distance_metrics:
-            df: pd.DataFrame = pd.DataFrame({
-                "source": record_indices[:, 0],
-                "neighbour": record_indices[:, 1],
-                "high_dim_distance": original_distance_matrices[metric].flatten(),
-                "low_dim_distance": cdist(low_dim_projection_data, low_dim_projection_data, metric).flatten(),
-            })
-            # Discard auto-referential entries.
-            df = df[df.source != df.neighbour]
+            # 2. Gather distance values, merge with existing dataframes (note that index sequence is identical, since
+            # both refer to the distance matrix in its original form + .flatten()).
+            hd_distances = original_distance_matrices[metric]
+            ld_distances = cdist(low_dim_projection_data, low_dim_projection_data, metric)
 
-            # Attach to existing dataframes.
-            pairwise_displacement_data[metric]["high_dim_distance"] = df.high_dim_distance
-            pairwise_displacement_data[metric]["low_dim_distance"] = df.low_dim_distance
+            # 3. Discard auto-referential entries (see https://stackoverflow.com/a/46736275) & append distance values to
+            # dataframe.
+            df["high_dim_distance"] = np.delete(
+                hd_distances.flatten(), range(0, hd_distances.size, len(hd_distances) + 1), 0
+            )
+            df["low_dim_distance"] = np.delete(
+                ld_distances.flatten(), range(0, ld_distances.size, len(ld_distances) + 1), 0
+            )
+
+            # 4. Fuse dataframes separated by metric into one.
+            pairwise_displacement_data = pd.concat([pairwise_displacement_data, df])
 
         return pairwise_displacement_data
