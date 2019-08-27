@@ -299,8 +299,13 @@ class Utils:
             quotechar='"'
         )
 
+        # Bin columns for histograms.
         for attribute in df.select_dtypes(include=[np.number]).columns:
             df[attribute + "#histogram"] = pd.cut(df[attribute], bins=bin_count).apply(lambda x: x.left)
+
+        # Round float values.
+        for numerical_col in df.select_dtypes(include='float64').columns:
+            df[numerical_col] = df[numerical_col].round(decimals=3)
 
         return df
 
