@@ -287,11 +287,11 @@ def get_dr_model_details():
 
     embedding_id = int(request.args["id"])
     file_name = app.config["FULL_FILE_NAME"]
-
     high_dim_file_name = storage_path + app.config["DATASET_NAME"] + "_records.csv"
     high_dim_neighbour_ranking_file_name = storage_path + app.config["DATASET_NAME"] + "_neighbourhood_ranking.pkl"
     high_dim_distance_matrices_file_name = storage_path + app.config["DATASET_NAME"] + "_distance_matrices.pkl"
 
+    # Make sure all files exist.
     for fn in (
             file_name, high_dim_file_name, high_dim_neighbour_ranking_file_name,
             high_dim_distance_matrices_file_name
@@ -306,7 +306,7 @@ def get_dr_model_details():
     low_dim_projection = h5file.root.projection_coordinates._f_get_child("model" + str(embedding_id)).read()
 
     # Compute pairwise displacement data.
-    res = CorankingMatrix.compute_pairwise_displacement_data(
+    pairwise_displacement_data: dict = CorankingMatrix.compute_pairwise_displacement_data(
         high_dim_distance_matrices_file_name,
         high_dim_neighbour_ranking_file_name,
         low_dim_projection
@@ -323,7 +323,7 @@ def get_dr_model_details():
 
     # Let SHAP estimate influence of hyperparameter values for each objective.
     # See https://github.com/slundberg/shap/issues/392 on how to verify predicted SHAP values.
-    explanations = {
+    explanations: dict = {
         objective: shap.TreeExplainer(
             app.config["GLOBAL_SURROGATE_MODELS"][objective]
         ).shap_values(embedding_metadata_feat_df.values[0], approximate=False)[param_indices].tolist()
@@ -338,6 +338,7 @@ def get_dr_model_details():
     for obj in DimensionalityReductionKernel.OBJECTIVES_WO_UPPER_BOUND:
         explanations[obj] = (explanations[obj] / app.config["EMBEDDING_METADATA"]["original"][obj].max()).tolist()
 
+    import json
     # Assemble result object.
     result = {
         # --------------------------------------------------------
@@ -364,10 +365,10 @@ def get_dr_model_details():
         # Relative positional data.
         # --------------------------------------------------------
 
-        # todo Return
-        # todo prepare as pairs: [record index 1, record index 2, high dim distance, low dim distance] to avoid JS
-        #  preprocessing.
-
+        "pairwise_displacement_data": {
+            metric: pairwise_displacement_data[metric].to_dict(orient="records")
+            for metric in pairwise_displacement_data
+        },
 
         # --------------------------------------------------------
         # Explain embedding value with SHAP.

@@ -157,17 +157,15 @@ class CorankingMatrix:
         # matrix.
         index_vals: list = list(range(n))
         record_indices: np.ndarray = np.asarray([element for element in itertools.product(index_vals, index_vals)])
-        record_bin_indices = pd.DataFrame({
+        record_bin_indices: pd.DataFrame = pd.DataFrame({
             "source": record_indices[:, 0],
             "neighbour": record_indices[:, 1],
             "high_dim_neighbour_rank": high_dim_neighbourhood_positions,
             "low_dim_neighbour_rank": low_dim_neighbourhood_positions
         })
-        # Exclude self-referential records (i. e. rows stating that record x is record's x closest neighbour).
-        record_bin_indices = record_bin_indices[record_bin_indices.source != record_bin_indices.neighbour]
 
-        # We remove the rankings corresponding to themselves
-        return Q[1:, 1:], record_bin_indices
+        # Exclude auto-referential records (i. e. rows stating that record x is record's x closest neighbour).
+        return Q[1:, 1:], record_bin_indices[record_bin_indices.source != record_bin_indices.neighbour]
 
     @staticmethod
     def _calculate_geodesic_ranking(data: np.ndarray, distance_metric: str):
@@ -353,24 +351,30 @@ class CorankingMatrix:
             original_distance_matrices_file_path: str,
             original_neighbour_ranking_file_path: str,
             low_dim_projection_data: np.ndarray
-    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    ) -> dict:
         """
         Computes pairwise displacement data, i. e. data needed for Shepard diagram (pairwise distances between records
         in high- and low-dimensional space) and coranking matrix for this low-dimensional embedding.
         :param original_distance_matrices_file_path:
         :param original_neighbour_ranking_file_path:
         :param low_dim_projection_data:
-        :return: (1) For Shepard diagram: pd.DataFrame with records like [record index 1, record index 2,
-        high dim distance, low dim distance]. (2) For co-ranking matrix: pd.DataFrame with records likes [
-        record_source, jumps_to_record_1, jumps_to_record_2, ...].
+        :return: Dict of pd.DataFrames with records like [
+            record index 1,
+            record index 2,
+            high dim distance,
+            low dim distance,
+            high dim neighbour rank,
+            low dim neighbour rank
+        ].
+        One dataframe per metric.
         """
 
-        # Read files on coranking and distance matrices.
-        print("start x")
+        # Get number of records.
+        n: int = low_dim_projection_data.shape[0]
+
         import time
 
         start = time.time()
-
         ###############################################
         # 1. Load files.
         ###############################################
@@ -385,36 +389,34 @@ class CorankingMatrix:
         # 2. Compute coranking and distance matrices
         # for low-dimensional dataset.
         ###############################################
-
         # Note that this is not feasible for bigger datasets - but storing distance and coranking matrices for every
-        # embedding is probably neither.
-
-        low_dim_distance_matrices = {
-            metric: cdist(low_dim_projection_data, low_dim_projection_data, metric)
-            for metric in distance_metrics
-        }
-
-        coranking_matrices = {
+        
+        # Gather co-ranking matrix information.
+        pairwise_displacement_data: dict = {
             metric: CorankingMatrix(
                 high_dimensional_data=original_distance_matrices[metric],
                 low_dimensional_data=low_dim_projection_data,
                 distance_metric=metric,
                 high_dimensional_neighbourhood_ranking=original_neighbour_ranking[metric]
-            )
+            ).record_bin_indices
             for metric in distance_metrics
         }
 
-        # todo next: finish compilation of shepard diagram data. then start with visualization (DetailDataset.js first).
+        # Gather distance values, merge with existing dataframes.
+        index_vals: list = list(range(n))
+        record_indices: np.ndarray = np.asarray([element for element in itertools.product(index_vals, index_vals)])
+        for metric in distance_metrics:
+            df: pd.DataFrame = pd.DataFrame({
+                "source": record_indices[:, 0],
+                "neighbour": record_indices[:, 1],
+                "high_dim_distance": original_distance_matrices[metric].flatten(),
+                "low_dim_distance": cdist(low_dim_projection_data, low_dim_projection_data, metric).flatten(),
+            })
+            # Discard auto-referential entries.
+            df = df[df.source != df.neighbour]
 
-        ###############################################
-        # 3. Transform data to desired format.
-        ###############################################
+            # Attach to existing dataframes.
+            pairwise_displacement_data[metric]["high_dim_distance"] = df.high_dim_distance
+            pairwise_displacement_data[metric]["low_dim_distance"] = df.low_dim_distance
 
-        # Distance matrices: Should be [metric, record index 1, record index 2, high dim distance, low dim distance].
-        # Coranking matrix: Should be [metric, record index 1, record index 2, displacement rank].
-
-        # print(coranking_matrices["euclidean"]._matrix.shape)
-        # print(original_distance_matrices["euclidean"].shape)
-        print("*****", time.time() - start)
-
-        return pd.DataFrame(), pd.DataFrame()
+        return pairwise_displacement_data
