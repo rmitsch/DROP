@@ -338,7 +338,6 @@ def get_dr_model_details():
     for obj in DimensionalityReductionKernel.OBJECTIVES_WO_UPPER_BOUND:
         explanations[obj] = (explanations[obj] / app.config["EMBEDDING_METADATA"]["original"][obj].max()).tolist()
 
-    import json
     # Assemble result object.
     result = {
         # --------------------------------------------------------
@@ -365,7 +364,13 @@ def get_dr_model_details():
         # Relative positional data.
         # --------------------------------------------------------
 
-        "pairwise_displacement_data": pairwise_displacement_data.to_dict(orient="records"),
+        "pairwise_displacement_data": pairwise_displacement_data.drop(columns=[
+            "high_dim_neighbour_rank", "low_dim_neighbour_rank"
+        ]).to_dict(orient="records"),
+        # Bin data for co-ranking matrix.
+        "coranking_matrix_data": CorankingMatrix.bin_coranking_matrix_data(
+            pairwise_displacement_data
+        ).to_dict(orient="records"),
 
         # --------------------------------------------------------
         # Explain embedding value with SHAP.

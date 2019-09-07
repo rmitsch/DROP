@@ -417,3 +417,27 @@ class CorankingMatrix:
             pairwise_displacement_data = pd.concat([pairwise_displacement_data, df])
 
         return pairwise_displacement_data
+
+    @staticmethod
+    def bin_coranking_matrix_data(pairwise_displacement_data: pd.DataFrame, n_bins: int = 10):
+        """
+        Bins pairwise displacement data into format easily usable for co-ranking matrix visualization.
+        :param pairwise_displacement_data:
+        :param n_bins:
+        :return:
+        """
+        df: pd.DataFrame = pairwise_displacement_data
+
+        # Prepare binned coranking matrix
+        df["high_dim_neighbour_bin"] = pd.cut(
+            df.high_dim_neighbour_rank, bins=n_bins, labels=[i for i in range(n_bins)]
+        )
+        df["low_dim_neighbour_bin"] = pd.cut(df.low_dim_neighbour_rank, bins=n_bins, labels=[i for i in range(n_bins)])
+
+        grouped = df.groupby(["metric", "high_dim_neighbour_bin", "low_dim_neighbour_bin"])
+        res = pd.DataFrame(
+            {"source": grouped["source"].apply(list), "neighbour": grouped["neighbour"].apply(list)}
+        )
+        res["paths"] = res.apply(lambda x: [(x.source[i], x.neighbour[i]) for i in range(len(x.source))], axis=1)
+
+        return res[["paths"]].reset_index()
