@@ -129,3 +129,10 @@ class HappinessDataset(InputDataset):
             "population": {"supertype": "numerical", "type": "discrete"},
             "record_name": {"supertype": "categorical", "type": "nominal"}
         }
+
+    @staticmethod
+    def sort_dataframe_columns_for_frontend(df: pd.DataFrame) -> pd.DataFrame:
+        df_sorted: pd.DataFrame = df.reindex(sorted(df.columns), axis=1)
+        df_sorted = df_sorted[['record_name'] + [col_name for col_name in df if col_name not in ['record_name']]]
+
+        return df_sorted

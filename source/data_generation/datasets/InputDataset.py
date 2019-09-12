@@ -7,7 +7,7 @@ import sklearn.ensemble
 from sklearn.model_selection import StratifiedShuffleSplit
 import sklearn.metrics
 import hdbscan
-
+import pandas as pd
 from utils import Utils
 
 
@@ -231,3 +231,13 @@ class InputDataset:
             return parameter
 
         return None
+
+    @staticmethod
+    @abc.abstractmethod
+    def sort_dataframe_columns_for_frontend(df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Sorts dataframe in desired sequence for frontend.
+        :param df:
+        :return:
+        """
+        pass

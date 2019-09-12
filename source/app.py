@@ -305,16 +305,25 @@ def get_dr_model_details():
     # Read coordinates for low-dimensional projection of this embedding.
     low_dim_projection = h5file.root.projection_coordinates._f_get_child("model" + str(embedding_id)).read()
 
+    # Fetch metadata about this dataset's attributes.
+    attribute_data_types: dict = app.config["DATASET_CLASS"].get_attributes_data_types()
+
     # Merge original high-dim. dataset with low-dim. coordinates.
-    original_dataset: pd.DataFrame = Utils.prepare_binned_original_dataset(app.config["DATASET_NAME"])
+    original_dataset: pd.DataFrame = app.config["DATASET_CLASS"].sort_dataframe_columns_for_frontend(
+        Utils.prepare_binned_original_dataset(app.config["DATASET_NAME"])
+    )
+    original_dataset.insert(loc=0, column="id", value=[_ for _ in range(len(original_dataset))])
+    # Prepare dataset for model detail table.
+    original_dataset_for_table: pd.DataFrame = app.config["DATASET_CLASS"].sort_dataframe_columns_for_frontend(
+        original_dataset[list(attribute_data_types.keys())]
+    )
+    original_dataset_for_table.insert(loc=0, column="id", value=[_ for _ in range(len(original_dataset))])
     # Append low.-dim. coordinates.
     for dim_idx in range(low_dim_projection.shape[1]):
         original_dataset[dim_idx] = low_dim_projection[:, dim_idx]
     # Pad low-dim. coordinates with a 0-dimension if they are just one-dimensional.
     if low_dim_projection.shape[1] == 1:
         original_dataset[1] = 0
-    # Add ID for table in frontend (needed by jquery's datatable library).
-    original_dataset.insert(loc=0, column="id", value=[_ for _ in range(len(original_dataset))])
 
     # Compute pairwise displacement data.
     pairwise_displacement_data: pd.DataFrame = CorankingMatrix.compute_pairwise_displacement_data(
@@ -365,7 +374,9 @@ def get_dr_model_details():
         # Fetch record names/titles, labels, original features.
         "original_dataset": original_dataset.to_json(orient='records'),
         # Get attributes' data types.
-        "attribute_data_types": app.config["DATASET_CLASS"].get_attributes_data_types(),
+        "attribute_data_types": attribute_data_types,
+        # Ready-to-use data for detail view table.
+        "original_dataset_for_table": original_dataset_for_table.to_json(orient="values"),
 
         # --------------------------------------------------------
         # Relative positional data.
@@ -422,4 +433,4 @@ def compute_correlation_strength():
 
 # Launch on :2483.
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=2483, threaded=True, debug=True)
+    app.run(host='0.0.0.0', port=2484, threaded=True, debug=True)
