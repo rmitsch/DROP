@@ -305,6 +305,17 @@ def get_dr_model_details():
     # Read coordinates for low-dimensional projection of this embedding.
     low_dim_projection = h5file.root.projection_coordinates._f_get_child("model" + str(embedding_id)).read()
 
+    # Merge original high-dim. dataset with low-dim. coordinates.
+    original_dataset: pd.DataFrame = Utils.prepare_binned_original_dataset(app.config["DATASET_NAME"])
+    # Append low.-dim. coordinates.
+    for dim_idx in range(low_dim_projection.shape[1]):
+        original_dataset[dim_idx] = low_dim_projection[:, dim_idx]
+    # Pad low-dim. coordinates with a 0-dimension if they are just one-dimensional.
+    if low_dim_projection.shape[1] == 1:
+        original_dataset[1] = 0
+    # Add ID for table in frontend (needed by jquery's datatable library).
+    original_dataset.insert(loc=0, column="id", value=[_ for _ in range(len(original_dataset))])
+
     # Compute pairwise displacement data.
     pairwise_displacement_data: pd.DataFrame = CorankingMatrix.compute_pairwise_displacement_data(
         high_dim_distance_matrices_file_name,
@@ -341,22 +352,18 @@ def get_dr_model_details():
     # Assemble result object.
     result = {
         # --------------------------------------------------------
-        # Retrieve data from low-dim. dataset.
+        # Retrieve model metadata.
         # --------------------------------------------------------
 
         # Transform node with this model into a dataframe so we can easily retain column names.
         "model_metadata": app.config["EMBEDDING_METADATA"]["original"].to_json(orient='index'),
-        # Fetch projection record by node name.
-        "low_dim_projection": low_dim_projection.tolist(),
-        # Get dissonances of this model's samples.
-        "sample_dissonances": h5file.root.pointwise_quality._f_get_child("model" + str(embedding_id)).read().tolist(),
 
         # --------------------------------------------------------
         # Retrieve data from original, high-dim. dataset.
         # --------------------------------------------------------
 
         # Fetch record names/titles, labels, original features.
-        "original_dataset": Utils.prepare_binned_original_dataset(app.config["DATASET_NAME"]).to_json(orient='index'),
+        "original_dataset": original_dataset.to_json(orient='records'),
         # Get attributes' data types.
         "attribute_data_types": app.config["DATASET_CLASS"].get_attributes_data_types(),
 
