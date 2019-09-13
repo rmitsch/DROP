@@ -10,11 +10,11 @@ class WineDataset(InputDataset):
     Loads wine dataset from sklearn.
     """
 
-    def __init__(self, data=None, preprocessed_features=None, classification_accuracy=None):
+    def __init__(self, data=None, preprocessed_features=None, target_domain_performance=None):
         super().__init__(
             data=data,
             preprocessed_features=preprocessed_features,
-            classification_accuracy=classification_accuracy
+            target_domain_performance=target_domain_performance
         )
 
     def _load_data(self):

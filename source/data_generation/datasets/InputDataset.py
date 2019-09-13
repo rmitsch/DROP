@@ -20,13 +20,13 @@ class InputDataset:
     # Target domain performance value in original high-dimensional space.
     high_dim_TDP = None
 
-    def __init__(self, data=None, preprocessed_features=None, classification_accuracy=None):
+    def __init__(self, data=None, preprocessed_features=None, target_domain_performance=None):
         """
         Defines variables to be used in inheriting classes.
         Takes some variable speeding up cloning an instance.
         :param data: Loaded primitive dataset.
         :param preprocessed_features: Preprocessed features.
-        :param classification_accuracy: Classification accuracy of this dataset.
+        :param target_domain_performance: Target domain performance of this dataset.
         """
 
         # Get logger.
@@ -40,7 +40,7 @@ class InputDataset:
             else self._preprocess_features()
 
         # Calculate accuracy.
-        self._classification_accuracy = classification_accuracy if classification_accuracy is not None \
+        self._target_domain_performance = target_domain_performance if target_domain_performance is not None \
             else self.compute_target_domain_performance()
 
     @abc.abstractmethod
@@ -74,12 +74,12 @@ class InputDataset:
         """
         return self._preprocessed_features
 
-    def classification_accuracy(self):
+    def target_domain_performance(self):
         """
         Returns classification accuracy.
         :return:
         """
-        return self._classification_accuracy
+        return self._target_domain_performance
 
     @abc.abstractmethod
     def labels(self):

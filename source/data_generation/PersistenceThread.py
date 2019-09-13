@@ -102,7 +102,7 @@ class PersistenceThread(threading.Thread):
                     metadata_row["r_nx"] = result_objectives["r_nx"]
                     metadata_row["b_nx"] = result_objectives["b_nx"]
                     metadata_row["stress"] = result_objectives["stress"]
-                    metadata_row["classification_accuracy"] = result_objectives["classification_accuracy"]
+                    metadata_row["target_domain_performance"] = result_objectives["target_domain_performance"]
                     metadata_row["separability_metric"] = result_objectives["separability_metric"]
 
                     # Append row to file.

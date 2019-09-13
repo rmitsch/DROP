@@ -148,7 +148,7 @@ class DimensionalityReductionThread(threading.Thread):
                 "r_nx": r_nx,
                 "b_nx": b_nx,
                 "stress": stress,
-                "classification_accuracy": rtdp,
+                "target_domain_performance": rtdp,
                 "separability_metric": separability_metric,
                 "pointwise_quality_values": q_nx_i
             }

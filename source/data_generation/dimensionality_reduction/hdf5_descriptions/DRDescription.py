@@ -15,6 +15,6 @@ class DRDescription(IsDescription):
     r_nx = Float32Col(pos=3)
     b_nx = Float32Col(pos=4)
     stress = Float32Col(pos=5)
-    classification_accuracy = Float32Col(pos=6)
+    target_domain_performance = Float32Col(pos=6)
     separability_metric = Float32Col(pos=7)
     runtime = Float32Col(pos=8)
