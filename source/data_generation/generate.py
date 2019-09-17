@@ -6,6 +6,7 @@ import pickle
 from tables import *
 from tqdm import tqdm
 
+from data_generation.explanations_generation import compute_and_persist_explainer_values
 from objectives.topology_preservation_objectives.CorankingMatrix import CorankingMatrix
 from data_generation.PersistenceThread import PersistenceThread
 from data_generation.datasets import *
@@ -148,3 +149,9 @@ for thread in threads:
     thread.start()
 for thread in threads:
     thread.join()
+
+######################################################
+# 4. Compute explainer values for all embeddings.
+######################################################
+
+compute_and_persist_explainer_values(logger, storage_path, dim_red_kernel_name, dataset_name)

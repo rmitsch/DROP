@@ -49,8 +49,12 @@ def get_metadata():
     :return:
     """
     app.config["CACHE_ROOT"] = "/tmp"
+    app.config["STORAGE_PATH"] = os.getcwd() + "/../data/"
     app.config["DATASET_NAME"] = InputDataset.check_dataset_name(request.args.get('datasetName'))
     app.config["DR_KERNEL_NAME"] = DimensionalityReductionKernel.check_kernel_name(request.args.get('drKernelName'))
+    base_path: str = app.config["STORAGE_PATH"] + app.config["DATASET_NAME"] + "_" + app.config["DR_KERNEL_NAME"] + "_"
+    app.config["SURROGATE_MODELS_PATH"] = base_path + "surrogatemodels.pkl"
+    app.config["EXPLAINER_VALUES_PATH"] = base_path + "explainervalues.pkl"
     dataset_name_class_links = {
         "vis": VISPaperDataset,
         "wine": WineDataset,
@@ -68,7 +72,7 @@ def get_metadata():
         get_metadata_template()
 
     # Build file name.
-    file_name = os.getcwd() + "/../data/drop_" + app.config["DATASET_NAME"] + "_" + app.config["DR_KERNEL_NAME"] + ".h5"
+    file_name = app.config["STORAGE_PATH"] + "drop_" + app.config["DATASET_NAME"] + "_" + app.config["DR_KERNEL_NAME"] + ".h5"
     app.config["FULL_FILE_NAME"] = file_name
 
     # Open .h5 file, if dataset name and DR kernel name are valid and file exists.
@@ -102,18 +106,17 @@ def get_metadata():
         ###################################################
 
         # Compute regressor for each objective.
-        cached_surrogate_models_filepath = os.path.join(app.config["CACHE_ROOT"], "global_surrogate_models.pkl")
-        if os.path.isfile(cached_surrogate_models_filepath):
-            with open(cached_surrogate_models_filepath, "rb") as file:
-                app.config["GLOBAL_SURROGATE_MODELS"] = pickle.load(file)
-        else:
-            app.config["GLOBAL_SURROGATE_MODELS"] = Utils.fit_random_forest_regressors(
-                metadata_template=app.config["METADATA_TEMPLATE"],
-                features_df=app.config["EMBEDDING_METADATA"]["features_preprocessed"],
-                labels_df=app.config["EMBEDDING_METADATA"]["labels"]
-            )
-            with open(cached_surrogate_models_filepath, "wb") as file:
-                pickle.dump(app.config["GLOBAL_SURROGATE_MODELS"], file)
+        print(app.config["SURROGATE_MODELS_PATH"])
+        with open(app.config["SURROGATE_MODELS_PATH"], "rb") as file:
+            app.config["GLOBAL_SURROGATE_MODELS"] = pickle.load(file)
+        # else:
+        #     app.config["GLOBAL_SURROGATE_MODELS"] = Utils.fit_random_forest_regressors(
+        #         metadata_template=app.config["METADATA_TEMPLATE"],
+        #         features_df=app.config["EMBEDDING_METADATA"]["features_preprocessed"],
+        #         labels_df=app.config["EMBEDDING_METADATA"]["labels"]
+        #     )
+        #     with open(cached_surrogate_models_filepath, "wb") as file:
+        #         pickle.dump(app.config["GLOBAL_SURROGATE_MODELS"], file)
 
         # Return JSON-formatted embedding data.
         return jsonify(df.drop(["b_nx"], axis=1).to_json(orient='index'))
@@ -129,17 +132,9 @@ def get_metadata_template():
     :return: Dictionary: {"hyperparameters": [...], "objectives": [...]}
     """
 
-    app.config["METADATA_TEMPLATE"] = {
-        "hyperparameters": DimensionalityReductionKernel.
-            DIM_RED_KERNELS[app.config["DR_KERNEL_NAME"].upper()]["parameters"],
-        "objectives": [
-            "runtime",
-            "r_nx",
-            "stress",
-            "classification_accuracy",
-            "separability_metric"
-        ]
-    }
+    app.config["METADATA_TEMPLATE"] = Utils.get_metadata_template(
+        DimensionalityReductionKernel.DIM_RED_KERNELS[app.config["DR_KERNEL_NAME"].upper()]
+    )
 
     return jsonify(app.config["METADATA_TEMPLATE"])
 
@@ -335,6 +330,7 @@ def get_dr_model_details():
     # Fetch dataframe with preprocessed features.
     embedding_metadata_feat_df = app.config["EMBEDDING_METADATA"]["features_preprocessed"].loc[[str(embedding_id)]]
 
+    print(app.config["EMBEDDING_METADATA"])
     # Drop index for categorical variables that are inactive for this record.
     # Note: Currently hardcoded for metric only.
     param_indices = Utils.get_active_col_indices(

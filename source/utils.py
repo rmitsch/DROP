@@ -357,3 +357,22 @@ class Utils:
                 metadata_config["original"].loc[[embedding_id]].metric.values[0]
             )[2:-1]
         ]
+
+    @staticmethod
+    def get_metadata_template(dr_kernel_config: dict) -> dict:
+        """
+        Assembles metadata template (i. e. which hyperparameters and objectives are available).
+        :param dr_kernel_config:
+        :return: Dictionary: {"hyperparameters": [...], "objectives": [...]}
+        """
+
+        return {
+            "hyperparameters": dr_kernel_config["parameters"],
+            "objectives": [
+                "runtime",
+                "r_nx",
+                "stress",
+                "classification_accuracy",
+                "separability_metric"
+            ]
+        }

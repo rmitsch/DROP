@@ -145,7 +145,6 @@ class PersistenceThread(threading.Thread):
         self._progress_bar.close()
 
         # Close file.
-        print(self._h5file)
         self._h5file.close()
 
     def _open_pytables_file(self) -> tables.file.File:
