@@ -2,7 +2,6 @@ import logging
 from contextlib import contextmanager
 import sys
 import os
-import pickle
 
 import pandas as pd
 import lime
@@ -117,13 +116,13 @@ class Utils:
                 encoded_categorical_values_to_category_names[i] = [
                     value.decode('UTF-8') for value in features_df[feature["name"]].unique()
                 ]
-
                 # Encode categorical values numerically.
                 features_df[feature["name"]] = LabelEncoder().fit_transform(
                     features_df[feature["name"]].values
                 )
 
-                # Encode as one-hot.
+                # Encode as one-hot (note that 0 and 1 might be reverse (i. e. 0 used for active and 1 for inactive).
+                # Doesn't make a difference for models though as long as this encoding used in a consistent manner.
                 features_df = pandas.concat([
                     features_df,
                     pandas.get_dummies(
@@ -231,7 +230,7 @@ class Utils:
         )
 
         # Define version.
-        flask_app.config["VERSION"] = "0.18.0"
+        flask_app.config["VERSION"] = "0.18.1"
 
         # Store metadata template. Is assembled once in /get_metadata.
         flask_app.config["METADATA_TEMPLATE"] = None
@@ -308,34 +307,6 @@ class Utils:
             df[numerical_col] = df[numerical_col].round(decimals=3)
 
         return df
-
-    @staticmethod
-    def compute_coranking_matrices(
-            distance_matrices: np.ndarray,
-            low_dim_data: np.ndarray,
-            high_dim_neighbour_ranking: np.ndarray,
-            metrics: set,
-            use_np_arrays: bool = True
-    ) -> dict:
-        """
-        Computes coranking matrices for specified values and list of metrics.
-        :param distance_matrices:
-        :param low_dim_data:
-        :param high_dim_neighbour_ranking:
-        :param metrics:
-        :param use_np_arrays:
-        :return: Dict with metric -> np.ndarray or metric -> list, depending on whether use_np_arrays is True.
-        """
-
-        return {
-            #     high_dimensional_data=distance_matrices[metric],
-            #     low_dimensional_data=low_dim_data,
-            #     distance_metric=metric,
-            #     high_dimensional_neighbourhood_ranking=high_dim_neighbour_ranking[metric]
-            # )
-            # for metric in metrics
-            # metric: CorankingMatrix(
-        }
 
     @staticmethod
     def get_active_col_indices(metadata: pd.DataFrame, metadata_config: dict, embedding_id: int) -> list:

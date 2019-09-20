@@ -14,7 +14,6 @@ import pandas as pd
 import psutil
 from tqdm import tqdm
 import dcor
-import shap
 import pickle
 from multiprocessing.pool import Pool as ProcessPool
 
@@ -102,27 +101,32 @@ def get_metadata():
             )
 
         ###################################################
-        # Compute global surrogate models.
+        # Load global surrogate models and local
+        # explainer values.
         ###################################################
 
         # Compute regressor for each objective.
-        print(app.config["SURROGATE_MODELS_PATH"])
         with open(app.config["SURROGATE_MODELS_PATH"], "rb") as file:
             app.config["GLOBAL_SURROGATE_MODELS"] = pickle.load(file)
-        # else:
-        #     app.config["GLOBAL_SURROGATE_MODELS"] = Utils.fit_random_forest_regressors(
-        #         metadata_template=app.config["METADATA_TEMPLATE"],
-        #         features_df=app.config["EMBEDDING_METADATA"]["features_preprocessed"],
-        #         labels_df=app.config["EMBEDDING_METADATA"]["labels"]
-        #     )
-        #     with open(cached_surrogate_models_filepath, "wb") as file:
-        #         pickle.dump(app.config["GLOBAL_SURROGATE_MODELS"], file)
+
+        # Load explainer values.
+        app.config["EXPLAINER_VALUES"] = pd.read_pickle(app.config["EXPLAINER_VALUES_PATH"])
 
         # Return JSON-formatted embedding data.
         return jsonify(df.drop(["b_nx"], axis=1).to_json(orient='index'))
 
     else:
         return "File/kernel does not exist.", 400
+
+
+@app.route('/get_explainer_values', methods=["GET"])
+def get_explainer_values():
+    """
+    Returns explainer values.
+    :return: List of records with schema (embedding ID, objective, hyperparameter, influence value).
+    """
+
+    return app.config["EXPLAINER_VALUES"].reset_index().to_json(orient='records')
 
 
 @app.route('/get_metadata_template', methods=["GET"])
@@ -280,11 +284,12 @@ def get_dr_model_details():
     :return: Jsonified structure of surrogate model for DR metadata.
     """
 
+    dataset_name: str = app.config["DATASET_NAME"]
     embedding_id = int(request.args["id"])
     file_name = app.config["FULL_FILE_NAME"]
-    high_dim_file_name = storage_path + app.config["DATASET_NAME"] + "_records.csv"
-    high_dim_neighbour_ranking_file_name = storage_path + app.config["DATASET_NAME"] + "_neighbourhood_ranking.pkl"
-    high_dim_distance_matrices_file_name = storage_path + app.config["DATASET_NAME"] + "_distance_matrices.pkl"
+    high_dim_file_name = storage_path + dataset_name + "_records.csv"
+    high_dim_neighbour_ranking_file_name = storage_path + dataset_name + "_neighbourhood_ranking.pkl"
+    high_dim_distance_matrices_file_name = storage_path + dataset_name + "_distance_matrices.pkl"
 
     # Make sure all files exist.
     for fn in (
@@ -330,29 +335,17 @@ def get_dr_model_details():
     # Fetch dataframe with preprocessed features.
     embedding_metadata_feat_df = app.config["EMBEDDING_METADATA"]["features_preprocessed"].loc[[str(embedding_id)]]
 
-    print(app.config["EMBEDDING_METADATA"])
     # Drop index for categorical variables that are inactive for this record.
     # Note: Currently hardcoded for metric only.
-    param_indices = Utils.get_active_col_indices(
+    param_indices: list = Utils.get_active_col_indices(
         embedding_metadata_feat_df, app.config["EMBEDDING_METADATA"], embedding_id
     )
 
-    # Let SHAP estimate influence of hyperparameter values for each objective.
-    # See https://github.com/slundberg/shap/issues/392 on how to verify predicted SHAP values.
-    explanations: dict = {
-        objective: shap.TreeExplainer(
-            app.config["GLOBAL_SURROGATE_MODELS"][objective]
-        ).shap_values(embedding_metadata_feat_df.values[0], approximate=False)[param_indices].tolist()
-        for objective in app.config["METADATA_TEMPLATE"]["objectives"]
-    }
-    # Transform SHAP values of objectives w/o upper bounds into [0, 1]-interval by dividing values for unbounded
-    # objectives  through the maximum for this objective.
-    # Note that we assume all objectives, including those w/o upper bounds, to be [0, x] where x is either 1 or an
-    # arbitrary real number.
-    # Hence we iterate over upper-unbounded objectives, get their max, divide values in explanations through the maximum
-    # of that objective. This yields [0, 1]-intervals for all objectives.
-    for obj in DimensionalityReductionKernel.OBJECTIVES_WO_UPPER_BOUND:
-        explanations[obj] = (explanations[obj] / app.config["EMBEDDING_METADATA"]["original"][obj].max()).tolist()
+    # Get metadata for SHAP estimates.
+    explainer_values: pd.DataFrame = app.config["EXPLAINER_VALUES"].loc[embedding_id]
+    explanation_columns: list = app.config[
+        "EMBEDDING_METADATA"
+    ]["features_preprocessed"].columns.values[param_indices].tolist()
 
     # Assemble result object.
     result = {
@@ -395,7 +388,15 @@ def get_dr_model_details():
             col if "metric_" not in col else "metric" for col
             in app.config["EMBEDDING_METADATA"]["features_preprocessed"].columns.values[param_indices]
         ],
-        "explanations": explanations
+        "explanations": {
+            objective: [
+                explainer_values[
+                    (explainer_values.hyperparameter == hp) & (explainer_values.objective == objective)
+                ].value.values.tolist()[0]
+                for hp in explanation_columns
+            ]
+            for objective in app.config["METADATA_TEMPLATE"]["objectives"]
+        }
     }
 
     # Close file with low-dim. data.
