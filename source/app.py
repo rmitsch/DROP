@@ -110,7 +110,11 @@ def get_metadata():
             app.config["GLOBAL_SURROGATE_MODELS"] = pickle.load(file)
 
         # Load explainer values.
-        app.config["EXPLAINER_VALUES"] = pd.read_pickle(app.config["EXPLAINER_VALUES_PATH"])
+        # Replace specific metric references with an arbitrary "metric" for parsing in frontend.
+        expl_df: pd.DataFrame = pd.read_pickle(app.config["EXPLAINER_VALUES_PATH"])
+        expl_df.hyperparameter = expl_df.hyperparameter.str.replace("metric_euclidean", "metric")
+        expl_df.hyperparameter = expl_df.hyperparameter.str.replace("metric_cosine", "metric")
+        app.config["EXPLAINER_VALUES"] = expl_df
 
         # Return JSON-formatted embedding data.
         return jsonify(df.drop(["b_nx"], axis=1).to_json(orient='index'))
