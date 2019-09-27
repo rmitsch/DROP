@@ -230,7 +230,7 @@ class Utils:
         )
 
         # Define version.
-        flask_app.config["VERSION"] = "0.18.1"
+        flask_app.config["VERSION"] = "0.19.0"
 
         # Store metadata template. Is assembled once in /get_metadata.
         flask_app.config["METADATA_TEMPLATE"] = None
