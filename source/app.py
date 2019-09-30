@@ -227,16 +227,15 @@ def get_surrogate_model_data():
     return rule_data.to_json(orient='records')
 
 
-@app.route('/get_sample_dissonance', methods=["GET"])
-def get_sample_dissonance():
+@app.route('/get_binned_pointwise_quality_data', methods=["GET"])
+def get_binned_pointwise_quality_data():
     """
-    Calculates and fetches variance/divergence of individual samples over all DR model parametrizations.
-    GET parameters:
-        - Distance function to use for determining neighbourhoods (not supported yet).
-    :return:
+    Calculates and fetches binned pointwise embedding quality of individual samples for each DR model parametrizations.
+    :return: Jsonified object with percentages of bins with bin labels.
     """
-    file_name = app.config["FULL_FILE_NAME"]
-    cached_file_path = os.path.join(app.config["CACHE_ROOT"], "sample_dissonance.pkl")
+    file_name: str = app.config["FULL_FILE_NAME"]
+    cached_file_path: str = os.path.join(app.config["CACHE_ROOT"], "pointwise_quality_binned.pkl")
+    number_of_bins: int = int(request.args["nbins"]) if "nbins" in request.args else 10
 
     if os.path.isfile(file_name):
         if os.path.isfile(cached_file_path):
@@ -260,14 +259,25 @@ def get_sample_dissonance():
         for model_pointwise_quality_leaf in h5file.walk_nodes("/pointwise_quality/", classname="CArray"):
             model_id = int(model_pointwise_quality_leaf._v_name[5:])
             pointwise_qualities[model_id - 1] = model_pointwise_quality_leaf.read().flatten()
-
-        # Close file.
         h5file.close()
 
         # Reshape data to desired model_id:sample_id:value format.
         df = pandas.DataFrame(pointwise_qualities)
         df["model_id"] = df.index
         df = df.melt("model_id", var_name='sample_id', value_name="measure")
+
+        # Bin data.
+        df["bin"] = pd.DataFrame(
+            pd.cut(df.measure, number_of_bins, labels=["bin_" + str(i) for i in range(number_of_bins)])
+        )
+        # Group my embedding.
+        df = df.drop(columns=["measure"]).groupby(
+            by=["model_id", "bin"]).count().reset_index().rename(columns={"sample_id": "count"})
+        # Pivot data to have one row per embedding (with percentages instead of absolute numbers).
+        df = df.pivot(index="model_id", columns="bin", values="count").fillna(0)
+        num_records: int = df[:1].sum(axis=1).values[0]
+        for col_name in df.columns:
+            df[col_name] = df[col_name] / num_records
 
         # Cache result as file.
         df.to_pickle(cached_file_path)
