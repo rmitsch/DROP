@@ -355,11 +355,23 @@ def get_dr_model_details():
         embedding_metadata_feat_df, app.config["EMBEDDING_METADATA"], embedding_id
     )
 
-    # Get metadata for SHAP estimates.
+    # Retrieve SHAP estimates.
     explainer_values: pd.DataFrame = app.config["EXPLAINER_VALUES"].loc[embedding_id]
     explanation_columns: list = app.config[
         "EMBEDDING_METADATA"
     ]["features_preprocessed"].columns.values[param_indices].tolist()
+    # Replace categorical metric values with "metric".
+    explanation_columns = [col if "metric_" not in col else "metric" for col in explanation_columns]
+
+    for objective in app.config["METADATA_TEMPLATE"]["objectives"]:
+        print(objective)
+        for hp in explanation_columns:
+            vals = explainer_values[
+                (explainer_values.hyperparameter == hp) & (explainer_values.objective == objective)
+            ].value.values
+
+            print("  ", hp, vals)
+        print("***")
 
     # Assemble result object.
     result = {
