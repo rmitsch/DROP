@@ -345,6 +345,7 @@ def get_dr_model_details():
         high_dim_neighbour_ranking_file_name,
         low_dim_projection
     )
+    pairwise_displacement_data.to_pickle("/tmp/pairwise_displacement_data.pkl")
 
     # Fetch dataframe with preprocessed features.
     embedding_metadata_feat_df = app.config["EMBEDDING_METADATA"]["features_preprocessed"].loc[[str(embedding_id)]]
@@ -362,16 +363,6 @@ def get_dr_model_details():
     ]["features_preprocessed"].columns.values[param_indices].tolist()
     # Replace categorical metric values with "metric".
     explanation_columns = [col if "metric_" not in col else "metric" for col in explanation_columns]
-
-    for objective in app.config["METADATA_TEMPLATE"]["objectives"]:
-        print(objective)
-        for hp in explanation_columns:
-            vals = explainer_values[
-                (explainer_values.hyperparameter == hp) & (explainer_values.objective == objective)
-            ].value.values
-
-            print("  ", hp, vals)
-        print("***")
 
     # Assemble result object.
     result = {
