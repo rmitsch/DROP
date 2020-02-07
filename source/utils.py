@@ -2,6 +2,9 @@ import logging
 from contextlib import contextmanager
 import sys
 import os
+import dropbox
+from dropbox.files import WriteMode as DropboxWriteMode
+from typing import List
 
 import pandas as pd
 import lime
@@ -217,20 +220,36 @@ class Utils:
         }
 
     @staticmethod
-    def init_flask_app(frontend_path: str):
+    def init_flask_app(argv: List[str]):
         """
         Initialize Flask app.
-        :param frontend_path: Path to directory containing frontend project.
+        :param argv: List of passed arguments.
         :return: App object.
         """
-        flask_app = Flask(
+
+        # Get path to frontend folder.
+        assert len(argv) >= 2, "Path to frontend folder has to be passed."
+        frontend_path: str = sys.argv[1]
+
+        # Init Flask app.
+        flask_app: Flask = Flask(
             __name__,
             template_folder=os.path.join(frontend_path, 'source/templates'),
             static_folder=os.path.join(frontend_path, 'source/static')
         )
 
         # Define version.
-        flask_app.config["VERSION"] = "0.24"
+        flask_app.config["VERSION"] = "0.25"
+
+        # Initialize Dropbox access, if token was provided.
+        if len(sys.argv) == 3:
+            print(
+                "Warning: For persistent result storage both the experiment name and the Dropbox OAuth 2 token have to "
+                "be provided."
+            )
+        if len(sys.argv) >= 4:
+            flask_app.config["EXPERIMENT_NAME"] = argv[2]
+            flask_app.config["DROPBOX"]: DropboxAccount = DropboxAccount(argv[3])
 
         # Store metadata template. Is assembled once in /get_metadata.
         flask_app.config["METADATA_TEMPLATE"] = None
@@ -347,3 +366,21 @@ class Utils:
                 "separability_metric"
             ]
         }
+
+
+class DropboxAccount:
+    """
+    Providing tools for synchronizing files (specifically files holding test results) to Dropbox account.
+    Based on https://stackoverflow.com/a/36851978.
+    """
+    def __init__(self, access_token: str):
+        self._dbx: dropbox.Dropbox = dropbox.Dropbox(access_token)
+
+    def upload_file(self, local_filepath: str, dropbox_filename: str):
+        """
+        Upload a file to Dropbox using API v2.
+        :param local_filepath: Local filepath.
+        :param dropbox_filename: File's name in Dropbox.
+        """
+        with open(local_filepath, 'rb') as f:
+            self._dbx.files_upload(f.read(), "/TALE-study/" + dropbox_filename, mode=DropboxWriteMode.overwrite)

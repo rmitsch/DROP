@@ -16,6 +16,8 @@ from tqdm import tqdm
 import dcor
 import pickle
 from multiprocessing.pool import Pool as ProcessPool
+import logging
+import datetime
 
 from data_generation.datasets import *
 from data_generation.dimensionality_reduction import DimensionalityReductionKernel
@@ -23,13 +25,12 @@ from objectives.topology_preservation_objectives import CorankingMatrix
 from utils import Utils
 
 
-frontend_path = sys.argv[1]
 # Initialize logger.
-logger = Utils.create_logger()
+logger: logging.Logger = Utils.create_logger()
 # Initialize flask app.
-app = Utils.init_flask_app(frontend_path)
+app = Utils.init_flask_app(sys.argv)
 # Define data storage location.
-storage_path = os.getcwd() + "/../data/"
+storage_path: str = os.getcwd() + "/../data/"
 
 
 # root: Render HTML for start menu.
@@ -92,6 +93,11 @@ def get_metadata():
         # Preprocess and cache dataset.
         ###################################################
 
+        # Prepare dataframe for ratings.
+        app.config["RATINGS"] = df.copy(deep=True)
+        app.config["RATINGS"]["rating"] = -1
+
+        # Assemble embedding-level metadata.
         app.config["EMBEDDING_METADATA"]["original"] = df
         app.config["EMBEDDING_METADATA"]["features_preprocessed"], \
         app.config["EMBEDDING_METADATA"]["labels"], \
@@ -145,6 +151,41 @@ def get_metadata_template():
     )
 
     return jsonify(app.config["METADATA_TEMPLATE"])
+
+
+@app.route('/update_embedding_ratings', methods=["GET"])
+def update_embedding_ratings():
+    """
+    Update and saves embedding's rating to disk.
+    GET parameters:
+        - "id": Embedding ID.
+        - "rating": Embedding's new rating.
+    :return: HTTP status code 200 at success, 404 if embedding ID wasn't found.
+    """
+
+    # Check if experiment name and Dropbox token were set.
+    if "EXPERIMENT_NAME" not in app.config or "DROPBOX" not in app.config:
+        return jsonify(success=False)
+
+    # Update rating for this embedding.
+    embedding_id: int = int(request.args["id"])
+    rating: int = int(request.args["rating"])
+    app.config["RATINGS"].loc[embedding_id, "rating"] = rating
+
+    # Synch data to Dropbox.
+    now: datetime.datetime = datetime.datetime.now()
+    filename: str = (
+        app.config["EXPERIMENT_NAME"] + "_" +
+        app.config["DATASET_NAME"] + "_" +
+        app.config["DR_KERNEL_NAME"] + "_" +
+        str(now.year) + str(now.month).zfill(2) + str(now.day).zfill(2) +
+        ".pkl"
+    )
+    tmp_location: str = "/tmp/" + filename5
+    app.config["RATINGS"].to_pickle(tmp_location)
+    app.config["DROPBOX"].upload_file(tmp_location, filename)
+
+    return jsonify(success=True)
 
 
 @app.route('/get_surrogate_model_data', methods=["GET"])
