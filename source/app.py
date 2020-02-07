@@ -181,7 +181,7 @@ def update_embedding_ratings():
         str(now.year) + str(now.month).zfill(2) + str(now.day).zfill(2) +
         ".pkl"
     )
-    tmp_location: str = "/tmp/" + filename5
+    tmp_location: str = "/tmp/" + filename
     app.config["RATINGS"].to_pickle(tmp_location)
     app.config["DROPBOX"].upload_file(tmp_location, filename)
 
