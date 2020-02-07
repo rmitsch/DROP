@@ -29,8 +29,6 @@ from utils import Utils
 logger: logging.Logger = Utils.create_logger()
 # Initialize flask app.
 app = Utils.init_flask_app(sys.argv)
-# Define data storage location.
-storage_path: str = os.getcwd() + "/../data/"
 
 
 # root: Render HTML for start menu.
@@ -48,11 +46,11 @@ def get_metadata():
         - drKernelName with "drk".
     :return:
     """
-    app.config["CACHE_ROOT"] = "/tmp"
-    app.config["STORAGE_PATH"] = os.getcwd() + "/../data/"
+
     app.config["DATASET_NAME"] = InputDataset.check_dataset_name(request.args.get('datasetName'))
     app.config["DR_KERNEL_NAME"] = DimensionalityReductionKernel.check_kernel_name(request.args.get('drKernelName'))
     base_path: str = app.config["STORAGE_PATH"] + app.config["DATASET_NAME"] + "_" + app.config["DR_KERNEL_NAME"] + "_"
+
     app.config["SURROGATE_MODELS_PATH"] = base_path + "surrogatemodels.pkl"
     app.config["EXPLAINER_VALUES_PATH"] = base_path + "explainervalues.pkl"
     dataset_name_class_links = {
@@ -126,6 +124,7 @@ def get_metadata():
         return jsonify(df.drop(["b_nx"], axis=1).to_json(orient='index'))
 
     else:
+        print("file does not exist")
         return "File/kernel does not exist.", 400
 
 
@@ -181,7 +180,8 @@ def update_embedding_ratings():
         str(now.year) + str(now.month).zfill(2) + str(now.day).zfill(2) +
         ".pkl"
     )
-    tmp_location: str = "/tmp/" + filename
+
+    tmp_location: str = app.config["CACHE_ROOT"] + "/" + filename
     app.config["RATINGS"].to_pickle(tmp_location)
     app.config["DROPBOX"].upload_file(tmp_location, filename)
 
@@ -342,14 +342,13 @@ def get_dr_model_details():
     dataset_name: str = app.config["DATASET_NAME"]
     embedding_id = int(request.args["id"])
     file_name = app.config["FULL_FILE_NAME"]
-    high_dim_file_name = storage_path + dataset_name + "_records.csv"
-    high_dim_neighbour_ranking_file_name = storage_path + dataset_name + "_neighbourhood_ranking.pkl"
-    high_dim_distance_matrices_file_name = storage_path + dataset_name + "_distance_matrices.pkl"
+    high_dim_file_name = app.config["STORAGE_PATH"] + dataset_name + "_records.csv"
+    high_dim_neighbour_ranking_file_name = app.config["STORAGE_PATH"] + dataset_name + "_neighbourhood_ranking.pkl"
+    high_dim_distance_matrices_file_name = app.config["STORAGE_PATH"] + dataset_name + "_distance_matrices.pkl"
 
     # Make sure all files exist.
     for fn in (
-            file_name, high_dim_file_name, high_dim_neighbour_ranking_file_name,
-            high_dim_distance_matrices_file_name
+        file_name, high_dim_file_name, high_dim_neighbour_ranking_file_name, high_dim_distance_matrices_file_name
     ):
         if not os.path.isfile(fn):
             return "File " + fn + " does not exist.", 400
@@ -365,7 +364,7 @@ def get_dr_model_details():
 
     # Merge original high-dim. dataset with low-dim. coordinates.
     original_dataset: pd.DataFrame = app.config["DATASET_CLASS"].sort_dataframe_columns_for_frontend(
-        Utils.prepare_binned_original_dataset(app.config["DATASET_NAME"])
+        Utils.prepare_binned_original_dataset(app.config["STORAGE_PATH"], app.config["DATASET_NAME"])
     )
     original_dataset.insert(loc=0, column="id", value=[_ for _ in range(len(original_dataset))])
     # Prepare dataset for model detail table.

@@ -1,6 +1,7 @@
 import csv
 import os
-from sklearn.datasets import fetch_mldata
+import numpy as np
+from sklearn.datasets import fetch_openml
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.preprocessing import StandardScaler
 
@@ -17,7 +18,7 @@ class MNISTDataset(InputDataset):
 
     def _load_data(self):
         # Fetch MNIST dataset.
-        mnist_data = fetch_mldata('MNIST original', data_home="../data")
+        mnist_data = MNISTDataset._load_original_mnist()
         reduced_mnist_data = {
             "features": None,
             "labels": None
@@ -34,6 +35,29 @@ class MNISTDataset(InputDataset):
             reduced_mnist_data["labels"] = mnist_data.target[test_indices].astype(int)
 
         return reduced_mnist_data
+
+    @staticmethod
+    def _load_original_mnist(self) -> np.ndarray:
+        """
+        Fetch original MNIST.
+        See https://github.com/ageron/handson-ml/issues/301.
+        """
+        def sort_by_target(mnist) -> np.ndarray:
+            reorder_train = np.array(sorted([(target, i) for i, target in enumerate(mnist.target[:60000])]))[:, 1]
+            reorder_test = np.array(sorted([(target, i) for i, target in enumerate(mnist.target[60000:])]))[:, 1]
+            mnist.data[:60000] = mnist.data[reorder_train]
+            mnist.target[:60000] = mnist.target[reorder_train]
+            mnist.data[60000:] = mnist.data[reorder_test + 60000]
+            mnist.target[60000:] = mnist.target[reorder_test + 60000]
+            return mnist
+
+        try:
+            mnist = fetch_openml('mnist_784', version=1, cache=True)
+            mnist.target = mnist.target.astype(np.int8)  # fetch_openml() returns targets as strings
+            return sort_by_target(mnist)  # fetch_openml() returns an unsorted dataset
+        except ImportError:
+            from sklearn.datasets import fetch_mldata
+            return fetch_mldata('MNIST original')
 
     def features(self):
         return self._data["features"]

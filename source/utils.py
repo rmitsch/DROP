@@ -14,7 +14,6 @@ import psutil
 import sklearn
 from flask import Flask
 from sklearn.preprocessing import LabelEncoder
-from sklearn.tree import DecisionTreeRegressor
 from skrules import SkopeRules
 import lime.lime_tabular
 
@@ -34,7 +33,7 @@ class Utils:
         # Logger set-up.
         # Source: https://docs.python.org/3/howto/logging-cookbook.html
         # Create global logger.
-        Utils.logger = logging.getLogger('DROP')
+        Utils.logger = logging.getLogger('TALE')
         Utils.logger.setLevel(logging.DEBUG)
         # Create console handler.
         ch = logging.StreamHandler()
@@ -47,37 +46,6 @@ class Utils:
 
         # Return logger object.
         return Utils.logger
-
-    @staticmethod
-    def extract_decision_tree_structure(clf: DecisionTreeRegressor, features: list, labels: list, node_index: int = 0):
-        """
-        Return textual structure for generated decision tree.
-        Source: https://planspace.org/20151129-see_sklearn_trees_with_d3/.
-        :return: Textual representation of regression tree.
-        """
-
-        node = {}
-
-        if clf.tree_.children_left[node_index] == -1:  # indicates leaf
-            node['name'] = " | ".join([
-                                          label + ": " +
-                                          str(round(clf.tree_.value[node_index][i][0], 3))
-                                          for i, label in enumerate(labels[0])
-                                          ])
-
-        else:
-            feature = features[clf.tree_.feature[node_index]]
-            threshold = clf.tree_.threshold[node_index]
-            node['name'] = '{} > {}'.format(feature, round(threshold, 3))
-            left_index = clf.tree_.children_left[node_index]
-            right_index = clf.tree_.children_right[node_index]
-
-            node['children'] = [
-                Utils.extract_decision_tree_structure(clf, features, labels, right_index),
-                Utils.extract_decision_tree_structure(clf, features, labels, left_index)
-            ]
-
-        return node
 
     @staticmethod
     @contextmanager
@@ -228,7 +196,7 @@ class Utils:
         """
 
         # Get path to frontend folder.
-        assert len(argv) >= 2, "Path to frontend folder has to be passed."
+        assert len(argv) >= 3, "Paths to frontend and data storage have to be passed."
         frontend_path: str = sys.argv[1]
 
         # Init Flask app.
@@ -241,18 +209,24 @@ class Utils:
         # Define version.
         flask_app.config["VERSION"] = "0.25"
 
+        # Store path to data storage location.
+        flask_app.config["STORAGE_PATH"] = sys.argv[2] + "/"
+
         # Initialize Dropbox access, if token was provided.
-        if len(sys.argv) == 3:
+        if len(sys.argv) == 4:
             print(
                 "Warning: For persistent result storage both the experiment name and the Dropbox OAuth 2 token have to "
                 "be provided."
             )
-        if len(sys.argv) >= 4:
-            flask_app.config["EXPERIMENT_NAME"] = argv[2]
-            flask_app.config["DROPBOX"]: DropboxAccount = DropboxAccount(argv[3])
+        if len(sys.argv) >= 5:
+            flask_app.config["EXPERIMENT_NAME"] = argv[3]
+            flask_app.config["DROPBOX"]: DropboxAccount = DropboxAccount(argv[4])
 
         # Store metadata template. Is assembled once in /get_metadata.
         flask_app.config["METADATA_TEMPLATE"] = None
+
+        # Set cache directory.
+        flask_app.config["CACHE_ROOT"] = "/tmp"
 
         # Store dataframe holding embedding metadata and related data.
         flask_app.config["EMBEDDING_METADATA"] = {
@@ -303,16 +277,17 @@ class Utils:
         ]
 
     @staticmethod
-    def prepare_binned_original_dataset(dataset_name: str, bin_count: int = 5) -> pd.DataFrame:
+    def prepare_binned_original_dataset(storage_path: str, dataset_name: str, bin_count: int = 5) -> pd.DataFrame:
         """
         Prepares original dataset for detail view in frontend by loading and binning it.
+        :param storage_path:
         :param dataset_name:
         :param bin_count:
         :return: Dataframe with all original attributes plus binned versions of it for numerical attributes.
         """
 
         df: pd.DataFrame = pandas.read_csv(
-            filepath_or_buffer=os.getcwd() + "/../data/" + dataset_name + "_records.csv",
+            filepath_or_buffer=storage_path + "/" + dataset_name + "_records.csv",
             delimiter=',',
             quotechar='"'
         )

@@ -3,6 +3,7 @@ FROM continuumio/miniconda3
 # Note: Dockerfile has to be build from parent directory with
 # docker build -t TALE -f DROP-backend/<dir/dir/Dockerfile> .
 
+
 ##########################################
 # 1. Copy relevant files into container.
 ##########################################
@@ -31,6 +32,7 @@ RUN conda env create --name envname --file=environments.yml
 #	apt-get -y --no-install-recommends install apt-utils && \
 #	apt-get -y --no-install-recommends install cmake  && \
 #	apt-get -y --no-install-recommends install nano  && \
+#   apt-get -y --no-install-recommends install libhdf5-serial-dev && \
 #	# Allow execution of setup scripts.
 #	chmod +x /tmp/setup.sh  && \
 #	# Install BLAS and LAPACK.

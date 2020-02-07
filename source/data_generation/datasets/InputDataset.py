@@ -9,6 +9,7 @@ import sklearn.metrics
 import hdbscan
 import pandas as pd
 from utils import Utils
+from sklearn.ensemble import RandomForestClassifier
 
 
 class InputDataset:
@@ -145,7 +146,7 @@ class InputDataset:
         n_splits = 3
 
         # Apply random forest w/o further preprocessing to predict class labels.
-        clf = sklearn.ensemble.RandomForestClassifier(
+        clf = RandomForestClassifier(
             n_estimators=100,
             max_depth=3,
             n_jobs=1  # psutil.cpu_count(logical=False)

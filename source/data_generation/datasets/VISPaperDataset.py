@@ -12,6 +12,7 @@ import sklearn.ensemble
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.metrics import f1_score
 import hdbscan
+from sklearn.ensemble import RandomForestClassifier
 import fasttext
 
 from data_generation.datasets import InputDataset
@@ -276,7 +277,7 @@ class VISPaperDataset(InputDataset):
         else:
             # Apply straightforward k-nearest neighbour w/o further preprocessing to predict class labels.
             # Note: Can/should be tuned based on available machine (especially memory is a constraint).
-            clf = sklearn.ensemble.RandomForestClassifier(
+            clf = RandomForestClassifier(
                 n_estimators=5,
                 n_jobs=1,
                 max_depth=50
