@@ -124,7 +124,6 @@ def get_metadata():
         return jsonify(df.drop(["b_nx"], axis=1).to_json(orient='index'))
 
     else:
-        print("file does not exist")
         return "File/kernel does not exist.", 400
 
 
