@@ -21,17 +21,25 @@ class InputDataset:
     # Target domain performance value in original high-dimensional space.
     high_dim_TDP = None
 
-    def __init__(self, data=None, preprocessed_features=None, target_domain_performance=None):
+    def __init__(self, data=None, preprocessed_features=None, target_domain_performance=None, storage_path: str = None):
         """
         Defines variables to be used in inheriting classes.
         Takes some variable speeding up cloning an instance.
         :param data: Loaded primitive dataset.
         :param preprocessed_features: Preprocessed features.
         :param target_domain_performance: Target domain performance of this dataset.
+        :param storage_path: Path to folder storing data.
         """
+
+        # Make sure that either storage path or data is is set.
+        assert data is not None or storage_path is not None, "Either data or storage_path have to be specified for " \
+                                                             "new dataset."
 
         # Get logger.
         self._logger = Utils.logger
+
+        # Set storage path.
+        self._storage_path = storage_path
 
         # Set primitive data set.
         self._data = copy.deepcopy(data) if data is not None else self._load_data()
@@ -98,14 +106,13 @@ class InputDataset:
         return self._data
 
     @abc.abstractmethod
-    def persist_records(self, directory: str):
+    def persist_records(self):
         """
         Persists manifest properties of all of this dataset's records as .csv.
         Schema: [name, label, [features]].
-        Note: Baseline code only works for datasets sticking exactly to the sklearn dataset pattern (i. e. self._data
+        Note: Baseline code only works for datasets sticking to the sklearn dataset pattern (i. e. self._data
         is a dictionary with one entry for "features" and one for "labels"); records are named by their index as they
         appear after being loaded.
-        :param directory: Path to directory in which to store the file.
         """
         pass
 

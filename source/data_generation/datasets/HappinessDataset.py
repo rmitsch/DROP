@@ -23,12 +23,12 @@ class HappinessDataset(InputDataset):
     # Measured TDP for Happiness dataset with regression task in terms of RMSE.
     high_dim_TDP = 0.31
 
-    def __init__(self):
+    def __init__(self, storage_path: str):
         self._df = None
-        super().__init__()
+        super().__init__(storage_path=storage_path)
 
     def _load_data(self):
-        df = pd.read_csv(filepath_or_buffer="../../data/happiness_2017.csv").drop(
+        df = pd.read_csv(filepath_or_buffer=self._storage_path + "/happiness_2017.csv").drop(
             ["map_reference", "biggest_official_language", "gdp_per_capita[$]"], axis=1
         ).set_index("country")
         df = df.rename(columns={col: re.sub(r'\[.*\]', '', col) for col in df.columns})
@@ -49,8 +49,8 @@ class HappinessDataset(InputDataset):
     def _preprocess_features(self):
         return StandardScaler().fit_transform(self._data["features"].values)
 
-    def persist_records(self, directory: str):
-        filepath = directory + '/happiness_records.csv'
+    def persist_records(self):
+        filepath = self._storage_path + '/happiness_records.csv'
 
         if not os.path.isfile(filepath):
             features_df = self._df.copy(deep=True)
@@ -69,7 +69,12 @@ class HappinessDataset(InputDataset):
 
         # Apply random forest w/o further preprocessing to predict class labels.
         reg = xgboost.XGBRegressor(
-            n_estimators=100, learning_rate=0.08, subsample=0.75, colsample_bytree=1, max_depth=7
+            objective='reg:squarederror',
+            n_estimators=100,
+            learning_rate=0.08,
+            subsample=0.75,
+            colsample_bytree=1,
+            max_depth=7
         )
 
         for i in range(0, n_splits):
