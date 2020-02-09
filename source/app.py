@@ -70,7 +70,7 @@ def get_metadata():
         get_metadata_template()
 
     # Build file name.
-    file_name = app.config["STORAGE_PATH"] + "drop_" + app.config["DATASET_NAME"] + "_" + app.config["DR_KERNEL_NAME"] + ".h5"
+    file_name = app.config["STORAGE_PATH"] + "tale_" + app.config["DATASET_NAME"] + "_" + app.config["DR_KERNEL_NAME"] + ".h5"
     app.config["FULL_FILE_NAME"] = file_name
 
     # Open .h5 file, if dataset name and DR kernel name are valid and file exists.

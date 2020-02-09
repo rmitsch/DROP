@@ -54,7 +54,7 @@ storage_path: str = sys.argv[3]
 
 # Get all parameter configurations (to avoid duplicate model generations).
 parameter_sets, num_param_sets = DimensionalityReductionKernel.generate_parameter_sets_for_testing(
-    data_file_path=storage_path + "drop_" + dataset_name + "_" + dim_red_kernel_name.lower() + ".h5",
+    data_file_path=storage_path + "/tale_" + dataset_name + "_" + dim_red_kernel_name.lower() + ".h5",
     dim_red_kernel_name=dim_red_kernel_name
 )
 
@@ -106,19 +106,19 @@ with open(storage_path + "/" + dataset_name + "_neighbourhood_ranking.pkl", "wb"
 # Shuffle list with parameter sets so that they are kinda evenly distributed.
 shuffle(parameter_sets)
 # Determine number of workers.
-n_jobs = psutil.cpu_count(logical=True)
-threads = []
+n_jobs: int = psutil.cpu_count(logical=True)
+threads: list = []
 # Shared list holding results.
-results = []
+results: list = []
 
 # Split parameter sets amongst workers.
 logger.info("Generating dimensionality reduction models with " + str(n_jobs) + " threads.")
-num_parameter_sets = int(len(parameter_sets) / n_jobs)
+num_parameter_sets: int = int(len(parameter_sets) / n_jobs)
 
 for i in range(0, n_jobs):
-    first_index = num_parameter_sets * i
+    first_index: int = num_parameter_sets * i
     # Add normal number of parameter sets, if this isn't the last job. Otherwise add all remaining sets.
-    last_index = first_index + num_parameter_sets if i < (n_jobs - 1) else len(parameter_sets)
+    last_index: int = first_index + num_parameter_sets if i < (n_jobs - 1) else len(parameter_sets)
 
     # Instantiate thread.
     threads.append(

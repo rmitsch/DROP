@@ -70,7 +70,6 @@ def construct_explanations(
 def compute_and_persist_explainer_values(
         logger: logging.Logger, storage_path: str, dr_kernel_name: str, dataset_name: str
 ):
-    print("storage_path:", storage_path)
     logger.info("  Fetching data.")
     # 1. Get metadata template.
     metadata_template: dict = Utils.get_metadata_template(
@@ -79,7 +78,7 @@ def compute_and_persist_explainer_values(
 
     # 2. Load data.
     h5file: File = tables.open_file(
-        filename=storage_path + "/drop_" + dataset_name + "_" + dr_kernel_name.lower() + ".h5",
+        filename=storage_path + "/tale_" + dataset_name + "_" + dr_kernel_name.lower() + ".h5",
         mode="r+"
     )
     df = pd.DataFrame(h5file.root.metadata[:]).set_index("id")

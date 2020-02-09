@@ -64,7 +64,7 @@ class PersistenceThread(threading.Thread):
         metadata_table = self._h5file.root.metadata
         metadata_row = metadata_table.row
         # Get configuration of this DR kernel's parameter set.
-        parameter_config = DimensionalityReductionKernel.DIM_RED_KERNELS[self._dim_red_kernel_name]["parameters"]
+        parameter_config: dict = DimensionalityReductionKernel.DIM_RED_KERNELS[self._dim_red_kernel_name]["parameters"]
 
         # Check on new arrivals every self._checking_interval seconds.
         last_processed_index = -1
@@ -157,7 +157,7 @@ class PersistenceThread(threading.Thread):
 
         self._ids_to_process = {i for i in range(0, self._total_number_of_results)}
         file_name: str = (
-                self._storage_path + "/drop_" + self._dataset_name + "_" + self._dim_red_kernel_name.lower() + ".h5"
+                self._storage_path + "/tale_" + self._dataset_name + "_" + self._dim_red_kernel_name.lower() + ".h5"
         )
 
         # If file exists: Return handle to existing file (assuming file is not corrupt).

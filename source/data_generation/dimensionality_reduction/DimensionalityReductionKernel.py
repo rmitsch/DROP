@@ -135,7 +135,7 @@ class DimensionalityReductionKernel:
         if os.path.isfile(data_file_path):
             h5file = open_file(filename=data_file_path, mode="r+")
             # Note: We don't use the model ID here, since that would never lead to comparison hits.
-            existent_parameter_sets = [
+            existent_parameter_sets: list = [
                 {
                     # Parse as UTF-8 string, if parameter is categorical.
                     param_config["name"]:

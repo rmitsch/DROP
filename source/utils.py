@@ -76,8 +76,8 @@ class Utils:
         labels; (3) list of lists translating encoding indices to original category names.
         """
 
-        features_names = [item["name"] for item in metadata_template["hyperparameters"]]
-        features_df = embeddings_metadata[features_names].copy(deep=True)
+        features_names: list = [item["name"] for item in metadata_template["hyperparameters"]]
+        features_df: pd.DataFrame = embeddings_metadata[features_names].copy(deep=True)
 
         # Encode categorical values numerically.
         encoded_categorical_values_to_category_names = {}
@@ -209,7 +209,7 @@ class Utils:
         )
 
         # Define version.
-        flask_app.config["VERSION"] = "0.25"
+        flask_app.config["VERSION"] = "0.25.1"
 
         # Store path to data storage location.
         flask_app.config["STORAGE_PATH"] = sys.argv[2] + "/"
