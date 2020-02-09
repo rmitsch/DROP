@@ -35,8 +35,8 @@ class DimensionalityReductionKernel:
     }
 
     # Define which runtimes are not bounded by [0, 1] intervals.
-    # Note that we assume all objectives start with 0, their upper bound might vary though.
-    OBJECTIVES_WO_UPPER_BOUND = {"runtime", "classification_accuracy"}
+    # Note that we assume all objectives to start with 0, their upper bound might vary though.
+    OBJECTIVES_WO_UPPER_BOUND = {"runtime", "target_domain_performance"}
 
     def __init__(self, dim_red_kernel_name: str):
         """
@@ -124,9 +124,9 @@ class DimensionalityReductionKernel:
         :return: List of parameter sets; number of parameter sets in total (including already generated ones).
         """
 
-        parameter_sets = []
-        parameter_config = DimensionalityReductionKernel.DIM_RED_KERNELS[dim_red_kernel_name]["parameters"]
-        existent_parameter_sets = []
+        parameter_sets: list = []
+        parameter_config: dict = DimensionalityReductionKernel.DIM_RED_KERNELS[dim_red_kernel_name]["parameters"]
+        existent_parameter_sets: list = []
 
         ###############################################
         # 1. Load already existent parameter sets.
@@ -153,7 +153,7 @@ class DimensionalityReductionKernel:
         #    Cartesian prodcut.
         ###############################################
 
-        parameter_combinations = [
+        parameter_combinations: list = [
             combination for combination in itertools.product(*[
                 param_desc["values"] for param_desc in parameter_config
             ])

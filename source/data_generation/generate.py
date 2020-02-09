@@ -99,8 +99,6 @@ with open(storage_path + "/" + dataset_name + "_distance_matrices.pkl", "wb") as
 with open(storage_path + "/" + dataset_name + "_neighbourhood_ranking.pkl", "wb") as file:
     pickle.dump(high_dim_neighbourhood_rankings, file)
 
-exit()
-
 ######################################################
 # 3. Set up multithreading.
 ######################################################
@@ -142,7 +140,8 @@ threads.append(
         total_number_of_results=num_param_sets,
         dataset_name=dataset_name,
         dim_red_kernel_name=dim_red_kernel_name,
-        checking_interval=10
+        checking_interval=10,
+        storage_path=storage_path
     )
 )
 

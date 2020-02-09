@@ -2,6 +2,7 @@ import os
 import pickle
 
 import psutil
+from tables import File
 from tqdm import tqdm
 import tables
 import pandas as pd
@@ -69,16 +70,16 @@ def construct_explanations(
 def compute_and_persist_explainer_values(
         logger: logging.Logger, storage_path: str, dr_kernel_name: str, dataset_name: str
 ):
-
+    print("storage_path:", storage_path)
     logger.info("  Fetching data.")
     # 1. Get metadata template.
-    metadata_template = Utils.get_metadata_template(
+    metadata_template: dict = Utils.get_metadata_template(
         DimensionalityReductionKernel.DIM_RED_KERNELS[dr_kernel_name]
     )
 
     # 2. Load data.
-    h5file = tables.open_file(
-        filename=storage_path + "drop_" + dataset_name + "_" + dr_kernel_name.lower() + ".h5",
+    h5file: File = tables.open_file(
+        filename=storage_path + "/drop_" + dataset_name + "_" + dr_kernel_name.lower() + ".h5",
         mode="r+"
     )
     df = pd.DataFrame(h5file.root.metadata[:]).set_index("id")
@@ -94,7 +95,9 @@ def compute_and_persist_explainer_values(
         features_df=features_preprocessed,
         labels_df=labels
     )
-    with open(storage_path + dataset_name.lower() + "_" + dr_kernel_name.lower() + "_surrogatemodels.pkl", "wb") as file:
+    with open(
+            storage_path + "/" + dataset_name.lower() + "_" + dr_kernel_name.lower() + "_surrogatemodels.pkl", "wb"
+    ) as file:
         pickle.dump(surrogate_models, file)
 
     # 4. Compute and store SHAP values.
@@ -122,7 +125,7 @@ def compute_and_persist_explainer_values(
             columns=["id", "objective", "hyperparameter", "value"]
         ).set_index("id")
 
-    results.to_pickle(storage_path + dataset_name.lower() + "_" + dr_kernel_name.lower() + "_explainervalues.pkl")
+    results.to_pickle(storage_path + "/" + dataset_name.lower() + "_" + dr_kernel_name.lower() + "_explainervalues.pkl")
 
 
 if __name__ == '__main__':

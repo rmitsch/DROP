@@ -1,9 +1,6 @@
 import threading
 import time
 
-from MulticoreTSNE import MulticoreTSNE
-from sklearn.preprocessing import StandardScaler
-
 from data_generation import InputDataset
 from objectives.topology_preservation_objectives import *
 from objectives.distance_preservation_objectives import *

@@ -111,9 +111,11 @@ class Utils:
                     }
                 )
 
-        return features_df, \
-               embeddings_metadata[metadata_template["objectives"]], \
-               encoded_categorical_values_to_category_names
+        return (
+            features_df,
+            embeddings_metadata[metadata_template["objectives"]],
+            encoded_categorical_values_to_category_names
+        )
 
     @staticmethod
     def fit_random_forest_regressors(
@@ -337,7 +339,7 @@ class Utils:
                 "runtime",
                 "r_nx",
                 "stress",
-                "classification_accuracy",
+                "target_domain_performance",
                 "separability_metric"
             ]
         }

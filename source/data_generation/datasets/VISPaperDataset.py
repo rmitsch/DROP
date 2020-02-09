@@ -250,7 +250,7 @@ class VISPaperDataset(InputDataset):
             )
 
     def compute_target_domain_performance(self, features: numpy.ndarray = None):
-        self._logger.info("Calculating classification accuracy.")
+        self._logger.info("Calculating target domain performance.")
 
         accuracy = 0
         n_splits = 1

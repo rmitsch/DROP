@@ -85,7 +85,7 @@ class InputDataset:
 
     def target_domain_performance(self):
         """
-        Returns classification accuracy.
+        Returns target domain performance accuracy.
         :return:
         """
         return self._target_domain_performance
