@@ -48,6 +48,13 @@ def construct_explanations(
                     [objective] * len(cols),
                     cols,
                     # See https://github.com/slundberg/shap/issues/392 on how to verify predicted SHAP values.
+                    # todo Increase perfomance.
+                    #    - Create TreeExplainer outside of function - performance gain? Measure overhead for creation
+                    #      of new TreeExplainer in test script.
+                    #    - Use approximate=True? 
+                    #    - Use logical=True when creating processes?
+                    #    - Predict for multiple values at once? -> In that case readjust multiprocessing data
+                    #      distribution scheme.
                     shap.TreeExplainer(
                         surrogate_models[objective]
                     ).shap_values(
