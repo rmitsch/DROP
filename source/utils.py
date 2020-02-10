@@ -7,15 +7,12 @@ from dropbox.files import WriteMode as DropboxWriteMode
 from typing import List
 
 import pandas as pd
-import lime
 import numpy as np
 import pandas
-import psutil
-import sklearn
 from flask import Flask
 from sklearn.preprocessing import LabelEncoder
+import lightgbm as lgbm
 from skrules import SkopeRules
-import lime.lime_tabular
 
 
 class Utils:
@@ -69,7 +66,7 @@ class Utils:
     @staticmethod
     def preprocess_embedding_metadata_for_predictor(metadata_template: dict, embeddings_metadata: pandas.DataFrame):
         """
-        Preprocesses embedding metadata for use in sklearn-style predictors and LIME.
+        Preprocesses embedding metadata for use in sklearn-style predictors and explainers.
         :param metadata_template:
         :param embeddings_metadata:
         :return: (1) Data frame holding all features (categorical ones are coded numerically); (2) data frame holding
@@ -118,73 +115,42 @@ class Utils:
         )
 
     @staticmethod
-    def fit_random_forest_regressors(
+    def fit_surrogate_regressor(
             metadata_template: dict, features_df: pandas.DataFrame, labels_df: pandas.DataFrame
     ):
         """
-        Fits sklearn random forest regressors to specified dataframe holding embedding data for each objective defined.
-        in metadata_template["objectives"].
+        Fits regressors to specified dataframe holding embedding data for each objective defined in
+        metadata_template["objectives"].
         :param metadata_template:
         :param features_df: Preprocessed dataframes with feature values.
         :param labels_df: Preprocessed dataframes with label values.
         :return: Dictionary with objective -> regressor.
         """
 
-        # Compute global surrogate models as basis for LIME's local explainers.
+        objectives: list = list(metadata_template["objectives"])
+
+        df: pd.DataFrame = pd.concat(
+            [features_df.reset_index(), labels_df.reset_index().drop(columns=["id"])], axis=1
+        ).set_index("id").sample(frac=1)
+        n_train: int = int(len(df) * 0.8)
+        train_df: pd.DataFrame = df.head(n_train)
+        test_df: pd.DataFrame = df.tail(len(df) - n_train)
+
+        # Compute global surrogate models as basis for local explainers.
         return {
-            objective: sklearn.ensemble.RandomForestRegressor(
+            objective: lgbm.LGBMRegressor(
+                boosting_type="gbdt",
                 n_estimators=100,
-                n_jobs=psutil.cpu_count(logical=False)
+                num_iterations=5000,
+                learning_rate=1 * 10e-4,
+                silent=True
             ).fit(
-                X=features_df,
-                y=labels_df[objective]
-            )
-            for objective in metadata_template["objectives"]
-        }
-
-    @staticmethod
-    def initialize_lime_explainers(metadata_template: dict, features_df: pandas.DataFrame):
-        """
-        Initialize LIME explainers with global surrogate models (as produced by Utils.fit_random_forest_regressors).
-        :param metadata_template:
-        :param features_df: Preprocessed dataframes with feature values.
-        :return: Dictionary with objective -> LIME explainer for this objective.
-        """
-        ##################################
-        # 1. Prepare information on
-        # categorical values for LIME.
-        ##################################
-
-        # Fetch names of categorical hyperparameters.
-        categorical_hyperparameters = [
-            dict["name"]
-            for index, dict in enumerate(metadata_template["hyperparameters"])
-            if dict["type"] == "categorical"
-        ]
-
-        # A bit hacky: Find categorical attributes by picking columns starting with "CATEGORICAL ATTRIBUTE"_X.
-        categorical_feature_indices = [
-            i for i, col_name in enumerate(features_df.columns)
-            # col_name_parts[0] is the prefix, i. e. the name of the original (potentially categorical) hyperparameter.
-            if len(col_name.split("_")) == 2 and col_name.split("_")[0] in categorical_hyperparameters
-        ]
-
-        ##################################
-        # 2. Initialize explainers for
-        # each objective.
-        ##################################
-
-        return {
-            objective: lime.lime_tabular.LimeTabularExplainer(
-                training_data=features_df.values,
-                feature_names=features_df.columns,
-                class_names=metadata_template["objectives"],
-                # discretize_continuous=True,
-                # discretizer='decile',
-                # Specify categorical hyperparameters.
-                categorical_features=categorical_feature_indices,
-                verbose=False,
-                mode='regression'
+                train_df.drop(columns=objectives),
+                train_df[objective],
+                eval_set=[(test_df.drop(columns=objectives), test_df[objective])],
+                eval_metric='l2',
+                early_stopping_rounds=1000,
+                verbose=False
             )
             for objective in metadata_template["objectives"]
         }
@@ -244,10 +210,9 @@ class Utils:
         flask_app.config["DR_KERNEL_NAME"] = "tsne"
         flask_app.config["FULL_FILE_NAME"] = "happiness"
 
-        # For storage of global, unrestricted model used by LIME for local explanations.
+        # For storage of global, unrestricted model used by local explanations.
         # Has one global regressor for each possible objective.
         flask_app.config["GLOBAL_SURROGATE_MODEL"] = {}
-        flask_app.config["LIME_EXPLAINER"] = None
 
         return flask_app
 
@@ -263,7 +228,7 @@ class Utils:
         :param objective_name:
         :return: List of extracted rules: (rule, precision, recall, support, result from, result to).
         """
-        rules_clf = SkopeRules(
+        rules_clf: SkopeRules = SkopeRules(
             max_depth_duplication=None,
             n_estimators=30,
             precision_min=0.2,
@@ -315,7 +280,7 @@ class Utils:
         :return: List of active columns in metadata dataframe.
         """
 
-        cols = metadata.columns.values
+        cols: list = metadata.columns.values
         return [
             i for i
             in range(len(cols))
@@ -355,7 +320,7 @@ class DropboxAccount:
 
     def upload_file(self, local_filepath: str, dropbox_filename: str):
         """
-        Upload a file to Dropbox using API v2.
+        Uploads a file to Dropbox using API v2.
         :param local_filepath: Local filepath.
         :param dropbox_filename: File's name in Dropbox.
         """
