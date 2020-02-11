@@ -10,47 +10,65 @@ import logging
 import math
 from utils import Utils
 from data_generation.dimensionality_reduction import DimensionalityReductionKernel
+from data_generation.dimensionality_reduction.DimensionalityReductionKernelParameters import DIM_RED_KERNELS_PARAMETERS
 import numpy as np
 
 
-def construct_explanations(
-        features_preprocessed: pd.DataFrame,
+def construct_local_explanations(
+        features: pd.DataFrame,
         original_df: pd.DataFrame,
         surrogate_models: dict,
-        objectives: list
+        objectives: list,
+        dim_red_kernel_name: str
 ) -> pd.DataFrame:
     """
     Construct local explanations as SHAP values.
-    :param features_preprocessed: Set of preprocessed features.
+    :param features: Set of preprocessed features.
     :param original_df: Original (i.e. w/o explanations) dataframe.
     :param surrogate_models: Surrogate models per objective.
     :param objectives: List of objectives.
-    :return:
+    :param dim_red_kernel_name:
+    :return: Dataframe with local explanations.
     """
-    records: list = [(ix, record) for ix, record in features_preprocessed.iterrows()]
 
+    feature_values: np.ndarray = features.values
+    record_ids: np.ndarray = features.index.values
+
+    ########################################################
     # Initialize SHAP explainers (one per objective).
+    ########################################################
+
     explainers: dict = {
+        # todo use background dataset + 'interventional' when initializing?
         objective: shap.TreeExplainer(surrogate_models[objective])
         for objective in objectives
     }
-    # Select indices of active columns (i.e. ignore columns irrelevant for explanations).
-    active_col_indices: list = Utils.get_active_col_indices(
-        features_preprocessed, {"original": original_df}, int(records[0][0])
+
+    ########################################################
+    # Compose set of active columns' indices.
+    ########################################################
+
+    active_columns: pd.DataFrame = Utils.gather_column_activity(
+        features, DIM_RED_KERNELS_PARAMETERS[dim_red_kernel_name]
     )
-    active_cols: list = features_preprocessed.columns[active_col_indices]
+
+    ########################################################
+    # Compute SHAP explanations.
+    ########################################################
+
     # Compute maxima per objecive.
     max_per_objective: dict = {obj: original_df[obj].max() for obj in explainers}
 
     n_chunks: int = 100
-    chunksize: int = math.ceil(len(records) / n_chunks)
+    chunksize: int = math.ceil(len(feature_values) / n_chunks)
     pbar: tqdm = tqdm(total=n_chunks)
     explanations: list = []
     for i in range(n_chunks):
-        curr_records: list = records[i * chunksize:(i + 1) * chunksize]
-
+        curr_records: np.ndarray = feature_values[i * chunksize:(i + 1) * chunksize, :]
+        curr_record_ids: np.ndarray = record_ids[i * chunksize:(i + 1) * chunksize].astype(int)
+ 
         for obj in objectives:
-            df: pd.DataFrame = pd.DataFrame((
+            df: pd.DataFrame = pd.DataFrame(
                 explainers[obj].shap_values(
                     # Transform SHAP values of objectives w/o upper bounds into [0, 1]-interval by dividing values
                     # for unbounded objectives through the maximum for this objective.
@@ -58,15 +76,22 @@ def construct_explanations(
                     # either 1 or an arbitrary real number.
                     # Hence we iterate over upper-unbounded objectives, get their max, divide values in explanations
                     # through the maximum of that objective. This yields [0, 1]-intervals for all objectives.
-                    np.asarray([record[1].values for record in curr_records]), approximate=False
-                )[:, active_col_indices].tolist() / max_per_objective[obj]
-            ), columns=active_cols)
-            df["id"] = [int(record[0]) for record in curr_records]
-            df["objective"] = obj
-            explanations.append(
-                df.melt(id_vars=["id", "objective"], value_vars=active_cols, var_name="hyperparameter").set_index("id")
+                    np.asarray([record for record in curr_records]), approximate=False
+                )[
+                    # Select only active columns. Use fancy indexing to select active columns for that - see
+                    # https://stackoverflow.com/questions/20103779/index-2d-numpy-array-by-a-2d-array-of-indices-without-loops.
+                    np.arange(len(curr_records))[:, None],
+                    np.asarray(active_columns.loc[curr_record_ids].idx.values.tolist())
+                ].tolist() / max_per_objective[obj]
             )
 
+            # Complement with metadata; join active_columns to get real hyperparameter name.
+            df["id"] = curr_record_ids
+            df["objective"] = obj
+            df = df.melt(id_vars=["id", "objective"], var_name="hyperparameter").set_index("id").join(active_columns)
+            df.hyperparameter = df.apply(lambda row: features.columns[row["idx"][row["hyperparameter"]]], axis=1)
+            # Add to collection.
+            explanations.append(df.drop(columns=["idx", "cols"]))
         pbar.update(1)
     pbar.close()
 
@@ -119,8 +144,8 @@ def compute_and_persist_explainer_values(
     ######################################
 
     logger.info("  Computing SHAP values.")
-    construct_explanations(
-        features_preprocessed, df, surrogate_models, metadata_template["objectives"]
+    construct_local_explanations(
+        features_preprocessed, df, surrogate_models, metadata_template["objectives"], dr_kernel_name
     ).to_pickle(
         storage_path + "/" + dataset_name.lower() + "_" + dr_kernel_name.lower() + "_explainervalues.pkl"
     )
