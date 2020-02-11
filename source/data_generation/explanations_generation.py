@@ -16,6 +16,7 @@ import numpy as np
 
 def construct_local_explanations(
         features: pd.DataFrame,
+        labels: pd.DataFrame,
         original_df: pd.DataFrame,
         surrogate_models: dict,
         objectives: list,
@@ -24,6 +25,7 @@ def construct_local_explanations(
     """
     Construct local explanations as SHAP values.
     :param features: Set of preprocessed features.
+    :param labels: Labels for dataset.
     :param original_df: Original (i.e. w/o explanations) dataframe.
     :param surrogate_models: Surrogate models per objective.
     :param objectives: List of objectives.
@@ -39,7 +41,6 @@ def construct_local_explanations(
     ########################################################
 
     explainers: dict = {
-        # todo use background dataset + 'interventional' when initializing?
         objective: shap.TreeExplainer(surrogate_models[objective])
         for objective in objectives
     }
@@ -76,7 +77,9 @@ def construct_local_explanations(
                     # either 1 or an arbitrary real number.
                     # Hence we iterate over upper-unbounded objectives, get their max, divide values in explanations
                     # through the maximum of that objective. This yields [0, 1]-intervals for all objectives.
-                    np.asarray([record for record in curr_records]), approximate=False
+                    np.asarray([record for record in curr_records]),
+
+                    approximate=False
                 )[
                     # Select only active columns. Use fancy indexing to select active columns for that - see
                     # https://stackoverflow.com/questions/20103779/index-2d-numpy-array-by-a-2d-array-of-indices-without-loops.
@@ -145,7 +148,7 @@ def compute_and_persist_explainer_values(
 
     logger.info("  Computing SHAP values.")
     construct_local_explanations(
-        features_preprocessed, df, surrogate_models, metadata_template["objectives"], dr_kernel_name
+        features_preprocessed, labels, df, surrogate_models, metadata_template["objectives"], dr_kernel_name
     ).to_pickle(
         storage_path + "/" + dataset_name.lower() + "_" + dr_kernel_name.lower() + "_explainervalues.pkl"
     )
