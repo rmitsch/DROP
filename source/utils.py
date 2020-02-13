@@ -175,7 +175,7 @@ class Utils:
         )
 
         # Define version.
-        flask_app.config["VERSION"] = "0.25.1"
+        flask_app.config["VERSION"] = "0.25.2"
 
         # Store path to data storage location.
         flask_app.config["STORAGE_PATH"] = sys.argv[2] + "/"
