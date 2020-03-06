@@ -21,19 +21,12 @@ def generate_instance(instance_dataset_name: str, storage_path: str) -> InputDat
     :param storage_path: Path to folder holding files.
     :return:
     """
-    assert instance_dataset_name in ("wine", "swiss_roll", "mnist", "vis", "happiness"), \
-        'Dataset ' + instance_dataset_name + ' not supported.'
+    assert instance_dataset_name in ("movie", "happiness"), 'Dataset ' + instance_dataset_name + ' not supported.'
 
-    if instance_dataset_name == "wine":
-        return WineDataset()
-    elif instance_dataset_name == "swiss_roll":
-        return SwissRollDataset()
-    elif instance_dataset_name == "mnist":
-        return MNISTDataset()
-    elif instance_dataset_name == "vis":
-        return VISPaperDataset()
-    elif instance_dataset_name == "happiness":
+    if instance_dataset_name == "happiness":
         return HappinessDataset(storage_path=storage_path)
+    elif instance_dataset_name == "movie":
+        return MovieDataset(storage_path=storage_path)
 
 
 # Create logger.
@@ -66,7 +59,7 @@ logger.info("Creating dataset.")
 
 # Load dataset.
 high_dim_dataset: InputDataset = generate_instance(instance_dataset_name=dataset_name, storage_path=storage_path)
-
+exit()
 # Persist dataset's records.
 high_dim_dataset.persist_records()
 

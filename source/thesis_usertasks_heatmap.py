@@ -85,7 +85,7 @@ matrix = matrix.rename(columns={col: col.replace("C0", "C") for col in matrix.co
 ax = sns.heatmap(
     matrix, annot=False, fmt="g", linewidths=1, cmap=sns.cubehelix_palette(8, start=0, dark=0, light=.95), cbar=False
 )
-ax.set_xlabel("Task", fontsize=20, labelpad=20)
-ax.set_ylabel("Component", fontsize=20, labelpad=20)
+ax.set_xlabel("Component", fontsize=20, labelpad=20)
+ax.set_ylabel("Task", fontsize=20, labelpad=20)
 ax.tick_params(labelsize=15)
 plt.show()

@@ -17,7 +17,8 @@ import xgboost
 
 class HappinessDataset(InputDataset):
     """
-    Extended Kaggle happiness dataset.
+    Extended World Happiness Report dataset.
+    Sources: https://www.kaggle.com/unsdsn/world-happiness, Christoph Kralj.
     """
 
     # Measured TDP for Happiness dataset with regression task in terms of RMSE.
@@ -67,7 +68,7 @@ class HappinessDataset(InputDataset):
         accuracy = 0
         n_splits = 100
 
-        # Apply random forest w/o further preprocessing to predict class labels.
+        # Apply boosting w/o further preprocessing to predict target values.
         reg = xgboost.XGBRegressor(
             objective='reg:squarederror',
             n_estimators=100,

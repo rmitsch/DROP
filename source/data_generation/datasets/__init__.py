@@ -1,6 +1,3 @@
 from data_generation.datasets.InputDataset import InputDataset
-from data_generation.datasets.MNISTDataset import MNISTDataset
-from data_generation.datasets.SwissRollDataset import SwissRollDataset
-from data_generation.datasets.VISPaperDataset import VISPaperDataset
-from data_generation.datasets.WineDataset import WineDataset
 from data_generation.datasets.HappinessDataset import HappinessDataset
+from data_generation.datasets.MovieDataset import MovieDataset

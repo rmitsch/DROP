@@ -54,10 +54,7 @@ def get_metadata():
     app.config["SURROGATE_MODELS_PATH"] = base_path + "surrogatemodels.pkl"
     app.config["EXPLAINER_VALUES_PATH"] = base_path + "explainervalues.pkl"
     dataset_name_class_links = {
-        "vis": VISPaperDataset,
-        "wine": WineDataset,
-        "swiss_roll": SwissRollDataset,
-        "mnist": MNISTDataset,
+        "movie": MovieDataset,
         "happiness": HappinessDataset
     }
     app.config["DATASET_CLASS"] = dataset_name_class_links[app.config["DATASET_NAME"]]
