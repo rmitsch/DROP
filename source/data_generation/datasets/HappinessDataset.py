@@ -45,13 +45,12 @@ class HappinessDataset(InputDataset):
         return StandardScaler().fit_transform(self._data["features"].values)
 
     def persist_records(self):
-        filepath = self._storage_path + '/happiness_records.csv'
+        filepath: str = self._storage_path + '/happiness_records.csv'
 
         if not os.path.isfile(filepath):
-            features_df = self._df.copy(deep=True)
-            features_df["record_name"] = features_df.index.values
-            features_df = features_df.rename(columns={"happiness_level": "target_label"})
-            features_df.to_csv(path_or_buf=filepath, index=False)
+            df: pd.DataFrame = self._df.copy(deep=True)
+            df["record_name"] = df.index.values
+            df.to_csv(path_or_buf=filepath, index=False)
 
     def compute_target_domain_performance(self, features: np.ndarray) -> float:
         """

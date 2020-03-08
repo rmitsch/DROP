@@ -31,19 +31,17 @@ class MovieDataset(InputDataset):
         super().__init__(storage_path=storage_path)
 
     def _load_data(self):
+        # Load and prepare data. Limit to 500 most popular movies.
         movies_metadata: pd.DataFrame = pd.read_csv(
             filepath_or_buffer=self._storage_path + "/movies_metadata.csv", low_memory=False,
             dtype={"id": int, "popularity": float}
         ).drop(columns=[
             "belongs_to_collection", "homepage", "imdb_id", "poster_path", "status", "video", "original_title",
             "original_language"
-        ]).set_index("id")
-
-        # Limit to 500 most popular movies.
-        movies_metadata = movies_metadata.sort_values(by="popularity", ascending=False).head(500)
+        ]).set_index("id").sort_values(by="popularity", ascending=False).head(500)
 
         # Simplify JSON lists - dispose of IDs.
-        def convert(x):
+        def convert(x: str) -> list:
             res = ast.literal_eval(x)
             return res if type(res) not in (float, int, bool) else []
         for col in ("genres", "production_companies", "production_countries", "spoken_languages"):
@@ -65,10 +63,12 @@ class MovieDataset(InputDataset):
             lambda vals: [val["name"] for val in convert(vals)]
         )
         movies_metadata = movies_metadata.join(movies_keywords)
+        self._df = movies_metadata
 
         # todo
         #  - finish MovieDataset implementation in backend
         #    - drop production companies?
+        #    - next step: TDP computation
         #  - generate embeddings
         #  - integrate in frontend
         #  - evaluate
@@ -80,10 +80,6 @@ class MovieDataset(InputDataset):
         # computation.
         # hence: implement compute_target_domain_performance(), compute_separability_matrix() and
         # compute_distance_matrix() in MovieDataset.
-
-        with pd.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', None):
-            print(movies_metadata.head())
-            exit()
 
         return {
             "features": movies_metadata.drop(["revenue"], axis=1),
@@ -100,7 +96,12 @@ class MovieDataset(InputDataset):
         pass
 
     def persist_records(self):
-        pass
+        filepath: str = self._storage_path + '/movie_records.csv'
+
+        if not os.path.isfile(filepath):
+            df: pd.DataFrame = self._df.copy(deep=True)
+            df["record_name"] = df.title
+            df.to_csv(path_or_buf=filepath, index=False)
 
     def compute_hd_target_domain_performance(self) -> float:
         pass

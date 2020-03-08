@@ -59,9 +59,10 @@ logger.info("Creating dataset.")
 
 # Load dataset.
 high_dim_dataset: InputDataset = generate_instance(instance_dataset_name=dataset_name, storage_path=storage_path)
-# exit()
+
 # Persist dataset's records as representation in frontend.
 high_dim_dataset.persist_records()
+exit()
 
 ######################################################
 # 3. Calculate distance matrices and the corresponding
