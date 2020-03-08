@@ -39,6 +39,9 @@ class MovieDataset(InputDataset):
             "original_language"
         ]).set_index("id")
 
+        # Limit to 500 most popular movies.
+        movies_metadata = movies_metadata.sort_values(by="popularity", ascending=False).head(500)
+
         # Simplify JSON lists - dispose of IDs.
         def convert(x):
             res = ast.literal_eval(x)
@@ -65,6 +68,7 @@ class MovieDataset(InputDataset):
 
         # todo
         #  - finish MovieDataset implementation in backend
+        #    - drop production companies?
         #  - generate embeddings
         #  - integrate in frontend
         #  - evaluate
@@ -96,6 +100,12 @@ class MovieDataset(InputDataset):
         pass
 
     def persist_records(self):
+        pass
+
+    def compute_hd_target_domain_performance(self) -> float:
+        pass
+
+    def compute_relative_target_domain_performance(self, features: np.ndarray):
         pass
 
     @staticmethod

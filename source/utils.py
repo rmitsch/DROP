@@ -85,9 +85,7 @@ class Utils:
                     value.decode('UTF-8') for value in features_df[feature["name"]].unique()
                 ]
                 # Encode categorical values numerically.
-                features_df[feature["name"]] = LabelEncoder().fit_transform(
-                    features_df[feature["name"]].values
-                )
+                features_df[feature["name"]] = LabelEncoder().fit_transform(features_df[feature["name"]].values)
 
                 # Encode as one-hot (note that 0 and 1 might be reverse (i. e. 0 used for active and 1 for inactive).
                 # Doesn't make a difference for models though as long as this encoding used in a consistent manner.

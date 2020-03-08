@@ -67,8 +67,8 @@ class PersistenceThread(threading.Thread):
         parameter_config: dict = DimensionalityReductionKernel.DIM_RED_KERNELS[self._dim_red_kernel_name]["parameters"]
 
         # Check on new arrivals every self._checking_interval seconds.
-        last_processed_index = -1
-        num_of_results_so_far = 0
+        last_processed_index: int = -1
+        num_of_results_so_far: int = 0
         while num_of_results_so_far < self._expected_number_of_results:
             # Check how many results are available so far.
             num_of_results_so_far = len(self._results)
@@ -155,7 +155,7 @@ class PersistenceThread(threading.Thread):
         :return: File handle of newly created .h5 file.
         """
 
-        self._ids_to_process = {i for i in range(0, self._total_number_of_results)}
+        self._ids_to_process: set = {i for i in range(0, self._total_number_of_results)}
         file_name: str = (
                 self._storage_path + "/tale_" + self._dataset_name + "_" + self._dim_red_kernel_name.lower() + ".h5"
         )

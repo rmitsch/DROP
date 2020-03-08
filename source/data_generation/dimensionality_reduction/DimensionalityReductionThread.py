@@ -119,17 +119,13 @@ class DimensionalityReductionThread(threading.Thread):
             # 2. c. Information-preserving metrics.
             ############################################
 
-            rtdp = self._input_dataset.compute_target_domain_performance(
-                features=low_dimensional_projection, relative=True
-            )
+            rtdp = self._input_dataset.compute_relative_target_domain_performance(features=low_dimensional_projection)
 
             ############################################
             # 2. d. Separability metrics.
             ############################################
 
-            separability_metric = self._input_dataset.compute_separability_metric(
-                features=low_dimensional_projection
-            )
+            separability_metric = self._input_dataset.compute_separability_metric(features=low_dimensional_projection)
 
             ###################################################
             # 3. Collect data, terminate.

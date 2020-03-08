@@ -59,12 +59,9 @@ logger.info("Creating dataset.")
 
 # Load dataset.
 high_dim_dataset: InputDataset = generate_instance(instance_dataset_name=dataset_name, storage_path=storage_path)
-exit()
-# Persist dataset's records.
+# exit()
+# Persist dataset's records as representation in frontend.
 high_dim_dataset.persist_records()
-
-# Scale attributes, fetch predictors.
-high_dim_features: np.ndarray = high_dim_dataset.preprocessed_features()
 
 ######################################################
 # 3. Calculate distance matrices and the corresponding

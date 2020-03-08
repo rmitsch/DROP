@@ -25,10 +25,10 @@ class HappinessDataset(InputDataset):
     high_dim_TDP = 0.31
 
     def __init__(self, storage_path: str):
-        self._df = None
+        self._df: pd.DataFrame = None
         super().__init__(storage_path=storage_path)
 
-    def _load_data(self):
+    def _load_data(self) -> dict:
         df = pd.read_csv(filepath_or_buffer=self._storage_path + "/happiness_2017.csv").drop(
             ["map_reference", "biggest_official_language", "gdp_per_capita[$]"], axis=1
         ).set_index("country")
@@ -41,13 +41,7 @@ class HappinessDataset(InputDataset):
             "labels": df.happiness_score
         }
 
-    def features(self):
-        return self._data["features"]
-
-    def labels(self):
-        return self._data["labels"]
-
-    def _preprocess_features(self):
+    def _preprocess_features(self) -> np.ndarray:
         return StandardScaler().fit_transform(self._data["features"].values)
 
     def persist_records(self):
@@ -59,17 +53,22 @@ class HappinessDataset(InputDataset):
             features_df = features_df.rename(columns={"happiness_level": "target_label"})
             features_df.to_csv(path_or_buf=filepath, index=False)
 
-    def compute_target_domain_performance(self, features: np.ndarray = None, relative: bool = False):
-        # Set features, if not specified in function call.
-        features = self.preprocessed_features() if features is None else features
-        labels = np.reshape(self.labels().values, (self.labels().values.shape[0], 1))
+    def compute_target_domain_performance(self, features: np.ndarray) -> float:
+        """
+        Auxiliary function providing TDP computation for both HD/original and relative case, since for HappinessDataset
+        both implementations are identical (both rely exclusively on numerical features).
+        :param features: Feature matrix as numeric numpy array.
+        :return: Target domain performance.
+        """
+
+        labels: np.ndarray = np.reshape(self.labels().values, (-1, 1))
 
         # Loop through stratified splits, average prediction accuracy over all splits.
-        accuracy = 0
-        n_splits = 100
+        accuracy: float = 0
+        n_splits: int = 100
 
         # Apply boosting w/o further preprocessing to predict target values.
-        reg = xgboost.XGBRegressor(
+        reg: xgboost.XGBRegressor = xgboost.XGBRegressor(
             objective='reg:squarederror',
             n_estimators=100,
             learning_rate=0.08,
@@ -83,39 +82,26 @@ class HappinessDataset(InputDataset):
             reg.fit(x_train, y_train)
 
             # Measure accuracy.
-            y_pred = reg.predict(x_test)
-            y_pred = np.reshape(y_pred, (y_pred.shape[0], 1))
+            y_pred: np.ndarray = reg.predict(x_test)
+            y_pred: np.ndarray = np.reshape(y_pred, (y_pred.shape[0], 1))
             accuracy += np.sqrt(sklearn.metrics.mean_squared_error(y_test, y_pred))
 
-        return accuracy / n_splits if not relative else HappinessDataset.high_dim_TDP / (accuracy / n_splits)
+        return accuracy / n_splits
 
-    def compute_separability_metric(self, features: np.ndarray) -> float:
-        """
-        Computes separability metric for this dataset.
-        Note: Assumes classification as domain task.
-        :param features: Coordinates of low-dimensional projection.
-        :return: Normalized score between 0 and 1 indicating how well labels are separated in low-dim. projection.
-        """
+    def compute_hd_target_domain_performance(self) -> float:
+        return self.compute_target_domain_performance(self._preprocessed_features)
 
-        # 1. Cluster projection with number of classes.
-        clusterer = hdbscan.HDBSCAN(alpha=1.0, metric='euclidean').fit(features)
+    def compute_relative_target_domain_performance(self, features: np.ndarray) -> float:
+        return self.compute_target_domain_performance(features) / self._hd_target_domain_performance
 
-        # 2. Calculate Silhouette score.
-        try:
-            silhouette_score = sklearn.metrics.silhouette_score(
-                X=self.labels().values.reshape(-1, 1), metric='euclidean', labels=clusterer.labels_
-            )
-            # Workaround: Use worst value if number is NaN - why does this happen?
-            silhouette_score = -1 if np.isnan(silhouette_score) else silhouette_score
-
-        # Silhouette score fails with only one label. Workaround: Set silhouette score to worst possible value in this
-        # case. Actual solution: Force at least two clusters - diff. clustering algorithm?
-        # See https://github.com/rmitsch/DROP/issues/49.
-        except ValueError:
-            silhouette_score = -1
-
-        # Normalize to 0 <= x <= 1.
-        return (silhouette_score + 1) / 2.0
+    def compute_separability_metric(
+            self,
+            features: np.ndarray,
+            cluster_metric: str = "euclidean",
+            silhouette_metric: str = "euclidean",
+            min_cluster_size: int = 2
+    ) -> float:
+        return super().compute_separability_metric(features, cluster_metric, silhouette_metric, min_cluster_size)
 
     @staticmethod
     def get_attributes_data_types() -> dict:

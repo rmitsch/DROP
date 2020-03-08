@@ -1,7 +1,7 @@
 import abc
 import copy
 import csv
-import numpy
+import numpy as np
 from scipy.spatial.distance import cdist
 import sklearn.ensemble
 from sklearn.model_selection import StratifiedShuffleSplit
@@ -10,6 +10,7 @@ import hdbscan
 import pandas as pd
 from utils import Utils
 from sklearn.ensemble import RandomForestClassifier
+import logging
 
 
 class InputDataset:
@@ -18,42 +19,30 @@ class InputDataset:
     Contains actual data as well information on ground truth.
     """
 
-    # Target domain performance value in original high-dimensional space.
-    high_dim_TDP = None
-
-    def __init__(self, data=None, preprocessed_features=None, target_domain_performance=None, storage_path: str = None):
+    def __init__(self, storage_path: str):
         """
         Defines variables to be used in inheriting classes.
         Takes some variable speeding up cloning an instance.
-        :param data: Loaded primitive dataset.
-        :param preprocessed_features: Preprocessed features.
-        :param target_domain_performance: Target domain performance of this dataset.
         :param storage_path: Path to folder storing data.
         """
 
-        # Make sure that either storage path or data is is set.
-        assert data is not None or storage_path is not None, "Either data or storage_path have to be specified for " \
-                                                             "new dataset."
-
         # Get logger.
-        self._logger = Utils.logger
+        self._logger: logging.Logger = Utils.logger
 
         # Set storage path.
-        self._storage_path = storage_path
+        self._storage_path: str = storage_path
 
         # Set primitive data set.
-        self._data = copy.deepcopy(data) if data is not None else self._load_data()
+        self._data: dict = self._load_data()
 
         # Preprocess features.
-        self._preprocessed_features = copy.deepcopy(preprocessed_features) if preprocessed_features is not None \
-            else self._preprocess_features()
+        self._preprocessed_features: np.ndarray = self._preprocess_features()
 
-        # Calculate accuracy.
-        self._target_domain_performance = target_domain_performance if target_domain_performance is not None \
-            else self.compute_target_domain_performance()
+        # Calculate accuracy for HD space, if not done yet.
+        self._hd_target_domain_performance: float = self.compute_hd_target_domain_performance()
 
     @abc.abstractmethod
-    def _load_data(self):
+    def _load_data(self) -> dict:
         """
         Loads or generates data for this dataset.
         :return:
@@ -61,44 +50,42 @@ class InputDataset:
         pass
 
     @abc.abstractmethod
-    def _preprocess_features(self):
+    def _preprocess_features(self) -> np.ndarray:
         """
-        Executes all necessary preprocessing.
-        :return: Set of preprocessed features. Is stored in self._scaled_features.
+        Executes all necessary preprocessing and transforms data for usage in sklearn-style models.
+        :return: Set of preprocessed features as numpy array.
         """
         pass
 
-    @abc.abstractmethod
-    def features(self):
+    def features(self) -> pd.DataFrame:
         """
         Returns features in this dataset.
         :return:
         """
-        pass
+        return self._data["features"]
 
-    def preprocessed_features(self):
+    def labels(self) -> pd.Series:
+        """
+        Returns ground truth labels in this dataset.
+        :return:
+        """
+        return self._data["labels"]
+
+    def preprocessed_features(self) -> np.ndarray:
         """
         Returns preprocssed features in this dataset.
         :return:
         """
         return self._preprocessed_features
 
-    def target_domain_performance(self):
+    def target_domain_performance(self) -> float:
         """
         Returns target domain performance accuracy.
         :return:
         """
-        return self._target_domain_performance
+        return self._hd_target_domain_performance
 
-    @abc.abstractmethod
-    def labels(self):
-        """
-        Returns ground truth labels in this dataset.
-        :return:
-        """
-        pass
-
-    def data(self):
+    def data(self) -> dict:
         """
         Returns loaded data.
         :return:
@@ -134,90 +121,71 @@ class InputDataset:
         """
         pass
 
-    def compute_target_domain_performance(self, features: numpy.ndarray = None, relative: bool = False):
+    def compute_hd_target_domain_performance(self) -> float:
         """
-        Calculates target domain performance for specified feature matrix.
-        Random forests are used as default model. Can be overwritten by children - important for comparison: Use
-        same procedure for prediction in both original and reduced dataset.
-        :param features: Data to be used for prediction. Labels are extract from original dataset.
-        :param relative: Indicates to compute RTDP instead of TDP.
-        :return:
+        Calculates target domain performance for feature matrix in original, high-dimensional dataset.
+        :return: Target domain performance for original, high-dimensional dataset.
         """
+        pass
 
-        # Set features, if not specified in function call.
-        features = self.preprocessed_features() if features is None else features
-        labels = self.labels()
+    def compute_relative_target_domain_performance(self, features: np.ndarray) -> float:
+        """
+        Calculates relative target domain performance for specified feature matrix.
+        :param features: Data to be used for prediction. Labels are extracted from original dataset.
+        :return: Relative target domain performance (i.e. TDP divided by TDP in original/HD space).
+        """
+        pass
 
-        # Loop through stratified splits, average prediction accuracy over all splits.
-        accuracy = 0
-        n_splits = 3
-
-        # Apply random forest w/o further preprocessing to predict class labels.
-        clf = RandomForestClassifier(
-            n_estimators=100,
-            max_depth=3,
-            n_jobs=1  # psutil.cpu_count(logical=False)
-        )
-
-        for train_indices, test_indices in StratifiedShuffleSplit(
-                n_splits=n_splits,
-                test_size=0.3
-        ).split(features, labels):
-            # Train model.
-            clf.fit(features[train_indices], labels[train_indices])
-
-            # Predict test set.
-            predicted_labels = clf.predict(features[test_indices])
-
-            # Measure accuracy.
-            accuracy += (predicted_labels == labels[test_indices]).sum() / len(predicted_labels)
-
-        return accuracy / n_splits if not relative else accuracy / n_splits / InputDataset.high_dim_TDP
-
-    def compute_distance_matrix(self, metric: str):
+    def compute_distance_matrix(self, metric: str) -> np.ndarray:
         """
         Compute distance matrix for all records in high-dimensional dataset.
-        :param metric:
+        :param metric: Metric to use in scipy's cdist().
         :return: Distance matrix as numpy.ndarry.
         """
 
-        return cdist(self.preprocessed_features(), self.preprocessed_features(), metric)
+        return cdist(self._preprocessed_features, self._preprocessed_features, metric)
 
-    def compute_separability_metric(self, features: numpy.ndarray) -> float:
+    def compute_separability_metric(
+            self,
+            features: np.ndarray,
+            cluster_metric: str = "euclidean",
+            silhouette_metric: str = "hamming",
+            min_cluster_size: int = 2
+    ) -> float:
         """
         Computes separability metric for this dataset.
         Note: Assumes classification as domain task.
         :param features: Coordinates of low-dimensional projection.
-        :return: Normalized score between 0 and 1 indicating how well labels are separated in low-dim. projection.
+        :param cluster_metric: Metric to use in clustering.
+        :param silhouette_metric: Metric to use when computing Silhouette score.
+        :param min_cluster_size: Minimal number of records in cluster.
+        :return: Normalized score between 0 and 1 indicating cluster consistency in feature space.
         """
 
         ########################################################################
         # 1. Cluster projection with number of classes.
         ########################################################################
-        # Alternative Approach: 1-kNN comparison - check if nearest neighbour is in same class.
-
-        # Determine min_cluster_size as approximate min number of elements in a class
-        unique, counts_per_class = numpy.unique(self.labels(), return_counts=True)
 
         # Create HDBSCAN instance and cluster data.
-        clusterer = hdbscan.HDBSCAN(
+        # noinspection PyTypeChecker
+        clusterer: hdbscan.HDBSCAN = hdbscan.HDBSCAN(
             alpha=1.0,
-            metric='euclidean',
+            metric=cluster_metric,
             # Use approximate number of entries in least common class as minimal cluster size.
-            min_cluster_size=int(counts_per_class.min() * 0.3),
+            min_cluster_size=min_cluster_size,
             min_samples=None
         ).fit(features)
 
         # 2. Calculate Silhouette score based on true labels.
         # Distance matrix: 1 if labels are equal, 0 otherwise -> Hamming distance.
         try:
-            silhouette_score = sklearn.metrics.silhouette_score(
-                X=self.labels().reshape(-1, 1),
-                metric='hamming',
+            silhouette_score: float = sklearn.metrics.silhouette_score(
+                X=self.labels().values.reshape(-1, 1),
+                metric=silhouette_metric,
                 labels=clusterer.labels_
             )
             # Workaround: Use worst value if number is NaN - why does this happen?
-            silhouette_score = -1 if numpy.isnan(silhouette_score) else silhouette_score
+            silhouette_score = -1 if np.isnan(silhouette_score) else silhouette_score
         # Silhouette score fails with only one label. Workaround: Set silhouette score to worst possible value in this
         # case. Actual solution: Force at least two clusters - diff. clustering algorithm?
         # See https://github.com/rmitsch/DROP/issues/49.
