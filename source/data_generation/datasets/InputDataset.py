@@ -36,7 +36,7 @@ class InputDataset:
         self._data: dict = self._load_data()
 
         # Preprocess features.
-        self._preprocessed_features: np.ndarray = self._preprocess_features()
+        self._preprocessed_hd_features: np.ndarray = self._preprocess_hd_features()
 
         # Calculate accuracy for HD space, if not done yet.
         self._hd_target_domain_performance: float = self.compute_hd_target_domain_performance()
@@ -50,7 +50,7 @@ class InputDataset:
         pass
 
     @abc.abstractmethod
-    def _preprocess_features(self) -> np.ndarray:
+    def _preprocess_hd_features(self) -> np.ndarray:
         """
         Executes all necessary preprocessing and transforms data for usage in sklearn-style models.
         :return: Set of preprocessed features as numpy array.
@@ -76,7 +76,7 @@ class InputDataset:
         Returns preprocssed features in this dataset.
         :return:
         """
-        return self._preprocessed_features
+        return self._preprocessed_hd_features
 
     def target_domain_performance(self) -> float:
         """
@@ -143,7 +143,7 @@ class InputDataset:
         :return: Distance matrix as numpy.ndarry.
         """
 
-        return cdist(self._preprocessed_features, self._preprocessed_features, metric)
+        return cdist(self._preprocessed_hd_features, self._preprocessed_hd_features, metric)
 
     def compute_separability_metric(
             self,

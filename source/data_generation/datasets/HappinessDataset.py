@@ -41,7 +41,7 @@ class HappinessDataset(InputDataset):
             "labels": df.happiness_score
         }
 
-    def _preprocess_features(self) -> np.ndarray:
+    def _preprocess_hd_features(self) -> np.ndarray:
         return StandardScaler().fit_transform(self._data["features"].values)
 
     def persist_records(self):
@@ -52,7 +52,7 @@ class HappinessDataset(InputDataset):
             df["record_name"] = df.index.values
             df.to_csv(path_or_buf=filepath, index=False)
 
-    def compute_target_domain_performance(self, features: np.ndarray) -> float:
+    def _compute_target_domain_performance(self, features: np.ndarray) -> float:
         """
         Auxiliary function providing TDP computation for both HD/original and relative case, since for HappinessDataset
         both implementations are identical (both rely exclusively on numerical features).
@@ -81,17 +81,17 @@ class HappinessDataset(InputDataset):
             reg.fit(x_train, y_train)
 
             # Measure accuracy.
-            y_pred: np.ndarray = reg.predict(x_test)
-            y_pred: np.ndarray = np.reshape(y_pred, (y_pred.shape[0], 1))
-            accuracy += np.sqrt(sklearn.metrics.mean_squared_error(y_test, y_pred))
+            y_pred: np.ndarray = np.reshape(reg.predict(x_test), (-1, 1))
+            accuracy += np.sqrt(sklearn.metrics.mean_squared_error(y_test, y_pred)) / np.mean(y_pred)
 
         return accuracy / n_splits
 
     def compute_hd_target_domain_performance(self) -> float:
-        return self.compute_target_domain_performance(self._preprocessed_features)
+        return self._compute_target_domain_performance(self._preprocessed_hd_features)
 
     def compute_relative_target_domain_performance(self, features: np.ndarray) -> float:
-        return self.compute_target_domain_performance(features) / self._hd_target_domain_performance
+        # TDP is measured as relative error here, so we divide performance in HD by that in LD space.
+        return self._hd_target_domain_performance / self._compute_target_domain_performance(features)
 
     def compute_separability_metric(
             self,
