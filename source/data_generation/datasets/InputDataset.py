@@ -11,6 +11,7 @@ import pandas as pd
 from utils import Utils
 from sklearn.ensemble import RandomForestClassifier
 import logging
+from enum import Enum
 
 
 class InputDataset:
@@ -18,6 +19,15 @@ class InputDataset:
     Wrapper class for datasets used as input in DR process.
     Contains actual data as well information on ground truth.
     """
+
+    class DataSupertypes(Enum):
+        NUMERICAL = "numerical"
+        CATEGORICAL = "categorical"
+
+    class DataSubtypes(Enum):
+        CONTINOUS = "continous"
+        DISCRETE = "discrete"
+        NOMINAL = "nominal"
 
     def __init__(self, storage_path: str):
         """

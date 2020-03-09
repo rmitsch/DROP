@@ -1,14 +1,8 @@
-import csv
-import math
 import os
-import warnings
-
+from enum import Enum
 import hdbscan
-import psutil
 import pandas as pd
 import numpy as np
-from sklearn.feature_selection import SelectKBest
-from sklearn.feature_selection import mutual_info_regression
 from sklearn.preprocessing import StandardScaler
 import sklearn
 from data_generation.datasets import InputDataset
@@ -69,7 +63,12 @@ class MovieDataset(InputDataset):
             lambda vals: [val["name"] for val in convert(vals)]
         )
         movies_metadata = movies_metadata.join(movies_keywords)
-        self._df = movies_metadata
+
+        # Compute movie age in years.
+        movies_metadata["age"] = (
+            datetime.datetime.now() - pd.to_datetime(movies_metadata.release_date)
+        ).dt.total_seconds() / (24 * 60 * 60) / 365.25
+        movies_metadata = movies_metadata.drop(columns="release_date")
 
         # todo
         #  - finish MovieDataset implementation in backend
@@ -87,6 +86,7 @@ class MovieDataset(InputDataset):
         # hence: implement compute_target_domain_performance(), compute_separability_matrix() and
         # compute_distance_matrix() in MovieDataset.
 
+        self._df = movies_metadata
         return {
             "features": movies_metadata.drop([target_col], axis=1),
             "labels": movies_metadata[target_col]
@@ -94,10 +94,6 @@ class MovieDataset(InputDataset):
 
     def _preprocess_hd_features(self):
         features: pd.DataFrame = self._data["features"].copy(deep=True)
-        features["age"] = (
-            datetime.datetime.now() - pd.to_datetime(features.release_date)
-        ).dt.total_seconds() / (24 * 60 * 60)
-        features = features.drop(columns="release_date")
 
         for cat_col in ("production_companies", "production_countries", "spoken_languages", "keywords"):
             features = features.join(
@@ -158,7 +154,31 @@ class MovieDataset(InputDataset):
 
     @staticmethod
     def get_attributes_data_types() -> dict:
-        pass
+        supertypes: Enum = InputDataset.DataSupertypes
+        subtypes: Enum = InputDataset.DataSubtypes
+
+        return {
+            **{
+                "budget": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.DISCRETE.value},
+                "overview": {"supertype": supertypes.CATEGORICAL.value, "type": subtypes.NOMINAL.value},
+                "popularity": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.CONTINOUS.value},
+                "production_companies": {"supertype": supertypes.CATEGORICAL.value, "type": subtypes.NOMINAL.value},
+                "production_countries": {"supertype": supertypes.CATEGORICAL.value, "type": subtypes.NOMINAL.value},
+                "age": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.CONTINOUS.value},
+                "revenue": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.CONTINOUS.value},
+                "runtime": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.CONTINOUS.value},
+                "spoken_languages": {"supertype": supertypes.CATEGORICAL.value, "type": subtypes.NOMINAL.value},
+                "tagline": {"supertype": supertypes.CATEGORICAL.value, "type": subtypes.NOMINAL.value},
+                "title": {"supertype": supertypes.CATEGORICAL.value, "type": subtypes.NOMINAL.value},
+                "vote_average": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.CONTINOUS.value},
+                "vote_count": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.DISCRETE.value},
+                "keywords": {"supertype": supertypes.CATEGORICAL.value, "type": subtypes.NOMINAL.value}
+            },
+            **{
+                genre: {"supertype": supertypes.NUMERICAL.value, "type": subtypes.DISCRETE.value}
+                for genre in MovieDataset.genres
+            }
+        }
 
     @staticmethod
     def sort_dataframe_columns_for_frontend(df: pd.DataFrame) -> pd.DataFrame:

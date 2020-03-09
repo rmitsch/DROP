@@ -1,13 +1,8 @@
-import csv
-import math
 import os
-import warnings
-
 import hdbscan
-import psutil
+from enum import Enum
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import StratifiedShuffleSplit
 import re
 from sklearn.preprocessing import StandardScaler
 import sklearn
@@ -104,21 +99,24 @@ class HappinessDataset(InputDataset):
 
     @staticmethod
     def get_attributes_data_types() -> dict:
+        supertypes: Enum = InputDataset.DataSupertypes
+        subtypes: Enum = InputDataset.DataSubtypes
+        
         return {
-            "happiness_rank": {"supertype": "numerical", "type": "discrete"},
-            "happiness_score": {"supertype": "numerical", "type": "continous"},
-            "economy": {"supertype": "numerical", "type": "continous"},
-            "family": {"supertype": "numerical", "type": "continous"},
-            "health": {"supertype": "numerical", "type": "continous"},
-            "freedom": {"supertype": "numerical", "type": "continous"},
-            "generosity": {"supertype": "numerical", "type": "continous"},
-            "corruption": {"supertype": "numerical", "type": "continous"},
-            "dystopia_residual": {"supertype": "numerical", "type": "continous"},
-            "cellular_subscriptions": {"supertype": "numerical", "type": "discrete"},
-            "surplus_deficit_gdp": {"supertype": "numerical", "type": "continous"},
-            "inflation_rate": {"supertype": "numerical", "type": "continous"},
-            "population": {"supertype": "numerical", "type": "discrete"},
-            "record_name": {"supertype": "categorical", "type": "nominal"}
+            "happiness_rank": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.DISCRETE.value},
+            "happiness_score": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.CONTINOUS.value},
+            "economy": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.CONTINOUS.value},
+            "family": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.CONTINOUS.value},
+            "health": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.CONTINOUS.value},
+            "freedom": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.CONTINOUS.value},
+            "generosity": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.CONTINOUS.value},
+            "corruption": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.CONTINOUS.value},
+            "dystopia_residual": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.CONTINOUS.value},
+            "cellular_subscriptions": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.DISCRETE.value},
+            "surplus_deficit_gdp": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.CONTINOUS.value},
+            "inflation_rate": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.CONTINOUS.value},
+            "population": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.DISCRETE.value},
+            "record_name": {"supertype": supertypes.CATEGORICAL.value, "type": subtypes.NOMINAL.value}
         }
 
     @staticmethod
