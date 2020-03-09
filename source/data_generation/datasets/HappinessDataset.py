@@ -88,15 +88,6 @@ class HappinessDataset(InputDataset):
         # TDP is measured as relative error here, so we divide performance in HD by that in LD space.
         return self._hd_target_domain_performance / self._compute_target_domain_performance(features)
 
-    def compute_separability_metric(
-            self,
-            features: np.ndarray,
-            cluster_metric: str = "euclidean",
-            silhouette_metric: str = "euclidean",
-            min_cluster_size: int = 2
-    ) -> float:
-        return super().compute_separability_metric(features, cluster_metric, silhouette_metric, min_cluster_size)
-
     @staticmethod
     def get_attributes_data_types() -> dict:
         supertypes: Enum = InputDataset.DataSupertypes

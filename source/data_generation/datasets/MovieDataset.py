@@ -72,8 +72,6 @@ class MovieDataset(InputDataset):
 
         # todo
         #  - finish MovieDataset implementation in backend
-        #    - drop production companies?
-        #    - next step: TDP computation
         #  - generate embeddings
         #  - integrate in frontend
         #  - evaluate
@@ -170,6 +168,7 @@ class MovieDataset(InputDataset):
                 "spoken_languages": {"supertype": supertypes.CATEGORICAL.value, "type": subtypes.NOMINAL.value},
                 "tagline": {"supertype": supertypes.CATEGORICAL.value, "type": subtypes.NOMINAL.value},
                 "title": {"supertype": supertypes.CATEGORICAL.value, "type": subtypes.NOMINAL.value},
+                "record_name": {"supertype": supertypes.CATEGORICAL.value, "type": subtypes.NOMINAL.value},
                 "vote_average": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.CONTINOUS.value},
                 "vote_count": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.DISCRETE.value},
                 "keywords": {"supertype": supertypes.CATEGORICAL.value, "type": subtypes.NOMINAL.value}
@@ -182,4 +181,7 @@ class MovieDataset(InputDataset):
 
     @staticmethod
     def sort_dataframe_columns_for_frontend(df: pd.DataFrame) -> pd.DataFrame:
-        pass
+        df_sorted: pd.DataFrame = df.reindex(sorted(df.columns), axis=1)
+        df_sorted = df_sorted[['record_name'] + [col_name for col_name in df if col_name not in ['record_name']]]
+
+        return df_sorted
