@@ -62,7 +62,6 @@ high_dim_dataset: InputDataset = generate_instance(instance_dataset_name=dataset
 
 # Persist dataset's records as representation in frontend.
 high_dim_dataset.persist_records()
-exit()
 
 ######################################################
 # 3. Calculate distance matrices and the corresponding
@@ -70,25 +69,20 @@ exit()
 ######################################################
 
 logger.info("Calculating distance matrices.")
-distance_matrices: dict = {
-    metric: high_dim_dataset.compute_distance_matrix(metric=metric)
-    for metric in DimensionalityReductionKernel.get_metric_values(dim_red_kernel_name)
-}
+distance_metric: str = "euclidean"
+distance_matrix: np.ndarray = high_dim_dataset.compute_distance_matrix()
 
 # Generate neighbourhood ranking for high dimensional data w.r.t. all used distance metrics.
 logger.info("Generating neighbourhood rankings.")
-high_dim_neighbourhood_rankings: dict = {
-    metric: CorankingMatrix.generate_neighbourhood_ranking(
-        distance_matrix=distance_matrices[metric]
-    )
-    for metric in DimensionalityReductionKernel.get_metric_values(dim_red_kernel_name)
-}
+high_dim_neighbourhood_ranking: np.ndarray = CorankingMatrix.generate_neighbourhood_ranking(
+    distance_matrix=distance_matrix
+)
 
 # Store high-dimensional distances matrices and neighbourhood rankings.
-with open(storage_path + "/" + dataset_name + "_distance_matrices.pkl", "wb") as file:
-    pickle.dump(distance_matrices, file)
+with open(storage_path + "/" + dataset_name + "_distance_matrix.pkl", "wb") as file:
+    pickle.dump(distance_matrix, file)
 with open(storage_path + "/" + dataset_name + "_neighbourhood_ranking.pkl", "wb") as file:
-    pickle.dump(high_dim_neighbourhood_rankings, file)
+    pickle.dump(high_dim_neighbourhood_ranking, file)
 
 ######################################################
 # 3. Set up multithreading.
@@ -106,7 +100,7 @@ results: list = []
 logger.info("Generating dimensionality reduction models with " + str(n_jobs) + " threads.")
 num_parameter_sets: int = int(len(parameter_sets) / n_jobs)
 
-for i in range(0, n_jobs):
+for i in range(0, n_jobs):  
     first_index: int = num_parameter_sets * i
     # Add normal number of parameter sets, if this isn't the last job. Otherwise add all remaining sets.
     last_index: int = first_index + num_parameter_sets if i < (n_jobs - 1) else len(parameter_sets)
@@ -115,10 +109,10 @@ for i in range(0, n_jobs):
     threads.append(
         DimensionalityReductionThread(
             results=results,
-            distance_matrices=distance_matrices,
+            distance_matrix=distance_matrix,
             parameter_sets=parameter_sets[first_index:last_index],
             input_dataset=high_dim_dataset,
-            high_dimensional_neighbourhood_rankings=high_dim_neighbourhood_rankings,
+            high_dimensional_neighbourhood_ranking=high_dim_neighbourhood_ranking,
             dim_red_kernel_name=dim_red_kernel_name
         )
     )

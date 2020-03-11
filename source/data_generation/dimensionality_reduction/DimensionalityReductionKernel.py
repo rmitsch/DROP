@@ -182,19 +182,6 @@ class DimensionalityReductionKernel:
         return parameter_sets, len(parameter_sets) + len(existent_parameter_sets)
 
     @staticmethod
-    def get_metric_values(dim_red_kernel_name: str):
-        """
-        Auxiliary function to retrieve possible values for attribute "metric" in specified dim. red. kernel.
-        :param dim_red_kernel_name:
-        :return:
-        """
-        for param_desc in DimensionalityReductionKernel.DIM_RED_KERNELS[dim_red_kernel_name]["parameters"]:
-            if param_desc["name"] == "metric":
-                return param_desc["values"]
-
-        return None
-
-    @staticmethod
     def check_kernel_name(parameter: str):
         """
         Checks whether supplied parameter is valid kernel name.

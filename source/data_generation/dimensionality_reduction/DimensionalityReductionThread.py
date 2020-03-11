@@ -15,32 +15,33 @@ class DimensionalityReductionThread(threading.Thread):
     def __init__(
             self,
             results: list,
-            distance_matrices: dict,
+            distance_matrix: np.ndarray,
             parameter_sets: list,
             input_dataset: InputDataset,
-            high_dimensional_neighbourhood_rankings: dict,
+            high_dimensional_neighbourhood_ranking: np.ndarray,
             dim_red_kernel_name: str
     ):
         """
         Initializes thread instance that will calculate the low-dimensional representation of the specified distance
         matrices applying the chosen DR method.
         :param results:
-        :param distance_matrices:
+        :param distance_matrix:
         :param parameter_sets:
         :param input_dataset:
-        :param high_dimensional_neighbourhood_rankings: Neighbourhood rankings in original high-dimensional space. Dict.
+        :param high_dimensional_neighbourhood_ranking: Neighbourhood rankings in original high-dimensional space. Dict.
         with one entry per distance metric.
         :param dim_red_kernel_name: Name of dimensionality reduction algorithm to apply.
         """
         threading.Thread.__init__(self)
 
-        self._distance_matrices = distance_matrices
-        self._parameter_sets = parameter_sets
-        self._results = results
-        self._input_dataset = input_dataset
-        self._high_dimensional_neighbourhood_rankings = high_dimensional_neighbourhood_rankings
-        self._dim_red_kernel = DimensionalityReductionKernel(dim_red_kernel_name)
+        self._distance_matrix: np.ndarray = distance_matrix
+        self._parameter_sets: list = parameter_sets
+        self._results: list = results
+        self._input_dataset: InputDataset = input_dataset
+        self._high_dimensional_neighbourhood_ranking: np.ndarray = high_dimensional_neighbourhood_ranking
+        self._dim_red_kernel: DimensionalityReductionKernel = DimensionalityReductionKernel(dim_red_kernel_name)
 
+    def run(self):
     def run(self):
         """
         Runs thread and calculates all t-SNE models specified in parameter_sets.
@@ -52,12 +53,11 @@ class DimensionalityReductionThread(threading.Thread):
         ###################################################
 
         for parameter_set in self._parameter_sets:
-            metric: str = parameter_set["metric"]
 
             # Calculate t-SNE. Surpress output while doing so.
-            start = time.time()
+            start: float = time.time()
             low_dimensional_projection: np.ndarry = self._dim_red_kernel.run(
-                high_dim_data=self._distance_matrices[metric],
+                high_dim_data=self._distance_matrix,
                 parameter_set=parameter_set
             )
 
@@ -66,41 +66,31 @@ class DimensionalityReductionThread(threading.Thread):
             ###################################################
 
             # Start measuring runtime.
-            runtime = time.time() - start
+            runtime: float = time.time() - start
 
             ############################################
             # 2. a. Topology-based metrics.
             ############################################
 
             # Create coranking matrix for topology-based objectives.
-            coranking_matrix = CorankingMatrix(
-                high_dimensional_data=self._distance_matrices[metric],
+            coranking_matrix: CorankingMatrix = CorankingMatrix(
                 low_dimensional_data=low_dimensional_projection,
-                distance_metric=metric,
-                high_dimensional_neighbourhood_ranking=self._high_dimensional_neighbourhood_rankings[metric]
+                high_dimensional_neighbourhood_ranking=self._high_dimensional_neighbourhood_ranking
             )
 
-            # R_nx.
-            r_nx = CorankingMatrixQualityCriterion(
-                high_dimensional_data=self._distance_matrices[metric],
+            r_nx: float = CorankingMatrixQualityCriterion(
                 low_dimensional_data=low_dimensional_projection,
-                distance_metric=metric,
                 coranking_matrix=coranking_matrix
             ).compute()
 
-            # B_nx.
-            b_nx = CorankingMatrixBehaviourCriterion(
-                high_dimensional_data=self._distance_matrices[metric],
+            b_nx: float = CorankingMatrixBehaviourCriterion(
                 low_dimensional_data=low_dimensional_projection,
-                distance_metric=metric,
                 coranking_matrix=coranking_matrix
             ).compute()
 
             # Pointwise Q_nx -> q_nx.
-            q_nx_i = PointwiseCorankingMatrixQualityCriterion(
-                high_dimensional_data=self._distance_matrices[metric],
+            q_nx_i: float = PointwiseCorankingMatrixQualityCriterion(
                 low_dimensional_data=low_dimensional_projection,
-                distance_metric=metric,
                 coranking_matrix=coranking_matrix
             ).compute()
 
@@ -108,10 +98,9 @@ class DimensionalityReductionThread(threading.Thread):
             # 2. b. Distance-based metrics.
             ############################################
 
-            stress = Stress(
-                high_dimensional_data=self._distance_matrices[metric],
+            stress: float = Stress(
+                high_dimensional_data=self._distance_matrix,
                 low_dimensional_data=low_dimensional_projection,
-                distance_metric=metric,
                 use_geodesic_distances=False
             ).compute()
 
@@ -119,13 +108,17 @@ class DimensionalityReductionThread(threading.Thread):
             # 2. c. Information-preserving metrics.
             ############################################
 
-            rtdp = self._input_dataset.compute_relative_target_domain_performance(features=low_dimensional_projection)
+            rtdp: float = self._input_dataset.compute_relative_target_domain_performance(
+                features=low_dimensional_projection
+            )
 
             ############################################
             # 2. d. Separability metrics.
             ############################################
 
-            separability_metric = self._input_dataset.compute_separability_metric(features=low_dimensional_projection)
+            separability_metric: float = self._input_dataset.compute_separability_metric(
+                features=low_dimensional_projection
+            )
 
             ###################################################
             # 3. Collect data, terminate.

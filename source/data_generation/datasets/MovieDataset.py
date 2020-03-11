@@ -1,6 +1,6 @@
 import os
 from enum import Enum
-import hdbscan
+from scipy.spatial.distance import cdist
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
@@ -9,6 +9,8 @@ from data_generation.datasets import InputDataset
 import xgboost
 import ast
 import datetime
+import plotly.express as px
+import umap
 
 
 class MovieDataset(InputDataset):
@@ -22,7 +24,9 @@ class MovieDataset(InputDataset):
     ]
 
     def __init__(self, storage_path: str):
-        self._df = None
+        self._df: pd.DataFrame = None
+        self._preprocessed_feature_cols: list = None
+
         super().__init__(storage_path=storage_path)
 
     def _load_data(self):
@@ -52,7 +56,7 @@ class MovieDataset(InputDataset):
         ).drop(columns=["genres"])
 
         # Limit to most popular movies.
-        movies_metadata = movies_metadata.head(1000)
+        movies_metadata = movies_metadata.head(500)
 
         # Join with story keywords.
         movies_keywords: pd.DataFrame = pd.read_csv(
@@ -71,7 +75,7 @@ class MovieDataset(InputDataset):
         movies_metadata = movies_metadata.drop(columns="release_date")
 
         # todo
-        #  - finish MovieDataset implementation in backend
+        #  - remove distance metric from attributes in backend
         #  - generate embeddings
         #  - integrate in frontend
         #  - evaluate
@@ -91,7 +95,10 @@ class MovieDataset(InputDataset):
         }
 
     def _preprocess_hd_features(self):
-        features: pd.DataFrame = self._data["features"].copy(deep=True)
+        features: pd.DataFrame = self._data["features"].copy(deep=True).drop(columns=[
+            # Drop textual data since we rely only on numerical on categorical data (for now).
+            "overview", "tagline", "title"
+        ])
 
         for cat_col in ("production_companies", "production_countries", "spoken_languages", "keywords"):
             features = features.join(
@@ -99,7 +106,9 @@ class MovieDataset(InputDataset):
                 how="left"
             ).drop(columns=[cat_col])
 
-        return StandardScaler().fit_transform(features.drop(columns=["overview", "tagline", "title"]).values)
+        self._preprocessed_feature_cols = features.columns.values.tolist()
+
+        return StandardScaler().fit_transform(features.values)
 
     def persist_records(self):
         filepath: str = self._storage_path + '/movie_records.csv'
@@ -121,7 +130,7 @@ class MovieDataset(InputDataset):
 
         # Loop through stratified splits, average prediction accuracy over all splits.
         relative_error: float = 0
-        n_splits: int = 10
+        n_splits: int = 1  # 0
 
         # Apply boosting w/o further preprocessing to predict target values.
         reg: xgboost.XGBRegressor = xgboost.XGBRegressor(
@@ -149,6 +158,47 @@ class MovieDataset(InputDataset):
     def compute_relative_target_domain_performance(self, features: np.ndarray):
         # TDP is measured as relative error here, so we divide performance in HD by that in LD space.
         return self._hd_target_domain_performance / self._compute_target_domain_performance(features)
+
+    def compute_distance_matrix(self) -> np.ndarray:
+        """
+        Compute distance matrix for all records in high-dimensional dataset.
+        Note that some subjective decisions regarding feature weights are made in order to achieve appropriate distance
+        computations.
+        :return: Distance matrix as numpy.ndarry.
+        """
+
+        features: np.ndarray = self._preprocessed_hd_features
+        feature_cols: list = self._preprocessed_feature_cols
+
+        ####################################################
+        # Compute distances for real-valued columns.
+        ####################################################
+
+        col_idx: list = [feature_cols.index(col) for col in ["popularity", "revenue", "vote_count", "age"]]
+        distances: np.ndarray = cdist(features[:, col_idx], features[:, col_idx], "euclidean")
+        # Normalize distances as workaround for merging with distances computed with other metrics (specifically
+        # Jaccard).
+        distances /= np.max(distances)
+        distances *= 0.5
+
+        ####################################################
+        # Compute distances for content keywords.
+        ####################################################
+
+        col_idx = [
+            feature_cols.index(col) for col in
+            [col for col in feature_cols if col.startswith("keywords")]
+        ]
+        distances += cdist(features[:, col_idx], features[:, col_idx], "jaccard") * 1
+
+        ####################################################
+        # Compute distances for genres.
+        ####################################################
+
+        col_idx = [feature_cols.index(col) for col in MovieDataset.genres]
+        distances += cdist(features[:, col_idx], features[:, col_idx], "jaccard") * 1
+
+        return distances
 
     @staticmethod
     def get_attributes_data_types() -> dict:

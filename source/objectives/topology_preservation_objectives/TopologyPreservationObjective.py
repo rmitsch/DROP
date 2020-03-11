@@ -13,8 +13,8 @@ class TopologyPreservationObjective(DimensionalityReductionObjective):
     def __init__(
             self,
             low_dimensional_data: numpy.ndarray,
-            high_dimensional_data: numpy.ndarray,
-            distance_metric: str = 'euclidean',
+            distance_metric: str = None,
+            high_dimensional_data: numpy.ndarray = None,
             coranking_matrix: CorankingMatrix = None
     ):
         """
@@ -25,6 +25,11 @@ class TopologyPreservationObjective(DimensionalityReductionObjective):
         :param distance_metric: Metric to use for calculation of coranking matrix (preferrably the same that's used
         for the distance matrix supplied to DR algorithm).
         """
+
+        assert high_dimensional_data is not None or coranking_matrix is not None
+        assert coranking_matrix is not None or distance_metric, \
+            "Distance metric must be specified when not passing high_dimensionsional_neighbourhood_rankings."
+
         super().__init__(
             low_dimensional_data=low_dimensional_data,
             high_dimensional_data=high_dimensional_data,
@@ -32,11 +37,10 @@ class TopologyPreservationObjective(DimensionalityReductionObjective):
         )
 
         # Update coranking matrix with supplied value (or calculate, if none was supplied).
-        self._coranking_matrix = coranking_matrix if coranking_matrix is not None else CorankingMatrix(
+        self._coranking_matrix: CorankingMatrix = coranking_matrix if coranking_matrix is not None else CorankingMatrix(
             high_dimensional_data=high_dimensional_data,
             low_dimensional_data=low_dimensional_data,
-            distance_metric=distance_metric,
-            high_dimensional_neighbourhood_ranking=None
+            distance_metric=distance_metric
         )
 
     @abc.abstractmethod

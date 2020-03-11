@@ -14,7 +14,8 @@ class DimensionalityReductionObjective(Objective):
             self,
             low_dimensional_data: numpy.ndarray,
             high_dimensional_data: numpy.ndarray,
-            distance_metric: str):
+            distance_metric: str
+    ):
         """
         Initializes DR objective.
         :param low_dimensional_data: Output of DR algorithm.

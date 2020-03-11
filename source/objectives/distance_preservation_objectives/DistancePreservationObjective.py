@@ -12,7 +12,7 @@ class DistancePreservationObjective(DimensionalityReductionObjective):
             self,
             low_dimensional_data: numpy.ndarray,
             high_dimensional_data: numpy.ndarray,
-            distance_metric: str = 'euclidean',
+            distance_metric: str = None,
             use_geodesic_distances: bool = False
     ):
         """

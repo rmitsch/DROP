@@ -12,13 +12,11 @@ DIM_RED_KERNELS_PARAMETERS: dict = {
         {"name": "early_exaggeration", "type": "numeric", "values": [5, 10, 15, 20]},
         {"name": "learning_rate", "type": "numeric", "values": [10, 100, 250, 500]},
         {"name": "n_iter", "type": "numeric", "values": [100, 250, 500, 1000]},
-        {"name": "angle", "type": "numeric", "values": [0.35, 0.5, 0.75, 0.9]},
-        {"name": "metric", "type": "categorical", "values": ['cosine', 'euclidean']}
+        {"name": "angle", "type": "numeric", "values": [0.35, 0.5, 0.75, 0.9]}
     ],
     "SVD": [
         {"name": "n_components", "type": "numeric", "values": [1, 2]},
-        {"name": "n_iter", "type": "numeric", "values": [5, 10, 20]},
-        {"name": "metric", "type": "categorical", "values": ['cosine', 'euclidean']}
+        {"name": "n_iter", "type": "numeric", "values": [5, 10, 20]}
     ],
     "UMAP": [
         {"name": "n_components", "type": "numeric", "values": [2, 3, 4]},
@@ -26,7 +24,6 @@ DIM_RED_KERNELS_PARAMETERS: dict = {
         {"name": "n_epochs", "type": "numeric", "values": [200, 500, 750]},
         {"name": "learning_rate", "type": "numeric", "values": [0.1, 0.5, 1.0]},
         {"name": "min_dist", "type": "numeric", "values": [0.05, 0.1, 0.2]},
-        {"name": "local_connectivity", "type": "numeric", "values": [1, 2, 3]},
-        {"name": "metric", "type": "categorical", "values": ['euclidean', 'cosine']}
+        {"name": "local_connectivity", "type": "numeric", "values": [1, 2, 3]}
     ]
 }

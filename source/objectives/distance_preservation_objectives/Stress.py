@@ -1,9 +1,9 @@
-import numpy
 import scipy
 import sklearn
 from .DistancePreservationObjective import DistancePreservationObjective
 import networkx
 from sklearn.isotonic import IsotonicRegression
+import numpy as np
 
 
 class Stress(DistancePreservationObjective):
@@ -12,26 +12,23 @@ class Stress(DistancePreservationObjective):
     """
     def __init__(
             self,
-            low_dimensional_data: numpy.ndarray,
-            high_dimensional_data: numpy.ndarray,
-            distance_metric: str = 'euclidean',
+            low_dimensional_data: np.ndarray,
+            high_dimensional_data: np.ndarray,
             use_geodesic_distances: bool = False
     ):
         """
         Initiates new pool for stress-related objectives.
         :param low_dimensional_data:
         :param high_dimensional_data:
-        :param distance_metric:
         :param use_geodesic_distances:
         """
         super().__init__(
             low_dimensional_data=low_dimensional_data,
             high_dimensional_data=high_dimensional_data,
-            distance_metric=distance_metric,
             use_geodesic_distances=use_geodesic_distances
         )
 
-    def compute(self):
+    def compute(self) -> float:
         """
         This method allows to compute multiple stress functions:
             * Kruskal stress https://www.researchgate.net/publication/24061688_Nonmetric_multidimensional_scaling_A_numerical_method
@@ -47,8 +44,9 @@ class Stress(DistancePreservationObjective):
 
         #  We compute distance matrices in both spaces
         if self._use_geodesic_distances:
-            k = 2
-            is_connex = False
+            k: int = 2
+            is_connex: bool = False
+
             while is_connex is False:
                 knn = sklearn.neighbors.NearestNeighbors(n_neighbors=k)
                 knn.fit(self._low_dimensional_data)
@@ -57,10 +55,11 @@ class Stress(DistancePreservationObjective):
                 is_connex = networkx.is_connected(graph)
                 k += 1
             s_uni_distances = networkx.all_pairs_dijkstra_path_length(graph, cutoff=None, weight='weight')
-            s_all_distances = numpy.array([numpy.array(a.items())[:, 1] for a in numpy.array(s_uni_distances.items())[:, 1]])
+            s_all_distances = np.array([np.array(a.items())[:, 1] for a in np.array(s_uni_distances.items())[:, 1]])
             s_all_distances = (s_all_distances + s_all_distances.T) / 2
             s_uni_distances = scipy.spatial.distance.squareform(s_all_distances)
             s_all_distances = s_all_distances.ravel()
+
         else:
             s_uni_distances = scipy.spatial.distance.pdist(self._low_dimensional_data)
             s_all_distances = scipy.spatial.distance.squareform(s_uni_distances).ravel()
@@ -87,14 +86,14 @@ class Stress(DistancePreservationObjective):
 
         # 4. Kruskal stress
         # We reorder the distances under the order of distances in latent space
-        s_all_distances = s_all_distances[l_all_distances.argsort()]
-        l_all_distances = l_all_distances[l_all_distances.argsort()]
+        s_all_distances: np.ndarray = s_all_distances[l_all_distances.argsort()]
+        l_all_distances: np.ndarray = l_all_distances[l_all_distances.argsort()]
         # We perform the isotonic regression
-        iso = IsotonicRegression()
-        s_iso_distances = iso.fit_transform(s_all_distances, l_all_distances)
+        iso: IsotonicRegression = IsotonicRegression()
+        s_iso_distances: np.ndarray = iso.fit_transform(s_all_distances, l_all_distances)
         # We compute the kruskal stress.
-        measures['kruskal_stress'] = numpy.sqrt(
-            numpy.square(s_iso_distances - l_all_distances).sum() / numpy.square(l_all_distances).sum()
+        measures['kruskal_stress'] = np.sqrt(
+            np.square(s_iso_distances - l_all_distances).sum() / np.square(l_all_distances).sum()
         )
 
         # Pick Kruskal's stress here. Best choices amongst Sammon, S, Kruskal, quadratic loss?

@@ -336,15 +336,15 @@ def get_dr_model_details():
     """
 
     dataset_name: str = app.config["DATASET_NAME"]
-    embedding_id = int(request.args["id"])
-    file_name = app.config["FULL_FILE_NAME"]
-    high_dim_file_name = app.config["STORAGE_PATH"] + dataset_name + "_records.csv"
-    high_dim_neighbour_ranking_file_name = app.config["STORAGE_PATH"] + dataset_name + "_neighbourhood_ranking.pkl"
-    high_dim_distance_matrices_file_name = app.config["STORAGE_PATH"] + dataset_name + "_distance_matrices.pkl"
+    embedding_id: int = int(request.args["id"])
+    file_name: str = app.config["FULL_FILE_NAME"]
+    high_dim_file_name: str = app.config["STORAGE_PATH"] + dataset_name + "_records.csv"
+    high_dim_neighbour_ranking_file_name: str = app.config["STORAGE_PATH"] + dataset_name + "_neighbourhood_ranking.pkl"
+    high_dim_distance_matrix_file_name = app.config["STORAGE_PATH"] + dataset_name + "_distance_matrix.pkl"
 
     # Make sure all files exist.
     for fn in (
-        file_name, high_dim_file_name, high_dim_neighbour_ranking_file_name, high_dim_distance_matrices_file_name
+        file_name, high_dim_file_name, high_dim_neighbour_ranking_file_name, high_dim_distance_matrix_file_name
     ):
         if not os.path.isfile(fn):
             return "File " + fn + " does not exist.", 400
@@ -377,7 +377,7 @@ def get_dr_model_details():
 
     # Compute pairwise displacement data.
     pairwise_displacement_data: pd.DataFrame = CorankingMatrix.compute_pairwise_displacement_data(
-        high_dim_distance_matrices_file_name,
+        high_dim_distance_matrix_file_name,
         high_dim_neighbour_ranking_file_name,
         low_dim_projection
     )

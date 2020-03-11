@@ -11,8 +11,8 @@ class PointwiseCorankingMatrixQualityCriterion(TopologyPreservationObjective):
     def __init__(
             self,
             low_dimensional_data: numpy.ndarray,
-            high_dimensional_data: numpy.ndarray,
-            distance_metric: str = 'euclidean',
+            distance_metric: str = None,
+            high_dimensional_data: numpy.ndarray = None,
             coranking_matrix: CorankingMatrix = None
     ):
         """
@@ -26,7 +26,7 @@ class PointwiseCorankingMatrixQualityCriterion(TopologyPreservationObjective):
             coranking_matrix=coranking_matrix
         )
 
-    def compute(self):
+    def compute(self) -> float:
         """
         Calculates objective.
         Source: http://www.cs.rug.nl/biehl/Preprints/2012-esann-quality.pdf, section 4.

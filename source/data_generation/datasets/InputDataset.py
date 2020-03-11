@@ -1,15 +1,11 @@
 import abc
-import copy
-import csv
 import numpy as np
 from scipy.spatial.distance import cdist
 import sklearn.ensemble
-from sklearn.model_selection import StratifiedShuffleSplit
 import sklearn.metrics
 import hdbscan
 import pandas as pd
 from utils import Utils
-from sklearn.ensemble import RandomForestClassifier
 import logging
 from enum import Enum
 
@@ -146,14 +142,13 @@ class InputDataset:
         """
         pass
 
-    def compute_distance_matrix(self, metric: str) -> np.ndarray:
+    def compute_distance_matrix(self) -> np.ndarray:
         """
         Compute distance matrix for all records in high-dimensional dataset.
-        :param metric: Metric to use in scipy's cdist().
         :return: Distance matrix as numpy.ndarry.
         """
 
-        return cdist(self._preprocessed_hd_features, self._preprocessed_hd_features, metric)
+        return cdist(self._preprocessed_hd_features, self._preprocessed_hd_features, "euclidean")
 
     def compute_separability_metric(
             self,

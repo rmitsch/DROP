@@ -11,8 +11,8 @@ class CorankingMatrixQualityCriterion(TopologyPreservationObjective):
     def __init__(
             self,
             low_dimensional_data: numpy.ndarray,
-            high_dimensional_data: numpy.ndarray,
-            distance_metric: str = 'euclidean',
+            distance_metric: str = None,
+            high_dimensional_data: numpy.ndarray = None,
             coranking_matrix: CorankingMatrix = None
     ):
         """

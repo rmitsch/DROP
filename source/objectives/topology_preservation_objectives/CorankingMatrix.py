@@ -21,21 +21,26 @@ class CorankingMatrix:
     def __init__(
             self,
             low_dimensional_data: np.ndarray,
-            high_dimensional_data: np.ndarray,
-            distance_metric: str = 'euclidean',
+            distance_metric: str = None,
+            high_dimensional_data: np.ndarray = None,
             high_dimensional_neighbourhood_ranking: np.ndarray = None
     ):
         """
         Computes new co-ranking matrix.
         :param low_dimensional_data:
         :param high_dimensional_data:
-        :param distance_metric:
+        :param distance_metric: Distance metric used to compute neighbourhood ranking. Only needed if
+        high_dimensional_neighbourhood_ranking not supplied.
         :param high_dimensional_neighbourhood_ranking:
         """
 
-        self._distance_metric = distance_metric
-        self._high_dim_ranking = None
-        self._low_dim_ranking = None
+        assert high_dimensional_data is not None or high_dimensional_neighbourhood_ranking is not None
+        assert high_dimensional_neighbourhood_ranking is not None or distance_metric, \
+            "Distance metric must be specified when not passing high_dimensionsional_neighbourhood_rankings."
+
+        self._distance_metric: str = distance_metric
+        self._high_dim_ranking: np.ndarray = None
+        self._low_dim_ranking: np.ndarray = None
 
         self._matrix, self._record_bin_indices = self._generate_coranking_matrix(
             high_dimensional_data=high_dimensional_data,
@@ -62,7 +67,7 @@ class CorankingMatrix:
         return distance_matrix.argsort(axis=1).argsort(axis=1)
 
     @staticmethod
-    def _generate_neighbourhood_matrix(data: np.ndarray, distance_metric: str) -> np.ndarray:
+    def _generate_neighbourhood_matrix(data: np.ndarray, distance_metric: str = "euclidean") -> np.ndarray:
         """
         Generates neighbourhood matrix. Accepts original data and chosen distance metric.
         Might be used to generate a ranking once and supplying it to generate_coranking_matrix() instead of calculating
@@ -74,7 +79,9 @@ class CorankingMatrix:
 
         # Original approach: Re-calculate with chosen data and distance metric.
         # Calculate distances, then sort by similarities.
-        return distance.squareform(distance.pdist(data, distance_metric)).argsort(axis=1).argsort(axis=1)
+        return distance.squareform(
+            distance.pdist(data, distance_metric if distance_metric is not None else "euclidean")
+        ).argsort(axis=1).argsort(axis=1)
 
     def _generate_coranking_matrix(
             self,
@@ -99,7 +106,7 @@ class CorankingMatrix:
         record index, bin index x-axis, bin index y-axis] if compute_indices_bin_location == True - otherwise None.
         """
 
-        n, m = high_dimensional_data.shape
+        n_rows: int = low_dimensional_data.shape[0]
 
         # ------------------------------------------------------------------------------------
         # 1. Calculate ranking in high dimensional space only if that hasn't been done yet.
@@ -141,7 +148,7 @@ class CorankingMatrix:
         Q, xedges, yedges = np.histogram2d(
             high_dim_neighbourhood_positions,
             low_dim_neighbourhood_positions,
-            bins=n
+            bins=n_rows
         )
 
         # ------------------------------------------------------------------------------------
@@ -155,7 +162,7 @@ class CorankingMatrix:
         # Compile dataframe with information on bin index for record pair.
         # Note that high_dim_neighbour_rank represents y-axis, low_dim_neighbour_offset the x-axis in co-ranking
         # matrix.
-        index_vals: list = list(range(n))
+        index_vals: list = list(range(n_rows))
         record_indices: np.ndarray = np.asarray([element for element in itertools.product(index_vals, index_vals)])
         record_bin_indices: pd.DataFrame = pd.DataFrame({
             "source": record_indices[:, 0],
@@ -192,40 +199,6 @@ class CorankingMatrix:
 
         # Generate rankings from distances.
         return distances.argsort(axis=1).argsort(axis=1)
-
-    @staticmethod
-    def generate_coranking_matrix_deprecated(
-            high_dimensional_data: np.ndarray,
-            low_dimensional_data: np.ndarray,
-            distance_metric: str,
-            high_dim_neighbourhood_ranking: np.ndarray = None
-    ):
-        """
-        Calculates coranking matrix (might be used for calculating matrix only once if several coranking-based metrics
-        are to be used).
-        Uses code from https://github.com/samueljackson92/coranking/. Adaption: Parameter for choice of distance metric,
-        miscellaneous refactoring.
-        :param high_dimensional_data:
-        :param low_dimensional_data:
-        :param distance_metric: One of the distance metrics supported by scipy's cdist().
-        :param high_dim_neighbourhood_ranking: Ranking of neighbourhood similarities. Calculated if none is supplied. If
-        supplied, high_dimensional_data is not used.
-        :return: Coranking matrix as 2-dim. ndarry.
-        """
-
-        n, m = high_dimensional_data.shape
-
-        # Calculate ranking of neighbourhood similarities for high- and low-dimensional datasets.
-        high_ranking = high_dim_neighbourhood_ranking if high_dim_neighbourhood_ranking is not None else \
-            CorankingMatrix._generate_neighbourhood_matrix(high_dimensional_data, distance_metric)
-        low_ranking = \
-            CorankingMatrix._generate_neighbourhood_matrix(low_dimensional_data, distance_metric)
-
-        # Aggregate coranking matrix.
-        Q, xedges, yedges = np.histogram2d(high_ranking.flatten(), low_ranking.flatten(), bins=n)
-
-        # Remove rankings which correspond to themselves, return coranking matrix.
-        return Q[1:, 1:]
 
     def matrix(self):
         """
@@ -348,14 +321,14 @@ class CorankingMatrix:
 
     @staticmethod
     def compute_pairwise_displacement_data(
-            original_distance_matrices_file_path: str,
+            original_distance_matrix_file_path: str,
             original_neighbour_ranking_file_path: str,
             low_dim_projection_data: np.ndarray
     ) -> pd.DataFrame:
         """
         Computes pairwise displacement data, i. e. data needed for Shepard diagram (pairwise distances between records
         in high- and low-dimensional space) and coranking matrix for this low-dimensional embedding.
-        :param original_distance_matrices_file_path:
+        :param original_distance_matrix_file_path:
         :param original_neighbour_ranking_file_path:
         :param low_dim_projection_data:
         :return: Dict of pd.DataFrames with records like [
@@ -377,10 +350,9 @@ class CorankingMatrix:
         ###############################################
 
         with open(original_neighbour_ranking_file_path, "rb") as file:
-            original_neighbour_ranking: dict = pickle.load(file)
-        with open(original_distance_matrices_file_path, "rb") as file:
-            original_distance_matrices: dict = pickle.load(file)
-        distance_metrics = list(original_distance_matrices.keys())
+            original_neighbour_ranking: np.ndarray = pickle.load(file)
+        with open(original_distance_matrix_file_path, "rb") as file:
+            original_distance_matrices: np.ndarray = pickle.load(file)
 
         ###############################################
         # 2. Compute coranking and distance matrices
@@ -389,32 +361,31 @@ class CorankingMatrix:
         # Note that this is not feasible for bigger datasets - but storing distance and coranking matrices for every
 
         pairwise_displacement_data: pd.DataFrame = pd.DataFrame()
-        for metric in distance_metrics:
-            # 1. Gather co-ranking matrix information.
-            df = CorankingMatrix(
-                high_dimensional_data=original_distance_matrices[metric],
-                low_dimensional_data=low_dim_projection_data,
-                distance_metric=metric,
-                high_dimensional_neighbourhood_ranking=original_neighbour_ranking[metric]
-            ).record_bin_indices
-            df["metric"] = metric
+        # 1. Gather co-ranking matrix information.
+        df = CorankingMatrix(
+            high_dimensional_data=None,
+            low_dimensional_data=low_dim_projection_data,
+            distance_metric=None,
+            high_dimensional_neighbourhood_ranking=original_neighbour_ranking
+        ).record_bin_indices
 
-            # 2. Gather distance values, merge with existing dataframes (note that index sequence is identical, since
-            # both refer to the distance matrix in its original form + .flatten()).
-            hd_distances = original_distance_matrices[metric]
-            ld_distances = cdist(low_dim_projection_data, low_dim_projection_data, metric)
+        # 2. Gather distance values, merge with existing dataframes (note that index sequence is identical, since
+        # both refer to the distance matrix in its original form + .flatten()).
+        hd_distances: np.ndarray = original_distance_matrices
+        # Use L2 norm to measure distances in embedding space.
+        ld_distances: np.ndarray = cdist(low_dim_projection_data, low_dim_projection_data, "euclidean")
 
-            # 3. Discard auto-referential entries (see https://stackoverflow.com/a/46736275) & append distance values to
-            # dataframe.
-            df["high_dim_distance"] = np.delete(
-                hd_distances.flatten(), range(0, hd_distances.size, len(hd_distances) + 1), 0
-            )
-            df["low_dim_distance"] = np.delete(
-                ld_distances.flatten(), range(0, ld_distances.size, len(ld_distances) + 1), 0
-            )
+        # 3. Discard auto-referential entries (see https://stackoverflow.com/a/46736275) & append distance values to
+        # dataframe.
+        df["high_dim_distance"] = np.delete(
+            hd_distances.flatten(), range(0, hd_distances.size, len(hd_distances) + 1), 0
+        )
+        df["low_dim_distance"] = np.delete(
+            ld_distances.flatten(), range(0, ld_distances.size, len(ld_distances) + 1), 0
+        )
 
-            # 4. Fuse dataframes separated by metric into one.
-            pairwise_displacement_data = pd.concat([pairwise_displacement_data, df])
+        # 4. Fuse dataframes separated by metric into one.
+        pairwise_displacement_data = pd.concat([pairwise_displacement_data, df])
 
         return pairwise_displacement_data
 
