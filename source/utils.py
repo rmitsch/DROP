@@ -173,10 +173,11 @@ class Utils:
         )
 
         # Define version.
-        flask_app.config["VERSION"] = "0.25.2"
+        flask_app.config["VERSION"] = "0.26"
 
         # Store path to data storage location.
-        flask_app.config["STORAGE_PATH"] = sys.argv[2] + "/"
+        flask_app.config["ROOT_STORAGE_PATH"] = sys.argv[2] + "/"
+        flask_app.config["STORAGE_PATH"] = flask_app.config["ROOT_STORAGE_PATH"]
 
         # Initialize Dropbox access, if token was provided.
         if len(sys.argv) == 4:
@@ -301,39 +302,39 @@ class Utils:
         # Compose indices of active columns as set of indices of numerical columns + set of indices of active one-hot
         # encoded categorical columns.
         cols: list = list(features.columns)
+
         # Get names and indices of numeric columns.
-        num_cols: list = [col for col in dim_red_kernel_parameters if col["type"] == "numeric"]
-        num_col_indices: list = [cols.index(feat["name"]) for feat in num_cols]
+        numeric_cols: list = [col for col in dim_red_kernel_parameters if col["type"] == "numeric"]
+        numeric_col_indices: list = [cols.index(feat["name"]) for feat in numeric_cols]
+
+        # Initialize with for numeric attributes.
+        active_columns: pd.DataFrame = pd.DataFrame({"id": features.index.values}).astype(int)
+        active_columns["cols"] = active_columns.apply(lambda x: numeric_cols, axis=1)
+        active_columns["idx"] = active_columns.apply(lambda x: numeric_col_indices, axis=1)
+        active_columns = active_columns.set_index("id")
 
         # Get names of categorical columns. Categorical columns' activity depends on the record (e.g. whether distance
         # metric == 'euclidean' or 'cosine', hence we compile the corresponding columns and names for each record.
         cat_cols: list = [col for col in dim_red_kernel_parameters if col["type"] == "categorical"]
+        if len(cat_cols):
+            # Initialize dataframe for feature activities.
+            for col in cat_cols:
+                active_columns[col["name"]] = None
+                active_columns[col["name"] + "_idx"] = None
 
-        # Initialize dataframe for feature activities.
-        active_columns: pd.DataFrame = pd.DataFrame({
-            **{"id": features.index.values},
-            **{col["name"]: None for col in cat_cols},
-            **{col["name"] + "_idx": None for col in cat_cols}
-        }).set_index("id")
+                # Assume one-hot encoding with '_' as concatenating element; transform one-hot encoded columns into a
+                # single one.
+                for val in col["values"]:
+                    onehot_colname: str = col["name"] + "_" + val
+                    active_row_idx: pd.Series = features[onehot_colname] == 1
+                    active_columns.loc[active_row_idx, col["name"]] = val
+                    active_columns.loc[active_row_idx, col["name"] + "_idx"] = cols.index(onehot_colname)
 
-        # Assume one-hot encoding with '_' as concatenating element; transform one-hot encoded columns into a single
-        # one.
-        for col in cat_cols:
-            for val in col["values"]:
-                onehot_colname: str = col["name"] + "_" + val
-                active_columns.loc[features[onehot_colname] == 1, col["name"]] = val
-                active_columns.loc[features[onehot_colname] == 1, col["name"] + "_idx"] = cols.index(onehot_colname)
-
-        # Merge all _idx columns into one; add numerical column indices.
-        active_columns["idx"] = active_columns[
-            [col for col in active_columns if "idx" in col]
-        ].apply(list, axis=1).apply(lambda x: [*num_col_indices, *x])
-        active_columns["cols"] = active_columns.idx.apply(lambda x: [cols[i] for i in x])
-
-        # Change ID type to int.
-        active_columns = active_columns.reset_index()
-        active_columns.id = active_columns.id.astype(int)
-        active_columns = active_columns.set_index("id")
+            # Merge all _idx columns into one; add numerical column indices.
+            active_columns["idx"] = active_columns[
+                [col for col in active_columns if "_idx" in col]
+            ].apply(list, axis=1).apply(lambda x: [*numeric_col_indices, *x])
+            active_columns["cols"] = active_columns.idx.apply(lambda x: [cols[i] for i in x])
 
         return active_columns[["idx", "cols"]]
 

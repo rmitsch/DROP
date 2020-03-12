@@ -43,7 +43,7 @@ dataset_name: str = sys.argv[1]
 # Define DR method to use.
 dim_red_kernel_name: str = sys.argv[2]
 # Get storage path.
-storage_path: str = sys.argv[3]
+storage_path: str = sys.argv[3] + "/" + dataset_name
 
 # Get all parameter configurations (to avoid duplicate model generations).
 parameter_sets, num_param_sets = DimensionalityReductionKernel.generate_parameter_sets_for_testing(

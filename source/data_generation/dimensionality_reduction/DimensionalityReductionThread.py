@@ -42,7 +42,6 @@ class DimensionalityReductionThread(threading.Thread):
         self._dim_red_kernel: DimensionalityReductionKernel = DimensionalityReductionKernel(dim_red_kernel_name)
 
     def run(self):
-    def run(self):
         """
         Runs thread and calculates all t-SNE models specified in parameter_sets.
         :return: List of 2D ndarrays containing coordinates of instances in low-dimensional space.
@@ -53,8 +52,7 @@ class DimensionalityReductionThread(threading.Thread):
         ###################################################
 
         for parameter_set in self._parameter_sets:
-
-            # Calculate t-SNE. Surpress output while doing so.
+            # Calculate t-SNE. Supress output while doing so.
             start: float = time.time()
             low_dimensional_projection: np.ndarry = self._dim_red_kernel.run(
                 high_dim_data=self._distance_matrix,

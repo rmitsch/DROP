@@ -69,9 +69,8 @@ class CorankingMatrix:
     @staticmethod
     def _generate_neighbourhood_matrix(data: np.ndarray, distance_metric: str = "euclidean") -> np.ndarray:
         """
-        Generates neighbourhood matrix. Accepts original data and chosen distance metric.
-        Might be used to generate a ranking once and supplying it to generate_coranking_matrix() instead of calculating
-        it repeatedly.
+        Generates neighbourhood matrix by computing distance matrix with chosen metric and corresponding neighbourhood
+        matrix.
         :param data:
         :param distance_metric:
         :return: ndarray of sorted and ranked neigbourhood similarity.
@@ -142,8 +141,8 @@ class CorankingMatrix:
         # 3. Compute coranking matrix.
         # ------------------------------------------------------------------------------------
 
-        high_dim_neighbourhood_positions = self._high_dim_ranking.flatten()
-        low_dim_neighbourhood_positions = self._low_dim_ranking.flatten()
+        high_dim_neighbourhood_positions: np.ndarray = self._high_dim_ranking.flatten()
+        low_dim_neighbourhood_positions: np.ndarray = self._low_dim_ranking.flatten()
 
         Q, xedges, yedges = np.histogram2d(
             high_dim_neighbourhood_positions,
@@ -397,6 +396,7 @@ class CorankingMatrix:
         :param n_bins:
         :return:
         """
+
         df: pd.DataFrame = pairwise_displacement_data
 
         # Prepare binned coranking matrix
@@ -405,10 +405,10 @@ class CorankingMatrix:
         )
         df["low_dim_neighbour_bin"] = pd.cut(df.low_dim_neighbour_rank, bins=n_bins, labels=[i for i in range(n_bins)])
 
-        grouped = df.groupby(["metric", "high_dim_neighbour_bin", "low_dim_neighbour_bin"])
-        res = pd.DataFrame(
+        grouped: pd.DataFrame = df.groupby(["high_dim_neighbour_bin", "low_dim_neighbour_bin"])
+        res: pd.DataFrame = pd.DataFrame(
             {"source": grouped["source"].apply(list), "neighbour": grouped["neighbour"].apply(list)}
         )
-        res["paths"] = res.apply(lambda x: [(x.source[i], x.neighbour[i]) for i in range(len(x.source))], axis=1)
+        res["paths"] = res.apply(lambda x: list(map(tuple, np.stack([x.source, x.neighbour], axis=1).tolist())), axis=1)
 
         return res[["paths"]].reset_index()

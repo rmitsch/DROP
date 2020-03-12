@@ -49,6 +49,10 @@ def get_metadata():
 
     app.config["DATASET_NAME"] = InputDataset.check_dataset_name(request.args.get('datasetName'))
     app.config["DR_KERNEL_NAME"] = DimensionalityReductionKernel.check_kernel_name(request.args.get('drKernelName'))
+
+    # Update root storage path with new dataset name.
+    app.config["STORAGE_PATH"] = app.config["ROOT_STORAGE_PATH"] + app.config["DATASET_NAME"] + "/"
+    # Update storage path w.r.t. DR kernel.
     base_path: str = app.config["STORAGE_PATH"] + app.config["DATASET_NAME"] + "_" + app.config["DR_KERNEL_NAME"] + "_"
 
     app.config["SURROGATE_MODELS_PATH"] = base_path + "surrogatemodels.pkl"
@@ -59,15 +63,14 @@ def get_metadata():
     }
     app.config["DATASET_CLASS"] = dataset_name_class_links[app.config["DATASET_NAME"]]
 
-    # Currently only Happiness dataset is fully supported.
-    assert app.config["DATASET_NAME"] == "happiness", "Only Happiness dataset currently supported."
-
     # Compile metadata template.
     if app.config["METADATA_TEMPLATE"] is None:
         get_metadata_template()
 
     # Build file name.
-    file_name = app.config["STORAGE_PATH"] + "tale_" + app.config["DATASET_NAME"] + "_" + app.config["DR_KERNEL_NAME"] + ".h5"
+    file_name: str = (
+        app.config["STORAGE_PATH"] + "tale_" + app.config["DATASET_NAME"] + "_" + app.config["DR_KERNEL_NAME"] + ".h5"
+    )
     app.config["FULL_FILE_NAME"] = file_name
 
     # Open .h5 file, if dataset name and DR kernel name are valid and file exists.
@@ -112,10 +115,7 @@ def get_metadata():
 
         # Load explainer values.
         # Replace specific metric references with an arbitrary "metric" for parsing in frontend.
-        expl_df: pd.DataFrame = pd.read_pickle(app.config["EXPLAINER_VALUES_PATH"])
-        expl_df.hyperparameter = expl_df.hyperparameter.str.replace("metric_euclidean", "metric")
-        expl_df.hyperparameter = expl_df.hyperparameter.str.replace("metric_cosine", "metric")
-        app.config["EXPLAINER_VALUES"] = expl_df
+        app.config["EXPLAINER_VALUES"] = pd.read_pickle(app.config["EXPLAINER_VALUES_PATH"])
 
         # Return JSON-formatted embedding data.
         return jsonify(df.drop(["b_nx"], axis=1).to_json(orient='index'))
@@ -365,9 +365,10 @@ def get_dr_model_details():
     original_dataset.insert(loc=0, column="id", value=[_ for _ in range(len(original_dataset))])
     # Prepare dataset for model detail table.
     original_dataset_for_table: pd.DataFrame = app.config["DATASET_CLASS"].sort_dataframe_columns_for_frontend(
-        original_dataset[list(attribute_data_types.keys())]
+        original_dataset[[col for col in attribute_data_types.keys() if col in original_dataset.columns]]
     )
     original_dataset_for_table.insert(loc=0, column="id", value=[_ for _ in range(len(original_dataset))])
+
     # Append low.-dim. coordinates.
     for dim_idx in range(low_dim_projection.shape[1]):
         original_dataset[dim_idx] = low_dim_projection[:, dim_idx]
@@ -384,7 +385,7 @@ def get_dr_model_details():
     pairwise_displacement_data.to_pickle("/tmp/pairwise_displacement_data.pkl")
 
     # Fetch dataframe with preprocessed features.
-    embedding_metadata_feat_df = app.config["EMBEDDING_METADATA"]["features_preprocessed"].loc[[str(embedding_id)]]
+    embedding_metadata_feat_df = app.config["EMBEDDING_METADATA"]["features_preprocessed"].loc[[embedding_id]]
 
     # Drop index for categorical variables that are inactive for this record.
     # Note: Currently hardcoded for metric only.
@@ -398,10 +399,10 @@ def get_dr_model_details():
         "EMBEDDING_METADATA"
     ]["features_preprocessed"].columns.values[param_indices].tolist()
     # Replace categorical metric values with "metric".
-    explanation_columns = [col if "metric_" not in col else "metric" for col in explanation_columns]
+    explanation_columns = [col for col in explanation_columns]
 
     # Assemble result object.
-    result = {
+    result: dict = {
         # --------------------------------------------------------
         # Retrieve model metadata.
         # --------------------------------------------------------
@@ -419,6 +420,8 @@ def get_dr_model_details():
         "attribute_data_types": attribute_data_types,
         # Ready-to-use data for detail view table.
         "original_dataset_for_table": original_dataset_for_table.to_json(orient="values"),
+        # Sorted attributes to use in table.
+        "cols_for_original_dataset_for_table": original_dataset_for_table.columns.values.tolist()[1:],
 
         # --------------------------------------------------------
         # Relative positional data.
@@ -438,8 +441,7 @@ def get_dr_model_details():
 
         "explanation_columns": [
             # Hardcoded workaround for one-hot encoded category attribute: Rename to "metric".
-            col if "metric_" not in col else "metric" for col
-            in app.config["EMBEDDING_METADATA"]["features_preprocessed"].columns.values[param_indices]
+            col for col in app.config["EMBEDDING_METADATA"]["features_preprocessed"].columns.values[param_indices]
         ],
         "explanations": {
             objective: [
@@ -469,8 +471,8 @@ def compute_correlation_strength():
     :return:
     """
 
-    df = app.config["EMBEDDING_METADATA"]["original"].drop(["num_records"], axis=1)
-    ids = request.args.get("ids")
+    df: pd.DataFrame = app.config["EMBEDDING_METADATA"]["original"].drop(["num_records"], axis=1)
+    ids: list = request.args.get("ids")
     ids = list(map(int, ids.split(","))) if ids is not None else None
 
     if ids is not None:

@@ -60,14 +60,14 @@ def construct_local_explanations(
     # Compute maxima per objecive.
     max_per_objective: dict = {obj: original_df[obj].max() for obj in explainers}
 
-    n_chunks: int = 100
+    n_chunks: int = min(100, int(len(feature_values) / 10))
     chunksize: int = math.ceil(len(feature_values) / n_chunks)
     pbar: tqdm = tqdm(total=n_chunks)
     explanations: list = []
     for i in range(n_chunks):
         curr_records: np.ndarray = feature_values[i * chunksize:(i + 1) * chunksize, :]
         curr_record_ids: np.ndarray = record_ids[i * chunksize:(i + 1) * chunksize].astype(int)
- 
+
         for obj in objectives:
             df: pd.DataFrame = pd.DataFrame(
                 explainers[obj].shap_values(
@@ -78,7 +78,6 @@ def construct_local_explanations(
                     # Hence we iterate over upper-unbounded objectives, get their max, divide values in explanations
                     # through the maximum of that objective. This yields [0, 1]-intervals for all objectives.
                     np.asarray([record for record in curr_records]),
-
                     approximate=False
                 )[
                     # Select only active columns. Use fancy indexing to select active columns for that - see

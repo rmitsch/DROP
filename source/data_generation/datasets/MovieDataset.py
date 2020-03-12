@@ -9,8 +9,6 @@ from data_generation.datasets import InputDataset
 import xgboost
 import ast
 import datetime
-import plotly.express as px
-import umap
 
 
 class MovieDataset(InputDataset):
@@ -38,7 +36,7 @@ class MovieDataset(InputDataset):
             dtype={"id": int, "popularity": float}
         ).drop(columns=[
             "belongs_to_collection", "homepage", "imdb_id", "poster_path", "status", "video", "original_title",
-            "original_language"
+            "original_language", "vote_count"
         ]).set_index("id").sort_values(by="popularity", ascending=False)
 
         # Simplify JSON lists - dispose of IDs.
@@ -56,7 +54,7 @@ class MovieDataset(InputDataset):
         ).drop(columns=["genres"])
 
         # Limit to most popular movies.
-        movies_metadata = movies_metadata.head(500)
+        movies_metadata = movies_metadata.head(300)
 
         # Join with story keywords.
         movies_keywords: pd.DataFrame = pd.read_csv(
@@ -73,20 +71,6 @@ class MovieDataset(InputDataset):
             datetime.datetime.now() - pd.to_datetime(movies_metadata.release_date)
         ).dt.total_seconds() / (24 * 60 * 60) / 365.25
         movies_metadata = movies_metadata.drop(columns="release_date")
-
-        # todo
-        #  - remove distance metric from attributes in backend
-        #  - generate embeddings
-        #  - integrate in frontend
-        #  - evaluate
-        # approach: keep data in frontend format (i.e. not all categorical columns expanded into normalized columns) and
-        # persists like this. in consequence:
-        # prepare data for classification and distance matrix computation in preprocess_data() -> normalizing, one-hot
-        # encoding etc. use weighting after one-hot encoding! -> important for suitable distance matrixes.
-        # alternatively: apply weighting in compute_distance_matrix() - feature weighting not necessary for TDP
-        # computation.
-        # hence: implement compute_target_domain_performance(), compute_separability_matrix() and
-        # compute_distance_matrix() in MovieDataset.
 
         self._df = movies_metadata
         return {
@@ -116,7 +100,11 @@ class MovieDataset(InputDataset):
         if not os.path.isfile(filepath):
             df: pd.DataFrame = self._df.copy(deep=True)
             df["record_name"] = df.title
-            df.to_csv(path_or_buf=filepath, index=False)
+            df.drop(
+                columns=["spoken_languages", "title", "tagline"]
+            ).to_csv(
+                path_or_buf=filepath, index=False
+            )
 
     def _compute_target_domain_performance(self, features: np.ndarray) -> float:
         """
@@ -174,7 +162,7 @@ class MovieDataset(InputDataset):
         # Compute distances for real-valued columns.
         ####################################################
 
-        col_idx: list = [feature_cols.index(col) for col in ["popularity", "revenue", "vote_count", "age"]]
+        col_idx: list = [feature_cols.index(col) for col in ["popularity", "revenue", "age"]]
         distances: np.ndarray = cdist(features[:, col_idx], features[:, col_idx], "euclidean")
         # Normalize distances as workaround for merging with distances computed with other metrics (specifically
         # Jaccard).
@@ -220,7 +208,6 @@ class MovieDataset(InputDataset):
                 "title": {"supertype": supertypes.CATEGORICAL.value, "type": subtypes.NOMINAL.value},
                 "record_name": {"supertype": supertypes.CATEGORICAL.value, "type": subtypes.NOMINAL.value},
                 "vote_average": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.CONTINOUS.value},
-                "vote_count": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.DISCRETE.value},
                 "keywords": {"supertype": supertypes.CATEGORICAL.value, "type": subtypes.NOMINAL.value}
             },
             **{
