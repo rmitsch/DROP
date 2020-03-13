@@ -64,8 +64,7 @@ def get_metadata():
     app.config["DATASET_CLASS"] = dataset_name_class_links[app.config["DATASET_NAME"]]
 
     # Compile metadata template.
-    if app.config["METADATA_TEMPLATE"] is None:
-        get_metadata_template()
+    update_and_get_metadata_template()
 
     # Build file name.
     file_name: str = (
@@ -135,7 +134,7 @@ def get_explainer_values():
 
 
 @app.route('/get_metadata_template', methods=["GET"])
-def get_metadata_template():
+def update_and_get_metadata_template():
     """
     Assembles metadata template (i. e. which hyperparameters and objectives are available).
     :return: Dictionary: {"hyperparameters": [...], "objectives": [...]}
@@ -335,7 +334,6 @@ def get_dr_model_details():
     :return: Jsonified structure of surrogate model for DR metadata.
     """
 
-    dataset_name: str = app.config["DATASET_NAME"]
     embedding_id: int = int(request.args["id"])
     file_name: str = app.config["FULL_FILE_NAME"]
     high_dim_file_name: str = app.config["STORAGE_PATH"] + "/records.csv"
@@ -349,11 +347,16 @@ def get_dr_model_details():
         if not os.path.isfile(fn):
             return "File " + fn + " does not exist.", 400
 
+    import plotly.express as px
     # Open file containing information on low-dimensional projections.
-    h5file = open_file(filename=file_name, mode="r+")
+    h5file: File = open_file(filename=file_name, mode="r+")
 
     # Read coordinates for low-dimensional projection of this embedding.
-    low_dim_projection = h5file.root.projection_coordinates._f_get_child("model" + str(embedding_id)).read()
+    low_dim_projection: np.ndarray = h5file.root.projection_coordinates._f_get_child("model" + str(embedding_id)).read()
+    # Workaround: Coordinates of very small magnitude are not properly displayed in frontend, so we move the comma a
+    # few digits.
+    if abs(low_dim_projection.max()) < 0.001:
+        low_dim_projection = low_dim_projection * 10000
 
     # Fetch metadata about this dataset's attributes.
     attribute_data_types: dict = app.config["DATASET_CLASS"].get_attributes_data_types()
