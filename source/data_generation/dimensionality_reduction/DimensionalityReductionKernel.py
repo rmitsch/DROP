@@ -1,7 +1,7 @@
 import os
 import itertools
 from sklearn.decomposition import TruncatedSVD
-import numpy
+import numpy as np
 from tables import *
 from MulticoreTSNE import MulticoreTSNE
 import umap
@@ -48,7 +48,7 @@ class DimensionalityReductionKernel:
         self._high_dim_data = None
         self._parameter_set = None
 
-    def run(self, high_dim_data: numpy.ndarray, parameter_set: dict):
+    def run(self, high_dim_data: np.ndarray, parameter_set: dict):
         """
         Applies chosen DR kernel on specified high dimensional data set with this parametrization.
         :param high_dim_data:
@@ -89,10 +89,11 @@ class DimensionalityReductionKernel:
         elif self._dim_red_kernel_name == "UMAP":
             # Workaround for spectral initialization bug (?): Repeat with different seed until valid results are
             # produced. See https://github.com/lmcinnes/umap/issues/85.
-            res = None
-            valid_res = False
-            while not valid_res:
-                res = umap.UMAP(
+            res: np.ndarray = None
+            valid_res: bool = False
+
+            def fit_umap(init: str = "spectral") -> np.ndarray:
+                return umap.UMAP(
                     n_components=parameter_set["n_components"],
                     n_neighbors=parameter_set["n_neighbors"],
                     n_epochs=parameter_set["n_epochs"],
@@ -102,13 +103,22 @@ class DimensionalityReductionKernel:
                     # min_dist:spread is 1:10, we follow this ratio.
                     spread=parameter_set["min_dist"] * 10,
                     local_connectivity=parameter_set["local_connectivity"],
-                    # Always set metric to 'precomputed', since distance matrices are calculated previously. If other
-                    # metrics are desired, the corresponding preprocessing step has to be extended.
-                    metric='precomputed'
+                    # Always set metric to 'precomputed', since distance matrices are calculated previously. If
+                    # other metrics are desired, the corresponding preprocessing step has to be extended.
+                    metric='precomputed',
+                    # Workaround for UMAP bug #376: Use init="random" when failing.
+                    # Update when https://github.com/lmcinnes/umap/pull/376 is merged into master.
+                    init=init
                 ).fit_transform(high_dim_data)
 
+            while not valid_res:
+                try:
+                    res = fit_umap()
+                except ValueError:
+                    res = fit_umap("random")
+
                 # Check validity of result by making sure it does not contain any NaNs.
-                valid_res = (numpy.count_nonzero(numpy.isnan(res)) == 0)
+                valid_res = (np.count_nonzero(np.isnan(res)) == 0)
 
             return res
 
