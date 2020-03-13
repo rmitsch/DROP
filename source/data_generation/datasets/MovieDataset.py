@@ -37,7 +37,7 @@ class MovieDataset(InputDataset):
         ).drop(columns=[
             "belongs_to_collection", "homepage", "imdb_id", "poster_path", "status", "video", "original_title",
             "original_language", "vote_count"
-        ]).set_index("id").sort_values(by="popularity", ascending=False)
+        ]).set_index("id").sort_values(by="revenue", ascending=False)
 
         # Simplify JSON lists - dispose of IDs.
         def convert(x: str) -> list:

@@ -74,10 +74,6 @@ class Utils:
         """
 
         features_names: list = [item["name"] for item in metadata_template["hyperparameters"]]
-        
-        print(features_names)
-        with pd.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', None):
-            print(embeddings_metadata.head())
         features_df: pd.DataFrame = embeddings_metadata[features_names].copy(deep=True)
 
         # Encode categorical values numerically.
