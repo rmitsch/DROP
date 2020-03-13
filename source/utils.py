@@ -253,7 +253,7 @@ class Utils:
         """
 
         df: pd.DataFrame = pandas.read_csv(
-            filepath_or_buffer=storage_path + "/" + dataset_name + "records.csv",
+            filepath_or_buffer=storage_path + "/records.csv",
             delimiter=',',
             quotechar='"'
         )

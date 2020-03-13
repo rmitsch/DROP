@@ -53,8 +53,10 @@ def get_metadata():
     # Update root storage path with new dataset name.
     app.config["STORAGE_PATH"] = app.config["ROOT_STORAGE_PATH"] + app.config["DATASET_NAME"] + "/"
 
-    app.config["SURROGATE_MODELS_PATH"] = app.config["STORAGE_PATH"] + "surrogatemodels" + app.config["DR_KERNEL_NAME"] + ".pkl"
-    app.config["EXPLAINER_VALUES_PATH"] = app.config["STORAGE_PATH"] + "explainervalues" + app.config["DR_KERNEL_NAME"] + ".pkl"
+    app.config["SURROGATE_MODELS_PATH"] = app.config["STORAGE_PATH"] + app.config["DR_KERNEL_NAME"] + \
+                                          "_surrogatemodels.pkl"
+    app.config["EXPLAINER_VALUES_PATH"] = app.config["STORAGE_PATH"] + app.config["DR_KERNEL_NAME"] + \
+                                          "_explainervalues.pkl"
     dataset_name_class_links = {
         "movie": MovieDataset,
         "happiness": HappinessDataset
@@ -336,7 +338,7 @@ def get_dr_model_details():
     dataset_name: str = app.config["DATASET_NAME"]
     embedding_id: int = int(request.args["id"])
     file_name: str = app.config["FULL_FILE_NAME"]
-    high_dim_file_name: str = app.config["STORAGE_PATH"] + dataset_name + "records.csv"
+    high_dim_file_name: str = app.config["STORAGE_PATH"] + "/records.csv"
     high_dim_neighbour_ranking_file_name: str = app.config["STORAGE_PATH"] + "neighbourhood_ranking.pkl"
     high_dim_distance_matrix_file_name = app.config["STORAGE_PATH"] + "distance_matrix.pkl"
 

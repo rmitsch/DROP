@@ -409,6 +409,12 @@ class CorankingMatrix:
         res: pd.DataFrame = pd.DataFrame(
             {"source": grouped["source"].apply(list), "neighbour": grouped["neighbour"].apply(list)}
         )
-        res["paths"] = res.apply(lambda x: list(map(tuple, np.stack([x.source, x.neighbour], axis=1).tolist())), axis=1)
+
+        res["paths"] = res.apply(
+            lambda x: list(
+                map(tuple, np.stack([x.source, x.neighbour], axis=1).tolist())
+            ) if type(x.source) == list else [],
+            axis=1
+        )
 
         return res[["paths"]].reset_index()
