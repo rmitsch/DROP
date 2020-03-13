@@ -137,7 +137,7 @@ def compute_and_persist_explainer_values(
         metadata_template=metadata_template, features_df=features_preprocessed, labels_df=labels
     )
     with open(
-            storage_path + "/" + dataset_name.lower() + "_" + dr_kernel_name.lower() + "_surrogatemodels.pkl", "wb"
+            storage_path + "/" + dr_kernel_name.lower() + "_surrogatemodels.pkl", "wb"
     ) as file:
         pickle.dump(surrogate_models, file)
 
@@ -149,7 +149,7 @@ def compute_and_persist_explainer_values(
     construct_local_explanations(
         features_preprocessed, labels, df, surrogate_models, metadata_template["objectives"], dr_kernel_name
     ).to_pickle(
-        storage_path + "/" + dataset_name.lower() + "_" + dr_kernel_name.lower() + "_explainervalues.pkl"
+        storage_path + "/" + dr_kernel_name.lower() + "_explainervalues.pkl"
     )
 
 

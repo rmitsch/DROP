@@ -52,11 +52,9 @@ def get_metadata():
 
     # Update root storage path with new dataset name.
     app.config["STORAGE_PATH"] = app.config["ROOT_STORAGE_PATH"] + app.config["DATASET_NAME"] + "/"
-    # Update storage path w.r.t. DR kernel.
-    base_path: str = app.config["STORAGE_PATH"] + app.config["DATASET_NAME"] + "_" + app.config["DR_KERNEL_NAME"] + "_"
 
-    app.config["SURROGATE_MODELS_PATH"] = base_path + "surrogatemodels.pkl"
-    app.config["EXPLAINER_VALUES_PATH"] = base_path + "explainervalues.pkl"
+    app.config["SURROGATE_MODELS_PATH"] = app.config["STORAGE_PATH"] + "surrogatemodels" + app.config["DR_KERNEL_NAME"] + ".pkl"
+    app.config["EXPLAINER_VALUES_PATH"] = app.config["STORAGE_PATH"] + "explainervalues" + app.config["DR_KERNEL_NAME"] + ".pkl"
     dataset_name_class_links = {
         "movie": MovieDataset,
         "happiness": HappinessDataset

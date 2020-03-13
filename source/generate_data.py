@@ -4,6 +4,7 @@ import pickle
 import numpy as np
 import logging
 import sys
+import numba
 
 from data_generation.explanations_generation import compute_and_persist_explainer_values
 from objectives.topology_preservation_objectives.CorankingMatrix import CorankingMatrix
@@ -88,6 +89,10 @@ with open(storage_path + "/" + "neighbourhood_ranking.pkl", "wb") as file:
 # 3. Set up multithreading.
 ######################################################
 
+# Adjust threading layer if UMAP is used to avoid multiprocessing deadlock.
+if dim_red_kernel_name == "UMAP":
+    numba.config.THREADING_LAYER = 'tbb'
+
 # Shuffle list with parameter sets so that they are kinda evenly distributed.
 shuffle(parameter_sets)
 # Determine number of workers.
@@ -100,7 +105,7 @@ results: list = []
 logger.info("Generating dimensionality reduction models with " + str(n_jobs) + " threads.")
 num_parameter_sets: int = int(len(parameter_sets) / n_jobs)
 
-for i in range(0, n_jobs):  
+for i in range(0, n_jobs):
     first_index: int = num_parameter_sets * i
     # Add normal number of parameter sets, if this isn't the last job. Otherwise add all remaining sets.
     last_index: int = first_index + num_parameter_sets if i < (n_jobs - 1) else len(parameter_sets)
