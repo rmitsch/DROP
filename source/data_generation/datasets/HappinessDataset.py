@@ -40,7 +40,7 @@ class HappinessDataset(InputDataset):
         return StandardScaler().fit_transform(self._data["features"].values)
 
     def persist_records(self):
-        filepath: str = self._storage_path + '/happiness_records.csv'
+        filepath: str = self._storage_path + '/records.csv'
 
         if not os.path.isfile(filepath):
             df: pd.DataFrame = self._df.copy(deep=True)

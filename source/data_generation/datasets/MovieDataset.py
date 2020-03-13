@@ -95,7 +95,7 @@ class MovieDataset(InputDataset):
         return StandardScaler().fit_transform(features.values)
 
     def persist_records(self):
-        filepath: str = self._storage_path + '/movie_records.csv'
+        filepath: str = self._storage_path + '/records.csv'
 
         if not os.path.isfile(filepath):
             df: pd.DataFrame = self._df.copy(deep=True)
@@ -118,7 +118,7 @@ class MovieDataset(InputDataset):
 
         # Loop through stratified splits, average prediction accuracy over all splits.
         relative_error: float = 0
-        n_splits: int = 1  # 0
+        n_splits: int = 3
 
         # Apply boosting w/o further preprocessing to predict target values.
         reg: xgboost.XGBRegressor = xgboost.XGBRegressor(

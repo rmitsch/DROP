@@ -69,7 +69,7 @@ def get_metadata():
 
     # Build file name.
     file_name: str = (
-        app.config["STORAGE_PATH"] + "tale_" + app.config["DATASET_NAME"] + "_" + app.config["DR_KERNEL_NAME"] + ".h5"
+        app.config["STORAGE_PATH"] + "embedding_" + app.config["DR_KERNEL_NAME"] + ".h5"
     )
     app.config["FULL_FILE_NAME"] = file_name
 
@@ -338,9 +338,9 @@ def get_dr_model_details():
     dataset_name: str = app.config["DATASET_NAME"]
     embedding_id: int = int(request.args["id"])
     file_name: str = app.config["FULL_FILE_NAME"]
-    high_dim_file_name: str = app.config["STORAGE_PATH"] + dataset_name + "_records.csv"
-    high_dim_neighbour_ranking_file_name: str = app.config["STORAGE_PATH"] + dataset_name + "_neighbourhood_ranking.pkl"
-    high_dim_distance_matrix_file_name = app.config["STORAGE_PATH"] + dataset_name + "_distance_matrix.pkl"
+    high_dim_file_name: str = app.config["STORAGE_PATH"] + dataset_name + "records.csv"
+    high_dim_neighbour_ranking_file_name: str = app.config["STORAGE_PATH"] + "neighbourhood_ranking.pkl"
+    high_dim_distance_matrix_file_name = app.config["STORAGE_PATH"] + "distance_matrix.pkl"
 
     # Make sure all files exist.
     for fn in (

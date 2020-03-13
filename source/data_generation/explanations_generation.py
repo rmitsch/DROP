@@ -60,8 +60,8 @@ def construct_local_explanations(
     # Compute maxima per objecive.
     max_per_objective: dict = {obj: original_df[obj].max() for obj in explainers}
 
-    n_chunks: int = min(100, int(len(feature_values) / 10))
-    chunksize: int = math.ceil(len(feature_values) / n_chunks)
+    chunksize: int = 10
+    n_chunks: int = math.ceil(len(feature_values) / chunksize)
     pbar: tqdm = tqdm(total=n_chunks)
     explanations: list = []
     for i in range(n_chunks):
@@ -118,7 +118,7 @@ def compute_and_persist_explainer_values(
     ######################################
 
     h5file: File = tables.open_file(
-        filename=storage_path + "/tale_" + dataset_name + "_" + dr_kernel_name.lower() + ".h5",
+        filename=storage_path + "/embedding_" + dr_kernel_name.lower() + ".h5",
         mode="r+"
     )
     df = pd.DataFrame(h5file.root.metadata[:]).set_index("id")

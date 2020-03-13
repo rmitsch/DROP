@@ -47,7 +47,7 @@ storage_path: str = sys.argv[3] + "/" + dataset_name
 
 # Get all parameter configurations (to avoid duplicate model generations).
 parameter_sets, num_param_sets = DimensionalityReductionKernel.generate_parameter_sets_for_testing(
-    data_file_path=storage_path + "/tale_" + dataset_name + "_" + dim_red_kernel_name.lower() + ".h5",
+    data_file_path=storage_path + "/embedding_" + dim_red_kernel_name.lower() + ".h5",
     dim_red_kernel_name=dim_red_kernel_name
 )
 
@@ -79,9 +79,9 @@ high_dim_neighbourhood_ranking: np.ndarray = CorankingMatrix.generate_neighbourh
 )
 
 # Store high-dimensional distances matrices and neighbourhood rankings.
-with open(storage_path + "/" + dataset_name + "_distance_matrix.pkl", "wb") as file:
+with open(storage_path + "/" + "distance_matrix.pkl", "wb") as file:
     pickle.dump(distance_matrix, file)
-with open(storage_path + "/" + dataset_name + "_neighbourhood_ranking.pkl", "wb") as file:
+with open(storage_path + "/" + "neighbourhood_ranking.pkl", "wb") as file:
     pickle.dump(high_dim_neighbourhood_ranking, file)
 
 ######################################################
