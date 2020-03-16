@@ -347,7 +347,6 @@ def get_dr_model_details():
         if not os.path.isfile(fn):
             return "File " + fn + " does not exist.", 400
 
-    import plotly.express as px
     # Open file containing information on low-dimensional projections.
     h5file: File = open_file(filename=file_name, mode="r+")
 
@@ -365,6 +364,7 @@ def get_dr_model_details():
     original_dataset: pd.DataFrame = app.config["DATASET_CLASS"].sort_dataframe_columns_for_frontend(
         Utils.prepare_binned_original_dataset(app.config["STORAGE_PATH"], app.config["DATASET_NAME"])
     )
+
     original_dataset.insert(loc=0, column="id", value=[_ for _ in range(len(original_dataset))])
     # Prepare dataset for model detail table.
     original_dataset_for_table: pd.DataFrame = app.config["DATASET_CLASS"].sort_dataframe_columns_for_frontend(

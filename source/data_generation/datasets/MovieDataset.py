@@ -34,10 +34,21 @@ class MovieDataset(InputDataset):
         movies_metadata: pd.DataFrame = pd.read_csv(
             filepath_or_buffer=self._storage_path + "/movies_metadata.csv", low_memory=False,
             dtype={"id": int, "popularity": float}
-        ).drop(columns=[
+        )
+
+        # Wrap title in link to IMDB page.
+        movies_metadata["title"] = (
+            "<a target=_blank " +
+            "href='" + "https://www.imdb.com/title/" + movies_metadata.imdb_id + "/'>" +
+            movies_metadata.title +
+            "</a>"
+        )
+
+        # Discard unnecessary columns.
+        movies_metadata = movies_metadata.drop(columns=[
             "belongs_to_collection", "homepage", "imdb_id", "poster_path", "status", "video", "original_title",
-            "original_language", "vote_count"
-        ]).set_index("id").sort_values(by="revenue", ascending=False)
+            "original_language", "vote_count", "overview"
+        ]).set_index("id")
 
         # Simplify JSON lists - dispose of IDs.
         def convert(x: str) -> list:
@@ -51,7 +62,7 @@ class MovieDataset(InputDataset):
         # Move genres into separate column.
         movies_metadata = movies_metadata.join(
             pd.get_dummies(movies_metadata.genres.apply(pd.Series).stack()).sum(level=0), how="inner"
-        ).drop(columns=["genres"])
+        ).drop(columns=["genres"]).sort_values(by="revenue", ascending=False)
 
         # Limit to most popular movies.
         movies_metadata = movies_metadata.head(300)
@@ -81,7 +92,7 @@ class MovieDataset(InputDataset):
     def _preprocess_hd_features(self):
         features: pd.DataFrame = self._data["features"].copy(deep=True).drop(columns=[
             # Drop textual data since we rely only on numerical on categorical data (for now).
-            "overview", "tagline", "title"
+            "tagline", "title"
         ])
 
         for cat_col in ("production_companies", "production_countries", "spoken_languages", "keywords"):
@@ -196,7 +207,6 @@ class MovieDataset(InputDataset):
         return {
             **{
                 "budget": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.DISCRETE.value},
-                "overview": {"supertype": supertypes.CATEGORICAL.value, "type": subtypes.NOMINAL.value},
                 "popularity": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.CONTINOUS.value},
                 "production_companies": {"supertype": supertypes.CATEGORICAL.value, "type": subtypes.NOMINAL.value},
                 "production_countries": {"supertype": supertypes.CATEGORICAL.value, "type": subtypes.NOMINAL.value},
