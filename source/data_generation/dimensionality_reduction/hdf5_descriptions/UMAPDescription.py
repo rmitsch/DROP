@@ -14,4 +14,3 @@ class UMAPDescription(DRDescription):
     learning_rate = Float64Col(pos=12)
     min_dist = Float64Col(pos=13)
     local_connectivity = Int32Col(pos=14)
-    metric = StringCol(20, pos=15)

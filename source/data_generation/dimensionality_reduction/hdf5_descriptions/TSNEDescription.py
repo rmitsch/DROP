@@ -14,4 +14,3 @@ class TSNEDescription(DRDescription):
     learning_rate = Float64Col(pos=12)
     n_iter = UInt16Col(pos=13)
     angle = Float64Col(pos=14)
-    metric = StringCol(20, pos=15)

@@ -10,4 +10,3 @@ class SVDDescription(DRDescription):
     # Hyperparameter.
     n_components = Int32Col(pos=9)
     n_iter = Int32Col(pos=10)
-    metric = StringCol(20, pos=11)

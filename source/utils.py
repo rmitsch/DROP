@@ -173,7 +173,7 @@ class Utils:
         )
 
         # Define version.
-        flask_app.config["VERSION"] = "0.26.3"
+        flask_app.config["VERSION"] = "0.26.4"
 
         # Store path to data storage location.
         flask_app.config["ROOT_STORAGE_PATH"] = sys.argv[2] + "/"
@@ -280,14 +280,7 @@ class Utils:
         """
 
         cols: list = metadata.columns.values
-        return [
-            i for i
-            in range(len(cols))
-            if "metric_" not in cols[i] or
-            cols[i] == "metric_" + str(
-                metadata_config["original"].loc[[embedding_id]].metric.values[0]
-            )[2:-1]
-        ]
+        return [i for i in range(len(cols))]
 
     @staticmethod
     def gather_column_activity(features: pd.DataFrame, dim_red_kernel_parameters: dict) -> pd.DataFrame:

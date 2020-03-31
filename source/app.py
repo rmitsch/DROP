@@ -92,7 +92,7 @@ def get_metadata():
 
         # Prepare dataframe for ratings.
         app.config["RATINGS"] = df.copy(deep=True)
-        app.config["RATINGS"]["rating"] = -1
+        app.config["RATINGS"]["rating"] = 0
 
         # Assemble embedding-level metadata.
         app.config["EMBEDDING_METADATA"]["original"] = df
@@ -117,6 +117,7 @@ def get_metadata():
         app.config["EXPLAINER_VALUES"] = pd.read_pickle(app.config["EXPLAINER_VALUES_PATH"])
 
         # Return JSON-formatted embedding data.
+        df["rating"] = app.config["RATINGS"]["rating"]
         return jsonify(df.drop(["b_nx"], axis=1).to_json(orient='index'))
 
     else:
@@ -391,7 +392,6 @@ def get_dr_model_details():
     embedding_metadata_feat_df = app.config["EMBEDDING_METADATA"]["features_preprocessed"].loc[[embedding_id]]
 
     # Drop index for categorical variables that are inactive for this record.
-    # Note: Currently hardcoded for metric only.
     param_indices: list = Utils.get_active_col_indices(
         embedding_metadata_feat_df, app.config["EMBEDDING_METADATA"], embedding_id
     )
@@ -480,8 +480,6 @@ def compute_correlation_strength():
 
     if ids is not None:
         df = df.iloc[ids]
-
-    df.metric = df.metric.astype("category").cat.codes
 
     return df.corr(method=lambda x, y: dcor.distance_correlation(x, y)).to_json(orient='index')
 
