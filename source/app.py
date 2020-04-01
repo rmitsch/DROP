@@ -49,6 +49,7 @@ def get_metadata():
 
     app.config["DATASET_NAME"] = InputDataset.check_dataset_name(request.args.get('datasetName'))
     app.config["DR_KERNEL_NAME"] = DimensionalityReductionKernel.check_kernel_name(request.args.get('drKernelName'))
+    app.config["CACHE_ROOT"] = "/tmp/" + app.config["DATASET_NAME"] + "_" + app.config["DR_KERNEL_NAME"]
 
     # Update root storage path with new dataset name.
     app.config["STORAGE_PATH"] = app.config["ROOT_STORAGE_PATH"] + app.config["DATASET_NAME"] + "/"
@@ -271,7 +272,7 @@ def get_binned_pointwise_quality_data():
     :return: Jsonified object with percentages of bins with bin labels.
     """
     file_name: str = app.config["FULL_FILE_NAME"]
-    cached_file_path: str = os.path.join(app.config["CACHE_ROOT"], "pointwise_quality_binned.pkl")
+    cached_file_path: str = app.config["CACHE_ROOT"] + "_pointwise_quality_binned.pkl"
     number_of_bins: int = int(request.args["nbins"]) if "nbins" in request.args else 10
 
     if os.path.isfile(file_name):

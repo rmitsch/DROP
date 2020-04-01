@@ -173,7 +173,7 @@ class Utils:
         )
 
         # Define version.
-        flask_app.config["VERSION"] = "0.26.4"
+        flask_app.config["VERSION"] = "0.26.5"
 
         # Store path to data storage location.
         flask_app.config["ROOT_STORAGE_PATH"] = sys.argv[2] + "/"
@@ -206,8 +206,8 @@ class Utils:
         # Store name of current dataset and kernel. Note that these values is only changed at call of /get_metadata.
         # Use t-SNE on happiness dataset as default.
         flask_app.config["DATASET_NAME"] = None
-        flask_app.config["DR_KERNEL_NAME"] = "tsne"
-        flask_app.config["FULL_FILE_NAME"] = "happiness"
+        flask_app.config["DR_KERNEL_NAME"] = "umap"
+        flask_app.config["FULL_FILE_NAME"] = "movie"
 
         # For storage of global, unrestricted model used by local explanations.
         # Has one global regressor for each possible objective.
