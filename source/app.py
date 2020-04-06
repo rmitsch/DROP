@@ -172,13 +172,11 @@ def update_embedding_ratings():
     now: datetime.datetime = datetime.datetime.now()
     filename: str = (
         app.config["EXPERIMENT_NAME"] + "_" +
-        app.config["DATASET_NAME"] + "_" +
-        app.config["DR_KERNEL_NAME"] + "_" +
         str(now.year) + str(now.month).zfill(2) + str(now.day).zfill(2) +
         ".pkl"
     )
 
-    tmp_location: str = app.config["CACHE_ROOT"] + "/" + filename
+    tmp_location: str = app.config["CACHE_ROOT"] + "_" + filename
     app.config["RATINGS"].to_pickle(tmp_location)
     app.config["DROPBOX"].upload_file(tmp_location, filename)
 
