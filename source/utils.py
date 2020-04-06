@@ -173,7 +173,7 @@ class Utils:
         )
 
         # Define version.
-        flask_app.config["VERSION"] = "0.26.5"
+        flask_app.config["VERSION"] = "0.26.6"
 
         # Store path to data storage location.
         flask_app.config["ROOT_STORAGE_PATH"] = sys.argv[2] + "/"
@@ -353,7 +353,6 @@ class Utils:
         return {
             "hyperparameters": dr_kernel_config["parameters"],
             "objectives": [
-                "runtime",
                 "r_nx",
                 "stress",
                 "target_domain_performance",
