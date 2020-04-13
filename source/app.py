@@ -172,6 +172,8 @@ def update_embedding_ratings():
     now: datetime.datetime = datetime.datetime.now()
     filename: str = (
         app.config["EXPERIMENT_NAME"] + "_" +
+        app.config["DATASET_NAME"] + "_" +
+        app.config["DR_KERNEL_NAME"] + "_" +
         str(now.year) + str(now.month).zfill(2) + str(now.day).zfill(2) +
         ".pkl"
     )
