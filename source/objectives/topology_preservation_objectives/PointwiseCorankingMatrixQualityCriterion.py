@@ -1,11 +1,12 @@
 import numpy
 from .TopologyPreservationObjective import TopologyPreservationObjective
 from .CorankingMatrix import CorankingMatrix
+import numpy as np
 
 
 class PointwiseCorankingMatrixQualityCriterion(TopologyPreservationObjective):
     """
-    Calculates coranking matrix quality criterion (R_nx).
+    Calculates pointwise coranking matrix quality criterion (q_nx).
     """
 
     def __init__(
@@ -26,11 +27,11 @@ class PointwiseCorankingMatrixQualityCriterion(TopologyPreservationObjective):
             coranking_matrix=coranking_matrix
         )
 
-    def compute(self) -> float:
+    def compute(self) -> np.ndarray:
         """
         Calculates objective.
         Source: http://www.cs.rug.nl/biehl/Preprints/2012-esann-quality.pdf, section 4.
-        :return: Vector with pointwise q_nx_i for k with weighted average.
+        :return: Vector with pointwise q_nx_i with weighted average over k.
         """
 
         ########################################
@@ -38,11 +39,11 @@ class PointwiseCorankingMatrixQualityCriterion(TopologyPreservationObjective):
         ########################################
 
         # Nuber of points.
-        num_points = self._low_dimensional_data.shape[0]
+        num_points: int = self._low_dimensional_data.shape[0]
         # Counter.
-        i = 0
+        i: int = 0
         # k for which to compute q_nx(k).
-        k_samples = [1, 5, 10]
+        k_samples: list = [1, 5, 10]
         k_samples.extend(numpy.linspace(
             start=1,
             stop=num_points - 2,
@@ -52,14 +53,14 @@ class PointwiseCorankingMatrixQualityCriterion(TopologyPreservationObjective):
         ))
 
         # Vector with all q_nx_i results for point with index i in (i).
-        q_nx_i = numpy.zeros([num_points, 1])
+        q_nx_i: np.ndarray = numpy.zeros([num_points, 1])
 
         ########################################
         # 2. Compute pointwise q_nx_i.
         ########################################
 
         # Generate mask matrix.
-        mask = numpy.zeros([num_points - 2, num_points - 2])
+        mask: np.ndarray = numpy.zeros([num_points - 2, num_points - 2])
 
         # Compute q_nx_i(k).
         for Q_i in self._coranking_matrix.create_pointwise_coranking_matrix_generator():

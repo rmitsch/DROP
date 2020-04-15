@@ -359,6 +359,16 @@ def get_dr_model_details():
     if abs(low_dim_projection.max()) < 0.001:
         low_dim_projection = low_dim_projection * 10000
 
+    # todo Ad pointwise quality metrics (specifically here: r_nx) to dataset passed on to frontend. Frontend should
+    #  automatically treat PQMs as normal attributes. Tasks:
+    #  - Concatenate PQMs to dataset (use appropriate name - q_nx_i? PQM? PQC?).
+    #  - Bin dataset with concatenated PQMs.
+    #  - Merge output of InputDataset.get_pointwise_metrics_data_types() with output of
+    #    InputDataset.get_attributes_data_types() to obtain complete attribute_data_types.
+    #  Estimate: ~ 2-3 hours.
+    pointwise_quality: np.ndarray = h5file.root.pointwise_quality._f_get_child("model" + str(embedding_id)).read()
+    print(pointwise_quality.shape, low_dim_projection.shape)
+
     # Fetch metadata about this dataset's attributes.
     attribute_data_types: dict = app.config["DATASET_CLASS"].get_attributes_data_types()
 
@@ -387,6 +397,11 @@ def get_dr_model_details():
         high_dim_neighbour_ranking_file_name,
         low_dim_projection
     )
+    with pd.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', None):
+        print(original_dataset.head())
+        print(original_dataset_for_table.head())
+        print(pairwise_displacement_data.head())
+
     pairwise_displacement_data.to_pickle("/tmp/pairwise_displacement_data.pkl")
 
     # Fetch dataframe with preprocessed features.

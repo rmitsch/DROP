@@ -87,7 +87,7 @@ class DimensionalityReductionThread(threading.Thread):
             ).compute()
 
             # Pointwise Q_nx -> q_nx.
-            q_nx_i: float = PointwiseCorankingMatrixQualityCriterion(
+            q_nx_i: np.ndarray = PointwiseCorankingMatrixQualityCriterion(
                 low_dimensional_data=low_dimensional_projection,
                 coranking_matrix=coranking_matrix
             ).compute()

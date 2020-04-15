@@ -127,6 +127,21 @@ class InputDataset:
         """
         pass
 
+    @staticmethod
+    def get_pointwise_metrics_data_types() -> dict:
+        """
+        Similar to get_attributes_data_types(), except this specifies the data types for dataset-agnostic pointwise DR
+        quality metrics passed on to frontend.
+        :return: Dictionary describing pointwise quality metrics' types. {metric -> {supertype: x, type: y}}.
+        """
+
+        supertypes: Enum = InputDataset.DataSupertypes
+        subtypes: Enum = InputDataset.DataSubtypes
+
+        return {
+            "q_nx_i": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.DISCRETE.value}
+        }
+
     def compute_hd_target_domain_performance(self) -> float:
         """
         Calculates target domain performance for feature matrix in original, high-dimensional dataset.
