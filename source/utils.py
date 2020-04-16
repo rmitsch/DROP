@@ -173,7 +173,7 @@ class Utils:
         )
 
         # Define version.
-        flask_app.config["VERSION"] = "0.29.1"
+        flask_app.config["VERSION"] = "0.30.0"
 
         # Store path to data storage location.
         flask_app.config["ROOT_STORAGE_PATH"] = sys.argv[2] + "/"
@@ -243,11 +243,17 @@ class Utils:
         ]
 
     @staticmethod
-    def prepare_binned_original_dataset(storage_path: str, dataset_name: str, bin_count: int = 5) -> pd.DataFrame:
+    def prepare_binned_original_dataset(
+            storage_path: str,
+            dataset_name: str,
+            pointwise_qualities: np.ndarray,
+            bin_count: int = 5
+    ) -> pd.DataFrame:
         """
         Prepares original dataset for detail view in frontend by loading and binning it.
         :param storage_path:
         :param dataset_name:
+        :param pointwise_qualities: Array of pointwise qualities - currently exactly one quality per record expected.
         :param bin_count:
         :return: Dataframe with all original attributes plus binned versions of it for numerical attributes.
         """
@@ -257,6 +263,11 @@ class Utils:
             delimiter=',',
             quotechar='"'
         )
+
+        assert pointwise_qualities.shape[0] == len(df), \
+            "Shape of pointwise_qualities does not match length of dataframe."
+
+        df["PQM"] = pointwise_qualities
 
         # Bin columns for histograms.
         for attribute in df.select_dtypes(include=[np.number]).columns:

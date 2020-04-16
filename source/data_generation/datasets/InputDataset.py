@@ -139,7 +139,8 @@ class InputDataset:
         subtypes: Enum = InputDataset.DataSubtypes
 
         return {
-            "q_nx_i": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.DISCRETE.value}
+            # Use PQM instead of q_nx_i for easier understanding in frontend.
+            "PQM": {"supertype": supertypes.NUMERICAL.value, "type": subtypes.DISCRETE.value}
         }
 
     def compute_hd_target_domain_performance(self) -> float:
