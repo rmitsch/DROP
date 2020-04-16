@@ -397,11 +397,6 @@ def get_dr_model_details():
     )
     pairwise_displacement_data.to_pickle("/tmp/pairwise_displacement_data.pkl")
 
-    with pd.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', None):
-        print(original_dataset.head())
-        print(original_dataset_for_table.head())
-        print(pairwise_displacement_data.head())
-
     # Fetch dataframe with preprocessed features.
     embedding_metadata_feat_df = app.config["EMBEDDING_METADATA"]["features_preprocessed"].loc[[embedding_id]]
 
