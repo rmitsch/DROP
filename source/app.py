@@ -137,7 +137,17 @@ def get_explainer_values():
     :return: List of records with schema (embedding ID, objective, hyperparameter, influence value).
     """
 
-    return app.config["EXPLAINER_VALUES"].reset_index().to_json(orient='records')
+    df: pd.DataFrame = app.config["EXPLAINER_VALUES"].copy(deep=True)
+    # Drop runtime (since dropped in frontend).
+    df = df[df.objective != "runtime"]
+    # todo (remove, generate data cleanly) Hack: Rename target_domain_performance and n_components here.
+    df.objective = df.objective.str.replace(
+        "target_domain_performance", "rdp"
+    ).str.replace(
+        "separability_metric", "separability"
+    )
+
+    return df.reset_index().to_json(orient='records')
 
 
 @app.route('/get_metadata_template', methods=["GET"])
@@ -415,11 +425,14 @@ def get_dr_model_details():
 
     # Retrieve SHAP estimates.
     explainer_values: pd.DataFrame = app.config["EXPLAINER_VALUES"].loc[embedding_id]
-    explanation_columns: list = app.config[
-        "EMBEDDING_METADATA"
-    ]["features_preprocessed"].columns.values[param_indices].tolist()
-    # Replace categorical metric values with "metric".
-    explanation_columns = [col for col in explanation_columns]
+    # Drop runtime (since dropped in frontend).
+    explainer_values = explainer_values[explainer_values.objective != "runtime"]
+    # todo (remove, generate data cleanly) Hack: Rename target_domain_performance and n_components here.
+    explainer_values.objective = explainer_values.objective.str.replace(
+        "target_domain_performance", "rdp"
+    ).str.replace(
+        "separability_metric", "separability"
+    )
 
     # Assemble result object.
     result: dict = {
@@ -471,9 +484,9 @@ def get_dr_model_details():
                 explainer_values[
                     (explainer_values.hyperparameter == hp) & (explainer_values.objective == objective)
                 ].value.values.tolist()[0]
-                for hp in explanation_columns
+                for hp in explainer_values.hyperparameter.unique()
             ]
-            for objective in app.config["METADATA_TEMPLATE"]["objectives"]
+            for objective in explainer_values.objective.unique()
         }
     }
 
