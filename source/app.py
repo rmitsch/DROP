@@ -1,6 +1,6 @@
 import os
 import sys
-
+import copy
 from functools import partial
 from flask import render_template
 from flask import request
@@ -119,7 +119,12 @@ def get_metadata():
 
         # Return JSON-formatted embedding data.
         df["rating"] = app.config["RATINGS"]["rating"]
-        return jsonify(df.drop(["b_nx"], axis=1).to_json(orient='index'))
+
+        # todo (remove, generate data cleanly) Hack: Rename target_domain_performance and n_components here, dismiss
+        #  b_nx.
+        return jsonify(
+            df.rename(columns={"target_domain_performance": "rdp", "separability_metric": "separability"}).drop(["b_nx"], axis=1).to_json(orient='index')
+        )
 
     else:
         return "File/kernel does not exist.", 400
@@ -146,7 +151,10 @@ def update_and_get_metadata_template():
         DimensionalityReductionKernel.DIM_RED_KERNELS[app.config["DR_KERNEL_NAME"].upper()]
     )
 
-    return jsonify(app.config["METADATA_TEMPLATE"])
+    # todo (remove) Hack: Rename "target_domain_performance" to "rdp".
+    modified_template: dict = copy.deepcopy(app.config["METADATA_TEMPLATE"])
+    modified_template["objectives"] = ["r_nx", "stress", "rdp", "separability"]
+    return jsonify(modified_template)
 
 
 @app.route('/update_embedding_ratings', methods=["GET"])
@@ -420,7 +428,10 @@ def get_dr_model_details():
         # --------------------------------------------------------
 
         # Transform node with this model into a dataframe so we can easily retain column names.
-        "model_metadata": app.config["EMBEDDING_METADATA"]["original"].to_json(orient='index'),
+        "model_metadata": app.config["EMBEDDING_METADATA"]["original"].rename(
+            # todo (remove, generate data cleanly) Hack: Rename target_domain_performance and n_components here.
+            columns={"target_domain_performance": "rdp", "separability_metric": "separability"}
+        ).to_json(orient='index'),
 
         # --------------------------------------------------------
         # Retrieve data from original, high-dim. dataset.
@@ -490,7 +501,10 @@ def compute_correlation_strength():
     if ids is not None:
         df = df.iloc[ids]
 
-    return df.corr(method=lambda x, y: dcor.distance_correlation(x, y)).to_json(orient='index')
+    # todo (remove, generate data cleanly) Hack: Rename target_domain_performance and n_components here.
+    return df.rename(
+        columns={"target_domain_performance": "rdp", "separability_metric": "separability"}
+    ).corr(method=lambda x, y: dcor.distance_correlation(x, y)).to_json(orient='index')
 
 
 # Launch on :2483.
