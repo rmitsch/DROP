@@ -147,7 +147,10 @@ def get_explainer_values():
         "separability_metric", "separability"
     )
 
-    return df.reset_index().to_json(orient='records')
+    return jsonify({
+        "max_abs_contribution": df.value.abs().max(),
+        "data": df.reset_index().to_dict(orient='records')
+    })
 
 
 @app.route('/get_metadata_template', methods=["GET"])
