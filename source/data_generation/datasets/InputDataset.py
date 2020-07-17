@@ -33,7 +33,7 @@ class InputDataset:
         """
 
         # Get logger.
-        self._logger: logging.Logger = Utils.logger
+        self._logger: logging.Logger = Utils.create_logger()
 
         # Set storage path.
         self._storage_path: str = storage_path

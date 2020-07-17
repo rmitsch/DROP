@@ -371,6 +371,7 @@ def get_dr_model_details():
             return "File " + fn + " does not exist.", 400
 
     # Open file containing information on low-dimensional projections.
+    print(file_name)
     h5file: File = open_file(filename=file_name, mode="r+")
 
     # Read coordinates for low-dimensional projection of this embedding.

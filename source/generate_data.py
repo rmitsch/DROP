@@ -22,6 +22,7 @@ def generate_instance(instance_dataset_name: str, storage_path: str) -> InputDat
     :param storage_path: Path to folder holding files.
     :return:
     """
+
     assert instance_dataset_name in ("movie", "happiness"), 'Dataset ' + instance_dataset_name + ' not supported.'
 
     if instance_dataset_name == "happiness":
@@ -30,122 +31,123 @@ def generate_instance(instance_dataset_name: str, storage_path: str) -> InputDat
         return MovieDataset(storage_path=storage_path)
 
 
-# Create logger.
-logger: logging.Logger = Utils.create_logger()
+if __name__ == '__main__':
+    # Create logger.
+    logger: logging.Logger = Utils.create_logger()
 
-######################################################
-# 1. Generate parameter sets, store in file.
-######################################################
+    ######################################################
+    # 1. Generate parameter sets, store in file.
+    ######################################################
 
-assert len(sys.argv) == 4, "Arguments to be specified: (1) Dataset name, (2) DR kernel name, (3) path to data folder."
+    assert len(sys.argv) == 4, "Arguments to be specified: (1) Dataset name, (2) DR kernel name, (3) path to data folder."
 
-# Define name of dataset to use (appended to file name).
-dataset_name: str = sys.argv[1]
-# Define DR method to use.
-dim_red_kernel_name: str = sys.argv[2]
-# Get storage path.
-storage_path: str = sys.argv[3] + "/" + dataset_name
+    # Define name of dataset to use (appended to file name).
+    dataset_name: str = sys.argv[1]
+    # Define DR method to use.
+    dim_red_kernel_name: str = sys.argv[2]
+    # Get storage path.
+    storage_path: str = sys.argv[3] + "/" + dataset_name
 
-# Get all parameter configurations (to avoid duplicate model generations).
-parameter_sets, num_param_sets = DimensionalityReductionKernel.generate_parameter_sets_for_testing(
-    data_file_path=storage_path + "/embedding_" + dim_red_kernel_name.lower() + ".h5",
-    dim_red_kernel_name=dim_red_kernel_name
-)
+    # Get all parameter configurations (to avoid duplicate model generations).
+    parameter_sets, num_param_sets = DimensionalityReductionKernel.generate_parameter_sets_for_testing(
+        data_file_path=storage_path + "/embedding_" + dim_red_kernel_name.lower() + ".h5",
+        dim_red_kernel_name=dim_red_kernel_name
+    )
 
-######################################################
-# 2. Load high-dimensional data.
-######################################################
+    ######################################################
+    # 2. Load high-dimensional data.
+    ######################################################
 
-logger.info("Creating dataset.")
+    logger.info("Creating dataset.")
 
-# Load dataset.
-high_dim_dataset: InputDataset = generate_instance(instance_dataset_name=dataset_name, storage_path=storage_path)
+    # Load dataset.
+    high_dim_dataset: InputDataset = generate_instance(instance_dataset_name=dataset_name, storage_path=storage_path)
 
-# Persist dataset's records as representation in frontend.
-high_dim_dataset.persist_records()
+    # Persist dataset's records as representation in frontend.
+    high_dim_dataset.persist_records()
 
-######################################################
-# 3. Calculate distance matrices and the corresponding
-# coranking matrices.
-######################################################
+    ######################################################
+    # 3. Calculate distance matrices and the corresponding
+    # coranking matrices.
+    ######################################################
 
-logger.info("Calculating distance matrices.")
-distance_metric: str = "euclidean"
-distance_matrix: np.ndarray = high_dim_dataset.compute_distance_matrix()
+    logger.info("Calculating distance matrices.")
+    distance_metric: str = "euclidean"
+    distance_matrix: np.ndarray = high_dim_dataset.compute_distance_matrix()
 
-# Generate neighbourhood ranking for high dimensional data w.r.t. all used distance metrics.
-logger.info("Generating neighbourhood rankings.")
-high_dim_neighbourhood_ranking: np.ndarray = CorankingMatrix.generate_neighbourhood_ranking(
-    distance_matrix=distance_matrix
-)
+    # Generate neighbourhood ranking for high dimensional data w.r.t. all used distance metrics.
+    logger.info("Generating neighbourhood rankings.")
+    high_dim_neighbourhood_ranking: np.ndarray = CorankingMatrix.generate_neighbourhood_ranking(
+        distance_matrix=distance_matrix
+    )
 
-# Store high-dimensional distances matrices and neighbourhood rankings.
-with open(storage_path + "/" + "distance_matrix.pkl", "wb") as file:
-    pickle.dump(distance_matrix, file)
-with open(storage_path + "/" + "neighbourhood_ranking.pkl", "wb") as file:
-    pickle.dump(high_dim_neighbourhood_ranking, file)
+    # Store high-dimensional distances matrices and neighbourhood rankings.
+    with open(storage_path + "/" + "distance_matrix.pkl", "wb") as file:
+        pickle.dump(distance_matrix, file)
+    with open(storage_path + "/" + "neighbourhood_ranking.pkl", "wb") as file:
+        pickle.dump(high_dim_neighbourhood_ranking, file)
 
-######################################################
-# 3. Set up multithreading.
-######################################################
+    ######################################################
+    # 3. Set up multithreading.
+    ######################################################
 
-# Adjust threading layer if UMAP is used to avoid multiprocessing deadlock.
-if dim_red_kernel_name == "UMAP":
-    numba.config.THREADING_LAYER = 'tbb'
+    # Adjust threading layer if UMAP is used to avoid multiprocessing deadlock.
+    if dim_red_kernel_name == "UMAP":
+        numba.config.THREADING_LAYER = 'tbb'
 
-# Shuffle list with parameter sets so that they are kinda evenly distributed.
-shuffle(parameter_sets)
-# Determine number of workers.
-n_jobs: int = psutil.cpu_count(logical=True)
-threads: list = []
-# Shared list holding results.
-results: list = []
+    # Shuffle list with parameter sets so that they are kinda evenly distributed.
+    shuffle(parameter_sets)
+    # Determine number of workers.
+    n_jobs: int = psutil.cpu_count(logical=True)
+    threads: list = []
+    # Shared list holding results.
+    results: list = []
 
-# Split parameter sets amongst workers.
-logger.info("Generating dimensionality reduction models with " + str(n_jobs) + " threads.")
-num_parameter_sets: int = int(len(parameter_sets) / n_jobs)
+    # Split parameter sets amongst workers.
+    logger.info("Generating dimensionality reduction models with " + str(n_jobs) + " threads.")
+    num_parameter_sets: int = int(len(parameter_sets) / n_jobs)
 
-for i in range(0, n_jobs):
-    first_index: int = num_parameter_sets * i
-    # Add normal number of parameter sets, if this isn't the last job. Otherwise add all remaining sets.
-    last_index: int = first_index + num_parameter_sets if i < (n_jobs - 1) else len(parameter_sets)
+    for i in range(0, n_jobs):
+        first_index: int = num_parameter_sets * i
+        # Add normal number of parameter sets, if this isn't the last job. Otherwise add all remaining sets.
+        last_index: int = first_index + num_parameter_sets if i < (n_jobs - 1) else len(parameter_sets)
 
-    # Instantiate thread.
+        # Instantiate thread.
+        threads.append(
+            DimensionalityReductionThread(
+                results=results,
+                distance_matrix=distance_matrix,
+                parameter_sets=parameter_sets[first_index:last_index],
+                input_dataset=high_dim_dataset,
+                high_dimensional_neighbourhood_ranking=high_dim_neighbourhood_ranking,
+                dim_red_kernel_name=dim_red_kernel_name
+            )
+        )
+
+    # Create thread ensuring persistence of results.
     threads.append(
-        DimensionalityReductionThread(
+        PersistenceThread(
             results=results,
-            distance_matrix=distance_matrix,
-            parameter_sets=parameter_sets[first_index:last_index],
-            input_dataset=high_dim_dataset,
-            high_dimensional_neighbourhood_ranking=high_dim_neighbourhood_ranking,
-            dim_red_kernel_name=dim_red_kernel_name
+            expected_number_of_results=len(parameter_sets),
+            total_number_of_results=num_param_sets,
+            dataset_name=dataset_name,
+            dim_red_kernel_name=dim_red_kernel_name,
+            checking_interval=10,
+            storage_path=storage_path
         )
     )
 
-# Create thread ensuring persistence of results.
-threads.append(
-    PersistenceThread(
-        results=results,
-        expected_number_of_results=len(parameter_sets),
-        total_number_of_results=num_param_sets,
-        dataset_name=dataset_name,
-        dim_red_kernel_name=dim_red_kernel_name,
-        checking_interval=10,
-        storage_path=storage_path
-    )
-)
+    ######################################################
+    # 3. Calculate low-dim. represenatations.
+    ######################################################
 
-######################################################
-# 3. Calculate low-dim. represenatations.
-######################################################
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
 
-for thread in threads:
-    thread.start()
-for thread in threads:
-    thread.join()
+    ######################################################
+    # 4. Compute explainer values for all embeddings.
+    ######################################################
 
-######################################################
-# 4. Compute explainer values for all embeddings.
-######################################################
-
-compute_and_persist_explainer_values(logger, storage_path, dim_red_kernel_name, dataset_name)
+    compute_and_persist_explainer_values(logger, storage_path, dim_red_kernel_name, dataset_name)
