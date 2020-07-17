@@ -100,8 +100,8 @@ def analyse(data: Dict, user_scores: pd.DataFrame):
 
         record_coordinates: pd.DataFrame = pd.DataFrame(emb, columns=["x", "y"])
         record_coordinates["cluster_id"] = cluster_ids
-        avg_inter_cluster_dist: float = 0
-        avg_intra_cluster_dist: float = 0
+        inter_cluster_dists: List[np.ndarray] = []
+        intra_cluster_dists: List[np.ndarray] = []
 
         # Compute avg. distance between points in same cluster and avg. dist for points in different clusters.
         cluster_ids: list = list(record_coordinates.cluster_id.unique())
@@ -114,28 +114,28 @@ def analyse(data: Dict, user_scores: pd.DataFrame):
             coords_in_cluster1: np.ndarray = record_coordinates[
                 record_coordinates.cluster_id == cluster_id_1
             ][["x", "y"]].values
-            avg_intra_cluster_dist += cdist(coords_in_cluster1, coords_in_cluster1, "euclidean").mean()
+            intra_cluster_dists.append(cdist(coords_in_cluster1, coords_in_cluster1, "euclidean").flatten())
 
             # Compute avg. distance between points in different clusters.
             for ix2, cluster_id_2 in enumerate(cluster_ids[ix1 + 1:]):
                 if cluster_id_2 == "-1":
                     continue
-                avg_inter_cluster_dist += cdist(
+                inter_cluster_dists.append(cdist(
                     coords_in_cluster1,
                     record_coordinates[record_coordinates.cluster_id == cluster_id_2][["x", "y"]].values,
                     "euclidean"
-                ).mean()
+                ).flatten())
 
         # Use a default value for ABW if there's only one cluster since ABW is undefined for one cluster.
         abw: float = (
             # Normalize values based the number of clusters.
-            (avg_intra_cluster_dist / len(cluster_ids) - 1) /
-            (avg_inter_cluster_dist / (len(cluster_ids) - 1) * (len(cluster_ids) - 2) / 2)
+            np.concatenate(intra_cluster_dists).mean() / np.concatenate(inter_cluster_dists).mean()
             if len(record_coordinates.cluster_id.unique()) != 1 else 1
         )
 
-        print("abw =", abw, avg_intra_cluster_dist, avg_inter_cluster_dist)
-
+        # print("abw =", abw)
+        # if len(intra_cluster_dists):
+        #     print(np.concatenate(intra_cluster_dists).mean(), np.concatenate(inter_cluster_dists).mean())
 
         ###############################################
         # 2. x. Append features.
