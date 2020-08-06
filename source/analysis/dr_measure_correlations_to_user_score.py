@@ -39,12 +39,12 @@ if __name__ == '__main__':
         print(len(df))
 
     for metric in [
-        ("r_nx", "Neighbourhood stability (r_nx)"),
+        ("r_nx", "Neighbourhood stability ($NH_{AUC}$)"),
         ("stress", "Distance (Kruskal's Stress)"),
         ("target_domain_performance", "Relative predictive power"),
         ("separability_metric", "Cluster purity (Silhouette)")
     ]:
-        ax = sns.regplot(x=metric[0], y="rating", data=df, ci=90, fit_reg=True)
+        ax = sns.regplot(x=metric[0], y="rating", data=df, ci=95, fit_reg=True)
         ax.set_title(metric[1] + " vs. perceptual rating \n")
         plt.xlabel(metric[1])
         plt.ylabel("Perceptual rating")

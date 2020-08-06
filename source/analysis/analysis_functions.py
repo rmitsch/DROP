@@ -17,6 +17,7 @@ from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error, m
 from sklearn.model_selection import ShuffleSplit, train_test_split
 from sklearn.preprocessing import StandardScaler, RobustScaler
 from sklearn.svm import OneClassSVM
+from statsmodels.stats.outliers_influence import variance_inflation_factor
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
@@ -207,7 +208,7 @@ def engineer_features(data: Dict, user_scores: pd.DataFrame):
         hd_data_with_emb_coords["x"] = emb[:, 0]
         hd_data_with_emb_coords["y"] = emb[:, 1]
 
-        # Compute correlation to
+        # Compute correlation between axes and variables.
         attribute_axis_corrs: pd.DataFrame = hd_data_with_emb_coords.corr(method="spearman")
         attribute_axis_corrs: dict = {
             axis: [
@@ -274,7 +275,7 @@ def engineer_features(data: Dict, user_scores: pd.DataFrame):
         ) if len(rec_coords[rec_coords.hd_cluster_id != "-1"]) else 1
 
         ###############################################
-        # 2. 8. Hypothesis margin (optional).
+        # 2. 8. Hypothesis margin.
         ###############################################
 
         distance_deltas: List[float] = []
@@ -324,8 +325,8 @@ def engineer_features(data: Dict, user_scores: pd.DataFrame):
     ).set_index(["dataset", "id"])
 
 
-def train(data: pd.DataFrame, cols_to_keep: Tuple[str] = None) -> Tuple[
-    LGBMRegressor, pd.DataFrame, pd.DataFrame, np.ndarray, np.ndarray
+def train(data: pd.DataFrame, cols_to_keep: Tuple[str] = None, filter_by_vif: bool = False) -> Tuple[
+    linear_model.Lasso, LGBMRegressor, pd.DataFrame, pd.DataFrame, np.ndarray, np.ndarray
 ]:
     """
     Trains model(s) on feature data to predict user ratings.
@@ -334,20 +335,27 @@ def train(data: pd.DataFrame, cols_to_keep: Tuple[str] = None) -> Tuple[
         - LightGBM
     :param data: Dataframe to predict.
     :param cols_to_keep: List of columns to use in model.
-    :return: Trained estimator, dataframe with evaluation data, dataframe with selected features, test feature set,
-    test labels.
+    :param filter_by_vif: Whether to filter columns by their VIF score.
+    :return: Trained lasso estimator, trained LGBM estimator, dataframe with evaluation data, dataframe with selected
+    features, test feature set, test labels.
     """
 
     target: str = "rating"
     data = data.drop(columns="separability_metric", errors="ignore")
 
+    if filter_by_vif and len(data.columns) > 2:
+        rating: pd.Series = data.rating
+        data = filter_features_by_vif(data.drop(columns="rating"))
+        data["rating"] = rating
+
     if cols_to_keep:
-        data = data[[*cols_to_keep, "rating"]]
+        data = data[[*[col for col in cols_to_keep if col in data.columns], "rating"]]
     metrics: List[Dict] = []
 
     # 1. With linear regression.
     print("=== Linear regression ===")
     n_splits: int = 100
+    lasso_estimator: Optional[linear_model.Lasso] = None
     pbar: tqdm = tqdm(total=n_splits)
     for train_indices, test_indices in ShuffleSplit(n_splits=n_splits, test_size=.2).split(data):
         features: np.ndarray = data.drop(columns=target).values
@@ -399,6 +407,11 @@ def train(data: pd.DataFrame, cols_to_keep: Tuple[str] = None) -> Tuple[
         train_labels: np.ndarray = data[[target]].values[train_indices, :]
         test_feats: np.ndarray = features[test_indices, :]
         test_labels: np.ndarray = data[[target]].values[test_indices, :]
+
+        scaler: StandardScaler = StandardScaler()
+        scaler.fit(train_feats)
+        train_feats = scaler.transform(train_feats)
+        test_feats = scaler.transform(test_feats)
 
         if True or not len(best_params):
             # Split train set in train and validation set.
@@ -455,39 +468,13 @@ def train(data: pd.DataFrame, cols_to_keep: Tuple[str] = None) -> Tuple[
         pbar.update(1)
     pbar.close()
 
-    """
-    just preservation:
-        lasso ->
-            mean_squared_error       1.126817
-            mean_absolute_error      0.856218
-            median_absolute_error    0.751933
-            explained_variance       0.427465
-        boost ->
-            mean_squared_error       1.117067
-            mean_absolute_error      0.818996
-            median_absolute_error    0.630537
-            explained_variance       0.410680
-    """
-    """
-    with all features:
-        lasso ->
-            mean_squared_error       1.066163
-            mean_absolute_error      0.831639
-            median_absolute_error    0.689467
-            explained_variance       0.440250
-        boost ->
-            an_squared_error       1.178090
-            mean_absolute_error      0.848246
-            median_absolute_error    0.671124
-            explained_variance       0.398336
-    """
-
-    return lgbm_estimator, pd.DataFrame(metrics), data, test_feats, test_labels
+    return lasso_estimator, lgbm_estimator, pd.DataFrame(metrics), data, test_feats, test_labels
 
 
 def interpret_model(
     data: pd.DataFrame,
-    estimator: Any,
+    lasso_estimator: linear_model.Lasso,
+    lgbm_estimator: LGBMRegressor,
     metrics: pd.DataFrame,
     test_feats: np.ndarray,
     test_labels: np.ndarray,
@@ -496,10 +483,12 @@ def interpret_model(
     """
     Interpret estimators with SHAP.
     :param data: Full dataset.
-    :param estimator: Trained estimator.
+    :param lasso_estimator: Trained lasso estimator.
+    :param lgbm_estimator: Trained LGBM estimator.
     :param metrics: Dataframe with metrics.
     :param test_feats: Set of features in test set.
     :param test_labels: Set of labels in test set.
+    :param base_path: Base path for storage.
     """
 
     target: str = "rating"
@@ -517,8 +506,8 @@ def interpret_model(
 
     # https://www.kaggle.com/slundberg/interpreting-a-lightgbm-model
     data_valid: pd.DataFrame = pd.DataFrame(test_feats, columns=cols)
-    shap_values: np.ndarray = shap.TreeExplainer(estimator).shap_values(data_valid)
-    global_importances: np.ndarray = np.abs(shap_values).mean(0)#[:-1]
+    shap_values: np.ndarray = shap.TreeExplainer(lgbm_estimator).shap_values(data_valid)
+    global_importances: np.ndarray = np.abs(shap_values).mean(0)  # [:-1]
 
     # Plot SHAP summary.
     shap.summary_plot(shap_values, pd.DataFrame(test_feats, columns=cols), show=False)
@@ -548,3 +537,28 @@ def interpret_model(
     plt.clf()
     # for i in reversed(inds2):
     #     shap.dependence_plot(i, shap_values, data_valid.iloc[:10000, :])
+
+
+def filter_features_by_vif(df: pd.DataFrame, thresh: float = 5.0):
+    """
+    Filters dataframe by VIF scores and removes all above that threshold.
+    Source:
+    https://stats.stackexchange.com/questions/155028/how-to-systematically-remove-collinear-variables-in-python
+    """
+    variables = list(range(df.shape[1]))
+    dropped = True
+    while dropped:
+        dropped = False
+        vif = [variance_inflation_factor(df.iloc[:, variables].values, ix)
+               for ix in range(df.iloc[:, variables].shape[1])]
+
+        maxloc = vif.index(max(vif))
+        if max(vif) > thresh:
+            print('dropping \'' + df.iloc[:, variables].columns[maxloc] +
+                  '\' at index: ' + str(maxloc))
+            del variables[maxloc]
+            dropped = True
+
+    print('Remaining variables:')
+    print(df.columns[variables])
+    return df.iloc[:, variables]
