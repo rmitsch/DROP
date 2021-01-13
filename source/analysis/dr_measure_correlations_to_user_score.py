@@ -7,6 +7,7 @@ import pandas as pd
 import os
 import seaborn as sns
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 
 
 def read_user_scores(dirpath: str) -> pd.DataFrame:
@@ -48,7 +49,7 @@ if __name__ == '__main__':
         ax.set_title(metric[1] + " vs. perceptual rating \n")
         plt.xlabel(metric[1])
         plt.ylabel("Perceptual rating")
-
+        ax.yaxis.set_major_locator(MaxNLocator(integer=True))
         ax.text(
             x=0.5,
             y=1.02,
