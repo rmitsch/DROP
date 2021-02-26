@@ -88,7 +88,7 @@ if __name__ == '__main__':
         pickle.dump(high_dim_neighbourhood_ranking, file)
 
     ######################################################
-    # 3. Set up multithreading.
+    # 4. Set up multithreading.
     ######################################################
 
     # Adjust threading layer if UMAP is used to avoid multiprocessing deadlock.
@@ -138,7 +138,7 @@ if __name__ == '__main__':
     )
 
     ######################################################
-    # 3. Calculate low-dim. represenatations.
+    # 5. Calculate low-dim. represenatations.
     ######################################################
 
     for thread in threads:
@@ -147,7 +147,7 @@ if __name__ == '__main__':
         thread.join()
 
     ######################################################
-    # 4. Compute explainer values for all embeddings.
+    # 6. Compute explainer values for all embeddings.
     ######################################################
 
     compute_and_persist_explainer_values(logger, storage_path, dim_red_kernel_name, dataset_name)

@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+
 import hdbscan
 from enum import Enum
 import pandas as pd
@@ -6,8 +8,8 @@ import numpy as np
 import re
 from sklearn.preprocessing import StandardScaler
 import sklearn
-from data_generation.datasets import InputDataset
 import xgboost
+from data_generation.datasets import InputDataset
 
 
 class HappinessDataset(InputDataset):
@@ -24,7 +26,9 @@ class HappinessDataset(InputDataset):
         super().__init__(storage_path=storage_path)
 
     def _load_data(self) -> dict:
-        df = pd.read_csv(filepath_or_buffer=self._storage_path + "/happiness_2017.csv").drop(
+        df = pd.read_csv(
+            os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../../raw_data/happiness/happiness_2017.csv")
+        ).drop(
             ["map_reference", "biggest_official_language", "gdp_per_capita[$]"], axis=1
         ).set_index("country")
         df = df.rename(columns={col: re.sub(r'\[.*\]', '', col) for col in df.columns})
@@ -41,8 +45,12 @@ class HappinessDataset(InputDataset):
 
     def persist_records(self):
         filepath: str = self._storage_path + '/records.csv'
+        print(filepath)
 
         if not os.path.isfile(filepath):
+            if not os.path.exists(self._storage_path):
+                Path(self._storage_path).mkdir(parents=True, exist_ok=True)
+
             df: pd.DataFrame = self._df.copy(deep=True)
             df["record_name"] = df.index.values
             df.to_csv(path_or_buf=filepath, index=False)

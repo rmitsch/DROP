@@ -1,5 +1,7 @@
 import os
 from enum import Enum
+from pathlib import Path
+
 from scipy.spatial.distance import cdist
 import pandas as pd
 import numpy as np
@@ -32,7 +34,10 @@ class MovieDataset(InputDataset):
 
         # Load and prepare data.
         movies_metadata: pd.DataFrame = pd.read_csv(
-            filepath_or_buffer=self._storage_path + "/movies_metadata.csv", low_memory=False,
+            filepath_or_buffer=os.path.join(
+                os.path.dirname(os.path.realpath(__file__)), "../../../raw_data/movie/movies_metadata.csv"
+            ),
+            low_memory=False,
             dtype={"id": int, "popularity": float}
         )
 
@@ -109,6 +114,9 @@ class MovieDataset(InputDataset):
         filepath: str = self._storage_path + '/records.csv'
 
         if not os.path.isfile(filepath):
+            if not os.path.exists(self._storage_path):
+                Path(self._storage_path).mkdir(parents=True, exist_ok=True)
+
             df: pd.DataFrame = self._df.copy(deep=True)
             df["record_name"] = df.title
             df.drop(

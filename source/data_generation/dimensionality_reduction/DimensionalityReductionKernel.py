@@ -92,7 +92,7 @@ class DimensionalityReductionKernel:
             res: np.ndarray = None
             valid_res: bool = False
 
-            def fit_umap(init: str = "spectral") -> np.ndarray:
+            def fit_umap(init: str = "random") -> np.ndarray:
                 return umap.UMAP(
                     n_components=parameter_set["n_components"],
                     n_neighbors=parameter_set["n_neighbors"],
@@ -106,8 +106,6 @@ class DimensionalityReductionKernel:
                     # Always set metric to 'precomputed', since distance matrices are calculated previously. If
                     # other metrics are desired, the corresponding preprocessing step has to be extended.
                     metric='precomputed',
-                    # Workaround for UMAP bug #376: Use init="random" when failing.
-                    # Update when https://github.com/lmcinnes/umap/pull/376 is merged into master.
                     init=init
                 ).fit_transform(high_dim_data)
 
