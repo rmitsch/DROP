@@ -5,6 +5,7 @@ Utils for analysis of perceptual embedding quality.
 import os
 import sys
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
+from pprint import pprint
 from typing import Dict, List, Tuple, Optional, Any
 
 import hdbscan
@@ -326,7 +327,7 @@ def engineer_features(data: Dict, user_scores: pd.DataFrame):
 
 
 def train(data: pd.DataFrame, cols_to_keep: Tuple[str] = None, filter_by_vif: bool = False) -> Tuple[
-    linear_model.Lasso, LGBMRegressor, pd.DataFrame, pd.DataFrame, np.ndarray, np.ndarray
+    linear_model.Lasso, LGBMRegressor, pd.DataFrame, pd.DataFrame, np.ndarray, np.ndarray, np.ndarray, np.ndarray
 ]:
     """
     Trains model(s) on feature data to predict user ratings.
@@ -337,7 +338,7 @@ def train(data: pd.DataFrame, cols_to_keep: Tuple[str] = None, filter_by_vif: bo
     :param cols_to_keep: List of columns to use in model.
     :param filter_by_vif: Whether to filter columns by their VIF score.
     :return: Trained lasso estimator, trained LGBM estimator, dataframe with evaluation data, dataframe with selected
-    features, test feature set, test labels.
+    features, test feature set, test labels, entire feature set, all labels.
     """
 
     target: str = "rating"
@@ -468,7 +469,8 @@ def train(data: pd.DataFrame, cols_to_keep: Tuple[str] = None, filter_by_vif: bo
         pbar.update(1)
     pbar.close()
 
-    return lasso_estimator, lgbm_estimator, pd.DataFrame(metrics), data, test_feats, test_labels
+    return lasso_estimator, lgbm_estimator, pd.DataFrame(metrics), data, test_feats, test_labels, \
+           data.drop(columns=target).values, data[target].values
 
 
 def interpret_model(
@@ -476,8 +478,8 @@ def interpret_model(
     lasso_estimator: linear_model.Lasso,
     lgbm_estimator: LGBMRegressor,
     metrics: pd.DataFrame,
-    test_feats: np.ndarray,
-    test_labels: np.ndarray,
+    feats: np.ndarray,
+    labels: np.ndarray,
     base_path: str
 ):
     """
@@ -486,8 +488,8 @@ def interpret_model(
     :param lasso_estimator: Trained lasso estimator.
     :param lgbm_estimator: Trained LGBM estimator.
     :param metrics: Dataframe with metrics.
-    :param test_feats: Set of features in test set.
-    :param test_labels: Set of labels in test set.
+    :param feats: Features.
+    :param labels: Labels.
     :param base_path: Base path for storage.
     """
 
@@ -505,12 +507,16 @@ def interpret_model(
     #     print(metrics[metrics.model == "lgbm"].mean())
 
     # https://www.kaggle.com/slundberg/interpreting-a-lightgbm-model
-    data_valid: pd.DataFrame = pd.DataFrame(test_feats, columns=cols)
+    data_valid: pd.DataFrame = pd.DataFrame(feats, columns=cols)
     shap_values: np.ndarray = shap.TreeExplainer(lgbm_estimator).shap_values(data_valid)
     global_importances: np.ndarray = np.abs(shap_values).mean(0)  # [:-1]
+    import_per_feat = {col: global_importances[i] for i, col in enumerate(cols)}
+    print("Feature importance per feature:")
+    pprint(import_per_feat)
+    # ffsum = sum([import_per_feat[ffkey] for ffkey in ("r_nx", "stress", "target_domain_performance", "b_nx")])
 
     # Plot SHAP summary.
-    shap.summary_plot(shap_values, pd.DataFrame(test_feats, columns=cols), show=False)
+    shap.summary_plot(shap_values, pd.DataFrame(feats, columns=cols), show=False)
     plt.tight_layout()
     plt.savefig(base_path + "shap_summary.png", dpi=200)
     plt.clf()
@@ -518,8 +524,8 @@ def interpret_model(
     # Plot feature importance.
     inds = np.argsort(-global_importances)
     f = plt.figure(figsize=(15, 10))
-    y_pos = np.arange(test_feats.shape[1])
-    inds2 = np.flip(inds[:test_feats.shape[1]], 0)
+    y_pos = np.arange(feats.shape[1])
+    inds2 = np.flip(inds[:feats.shape[1]], 0)
     plt.barh(y_pos, global_importances[inds2], align='center', color="#1E88E5")
     plt.yticks(y_pos, fontsize=16)
     plt.gca().set_yticklabels(data.columns[inds2])
@@ -533,6 +539,7 @@ def interpret_model(
     plt.grid()
 
     plt.tight_layout()
+    print(base_path)
     plt.savefig(base_path + "feature_importance.png", dpi=200)
     plt.clf()
     # for i in reversed(inds2):

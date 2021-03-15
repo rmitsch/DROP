@@ -80,32 +80,30 @@ if __name__ == '__main__':
 
     feature_configs: Dict[str, Tuple[str]] = {
         "all": tuple(c for c in feature_data.columns if c != "rating"),
-        "preservation_criteria": ("r_nx", "b_nx", "stress", "target_domain_performance"),
-        "vqc": tuple(
-            c for c in feature_data if c not in
-            ("r_nx", "b_nx", "stress", "target_domain_performance", "rating")
-        ),
-        "r_nx": ("r_nx",),
-        "b_nx": ("b_nx",),
-        "stress": ("stress", ),
-        "target_domain_performance": ("target_domain_performance",)
+        # "preservation_criteria": ("r_nx", "b_nx", "stress", "target_domain_performance"),
+        # "vqc": tuple(
+        #     c for c in feature_data if c not in
+        #     ("r_nx", "b_nx", "stress", "target_domain_performance", "rating")
+        # ),
+        # "r_nx": ("r_nx",),
+        # "b_nx": ("b_nx",),
+        # "stress": ("stress", ),
+        # "target_domain_performance": ("target_domain_performance",)
     }
-    for col in feature_data.columns:
-        if col != "rating":
-            feature_configs[col] = (col,)
+    # for col in feature_data.columns:
+    #     if col != "rating":
+    #         feature_configs[col] = (col,)
 
     pbar: tqdm = tqdm(total=len(feature_configs))
     for feature_set_to_use in feature_configs:
         cached_training_data_file_path: str = base_data_path + "evaluation/results_" + feature_set_to_use + ".pkl"
 
         if force_recomputation_model or not os.path.isfile(cached_training_data_file_path):
-            lasso_estimator, lgbm_estimator, metrics, selected_feature_data, test_feats, test_labels = af.train(
-                data=feature_data, cols_to_keep=feature_configs[feature_set_to_use], filter_by_vif=True
-            )
-
             with open(cached_training_data_file_path, 'wb') as handle:
                 pickle.dump(
-                    (lasso_estimator, lgbm_estimator, metrics, selected_feature_data, test_feats, test_labels),
+                    af.train(
+                        data=feature_data, cols_to_keep=feature_configs[feature_set_to_use], filter_by_vif=True
+                    ),
                     handle
                 )
 
@@ -116,7 +114,9 @@ if __name__ == '__main__':
                 metrics,
                 selected_feature_data,
                 test_feats,
-                test_labels
+                test_labels,
+                all_feats,
+                all_labels
             ) = pickle.load(handle)
 
         ###################################################
@@ -128,8 +128,8 @@ if __name__ == '__main__':
             lasso_estimator,
             lgbm_estimator,
             metrics,
-            test_feats,
-            test_labels,
+            all_feats,
+            all_labels,
             base_data_path + "evaluation/" + feature_set_to_use + "_"
         )
 
